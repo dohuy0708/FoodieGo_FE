@@ -1,8 +1,9 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import Home from "../screens/customer/Home";
-import Splash from "../screens/customer/Splash";
+import Home from "../Screens/Customer/Home";
+import Splash from "../Screens/Customer/Splash";
+import Register from "../Screens/vendor/Register";
 
 const Stack = createNativeStackNavigator();
 
@@ -10,6 +11,7 @@ export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Register" component={Register} />
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Home" component={Home} />
       </Stack.Navigator>
