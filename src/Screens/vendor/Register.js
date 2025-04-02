@@ -6,10 +6,12 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import { Color } from "../../constants";
 import React, { useState, useEffect } from "react";
 import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from 'expo-image-picker';
 import {
   getProvinces,
   getDistrictsByProvinceCode,
@@ -22,7 +24,31 @@ export default function Register() {
   const [selectedProvince, setSelectedProvince] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedWard, setSelectedWard] = useState(null);
-
+  const [selectedImage, setSelectedImage] = useState(null);
+  const selectImage = async () => {
+    try {
+      // Xin quyền truy cập thư viện ảnh
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Xin lỗi, chúng tôi cần quyền truy cập thư viện ảnh!');
+        return;
+      }
+  
+      // Mở thư viện ảnh
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 1,
+      });
+  
+      if (!result.canceled) {
+        setSelectedImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.log('ImagePicker Error: ', error);
+    }
+  };
   useEffect(() => {
     const fetchProvinces = async () => {
       const data = await getProvinces();
@@ -158,13 +184,25 @@ export default function Register() {
             </View>
           </View>
           <View style={styles.view_image}>
-            <TouchableOpacity style={styles.button} ><Text style={{ color:"white" }}>Thêm ảnh bìa</Text></TouchableOpacity>
+            {selectedImage && (
+              <Image
+                source={{ uri: selectedImage.uri }}
+                style={styles.previewImage}
+              />
+            )}
+            <TouchableOpacity
+              style={[styles.button, styles.addImageButton]}
+              onPress={selectImage}
+            >
+              <Text style={{ color: "white" }}>{selectImage?"Thay đổi ảnh":"Thêm ảnh bìa"}</Text>
+            </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity style={[styles.button, { marginTop: 10,width:"100%" }]}>
-  <Text style={{ color: "white" }}>Đăng ký</Text>
-</TouchableOpacity>
-         
+
+          <TouchableOpacity
+            style={[styles.button, { marginTop: 10, width: "100%" }]}
+          >
+            <Text style={{ color: "white" }}>Đăng ký</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -233,24 +271,30 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   view_image: {
-    justifyContent: "flex-end",
-    alignItems:"flex-end",
+    position: "relative",
     width: "100%",
     height: 200,
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
   },
-  button:
-  {
-   paddingHorizontal: 20,
+  button: {
+    paddingHorizontal: 20,
     paddingVertical: 10,
     backgroundColor: Color.DEFAULT_GREEN,
     height: 50,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+  },
+  addImageButton: {
+    position: "absolute",
+    bottom: 10,
+    right: 10,
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
   }
 });
