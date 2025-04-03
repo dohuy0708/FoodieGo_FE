@@ -12,7 +12,7 @@ import {
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Picker } from "@react-native-picker/picker";
 import Dish from "../../components/Dish";
-export default function HomeVendor() {
+export default function HomeVendor({ navigation }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [category, setCategory] = useState([
     { id: 1, name: "Cháo ếch" },
@@ -46,7 +46,20 @@ export default function HomeVendor() {
         <Text>VQCX+Q8M, Phường Linh Trung, Thủ Đức, Hồ Chí Minh</Text>
         <Text>Mở cửa: 6h30 am - 21h30 pm</Text>
         <View style={{ alignItems: "flex-end" }}>
-          <TouchableOpacity style={styles.edit_button}>
+          <TouchableOpacity
+            style={styles.edit_button}
+            onPress={() =>
+              navigation.navigate("EditVendor", {
+                vendorData: {
+                  name: "Cháo ếch Singapore",
+                  description: "Cháo ếch ngon nhất, rẻ nhất",
+                  address: "VQCX+Q8M, Phường Linh Trung, Thủ Đức, Hồ Chí Minh",
+                  openTime: "6h30 am - 21h30 pm",
+                  image: require("../../assets/images/store.png"),
+                },
+              })
+            }
+          >
             <Text style={{ color: Color.DEFAULT_WHITE }}>
               Chỉnh sửa thông tin
             </Text>
@@ -95,9 +108,7 @@ export default function HomeVendor() {
         </View>
         <View style={{ alignItems: "flex-end", marginBottom: 40 }}>
           <TouchableOpacity style={styles.edit_button}>
-            <Text style={{ color: Color.DEFAULT_WHITE }}>
-              Thêm món ăn
-            </Text>
+            <Text style={{ color: Color.DEFAULT_WHITE }}>Thêm món ăn</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -11,13 +11,13 @@ import {
 import { Color } from "../../constants";
 import React, { useState, useEffect } from "react";
 import { Picker } from "@react-native-picker/picker";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 import {
   getProvinces,
   getDistrictsByProvinceCode,
   getWardsByDistrictCode,
 } from "../../services/locationService";
-export default function Register() {
+export default function EditVendor() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [openTime, setOpenTime] = useState("");
@@ -34,12 +34,13 @@ export default function Register() {
   const selectImage = async () => {
     try {
       // Xin quyền truy cập thư viện ảnh
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Xin lỗi, chúng tôi cần quyền truy cập thư viện ảnh!');
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Xin lỗi, chúng tôi cần quyền truy cập thư viện ảnh!");
         return;
       }
-  
+
       // Mở thư viện ảnh
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -47,12 +48,12 @@ export default function Register() {
         aspect: [16, 9],
         quality: 1,
       });
-  
+
       if (!result.canceled) {
         setSelectedImage(result.assets[0]);
       }
     } catch (error) {
-      console.log('ImagePicker Error: ', error);
+      console.log("ImagePicker Error: ", error);
     }
   };
   useEffect(() => {
@@ -86,19 +87,20 @@ export default function Register() {
     fetchWards();
   }, [selectedDistrict]);
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container1}>
       <ScrollView style={styles.scrollView}>
+        <Image
+          source={require("../../assets/images/store.png")}
+          style={styles.image}
+        />
         <View style={styles.container}>
-          <Text style={styles.header}>Đăng ký nhà hàng</Text>
-          <Text style={styles.input_text}>
-            (*) Vui lòng nhập thông tin chính xác
-          </Text>
+          <Text style={styles.header}>Chỉnh sửa thông tin nhà hàng</Text>
           <View style={styles.input_container}>
             <TextInput
               style={styles.input_text}
               placeholder="Tên Nhà Hàng/Quán ăn"
               value={name}
-              onChangeText={Text => setName(Text)}
+              onChangeText={(Text) => setName(Text)}
             ></TextInput>
           </View>
           <View style={styles.input_container}>
@@ -106,7 +108,7 @@ export default function Register() {
               style={styles.input_text}
               placeholder="Mô tả Nhà Hàng/Quán ăn"
               value={description}
-              onChangeText={Text => setDescription(Text)}
+              onChangeText={(Text) => setDescription(Text)}
               multiline={true}
               numberOfLines={4}
             ></TextInput>
@@ -152,12 +154,16 @@ export default function Register() {
               selectedValue={selectedWard}
               onValueChange={(itemValue) => setSelectedWard(itemValue)}
               style={styles.picker}
-              
               enabled={!!selectedDistrict}
             >
               <Picker.Item label="Chọn phường/xã" value={null} />
               {wards.map((ward) => (
-                <Picker.Item key={ward.code} label={ward.name}  style={{ fontSize: 14 }} value={ward} />
+                <Picker.Item
+                  key={ward.code}
+                  label={ward.name}
+                  style={{ fontSize: 14 }}
+                  value={ward}
+                />
               ))}
             </Picker>
           </View>
@@ -168,7 +174,7 @@ export default function Register() {
                 style={styles.input_time}
                 keyboardType="numeric"
                 value={openTime}
-                onChangeText={Text => setOpenTime(Text)}
+                onChangeText={(Text) => setOpenTime(Text)}
                 maxLength={2}
               ></TextInput>
               <Text>giờ</Text>
@@ -176,7 +182,7 @@ export default function Register() {
                 style={styles.input_time}
                 keyboardType="numeric"
                 value={minuteOpenTime}
-                onChangeText={Text => setMinuteOpenTime(Text)}
+                onChangeText={(Text) => setMinuteOpenTime(Text)}
                 maxLength={2}
               ></TextInput>
               <Text>phút</Text>
@@ -189,7 +195,7 @@ export default function Register() {
                 style={styles.input_time}
                 keyboardType="numeric"
                 value={closeTime}
-                onChangeText={Text => setCloseTime(Text)}
+                onChangeText={(Text) => setCloseTime(Text)}
                 maxLength={2}
               ></TextInput>
               <Text>giờ</Text>
@@ -197,32 +203,25 @@ export default function Register() {
                 style={styles.input_time}
                 keyboardType="numeric"
                 value={minuteCloseTime}
-                onChangeText={Text => setMinuteCloseTime(Text)}
+                onChangeText={(Text) => setMinuteCloseTime(Text)}
                 maxLength={2}
               ></TextInput>
               <Text>phút</Text>
             </View>
           </View>
-          <View style={styles.view_image}>
-            {selectedImage && (
-              <Image
-                source={{ uri: selectedImage.uri }}
-                style={styles.previewImage}
-              />
-            )}
-            <TouchableOpacity
-              style={[styles.button, styles.addImageButton]}
-              onPress={selectImage}
-            >
-              <Text style={{ color: "white" }}>{selectImage?"Thay đổi ảnh":"Thêm ảnh bìa"}</Text>
-            </TouchableOpacity>
-          </View>
 
-          <TouchableOpacity
-            style={[styles.button, { marginTop: 10, width: "100%" }]}
-          >
-            <Text style={{ color: "white" }}>Đăng ký</Text>
-          </TouchableOpacity>
+         <View style={{ flexDirection: "row", gap: 10, alignSelf: "flex-end" }}>
+              <TouchableOpacity
+                style={[styles.button, { marginTop: 10,backgroundColor:Color.DEFAULT_YELLOW }]}
+              >
+                <Text style={{ color: "white" }}>Hủy bỏ</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, { marginTop: 10 }]}
+              >
+                <Text style={{ color: "white" }}>Thay đổi</Text>
+              </TouchableOpacity>
+         </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -230,6 +229,11 @@ export default function Register() {
 }
 
 const styles = StyleSheet.create({
+  container1: {
+    flex: 1,
+    width: "100%",
+    backgroundColor: "#fff",
+  },
   container: {
     paddingHorizontal: 10,
     paddingVertical: 30,
@@ -241,11 +245,9 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-
     alignItems: "center",
-    color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    fontSize: 30,
+    fontSize: 20,
   },
   input_container: {
     width: "100%",
@@ -290,14 +292,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  view_image: {
-    position: "relative",
-    width: "100%",
-    height: 200,
-    borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
-    borderRadius: 10,
-  },
+
   button: {
     paddingHorizontal: 20,
     paddingVertical: 10,
@@ -307,14 +302,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  addImageButton: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
+
+  image: {
+    width: "100%",
+    aspectRatio: 16 / 9,
     borderRadius: 10,
-  }
+  },
 });
