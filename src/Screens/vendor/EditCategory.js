@@ -9,13 +9,27 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Modal,
+  TextInput,
 } from "react-native";
 export default function EditCategory() {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryInput, setCategoryInput] = useState("");
   const renderItem = ({ item }) => (
     <View style={styles.categoryItem}>
       <Text style={styles.categoryText}>{item.name}</Text>
       <View style={{ flexDirection: "row", gap: 20 }}>
-        <Feather name="edit-2" size={24} color="black" />
+        <Feather
+          name="edit-2"
+          size={24}
+          color="black"
+          onPress={() => {
+            setEditingCategory(item);
+            setCategoryInput(item.name);
+            setModalVisible(true);
+          }}
+        />
         <Ionicons name="remove-circle-outline" size={24} color="black" />
       </View>
     </View>
@@ -41,10 +55,7 @@ export default function EditCategory() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Chỉnh sửa danh mục</Text>
-      <TouchableOpacity
-        style={styles.edit_button}
-        onPress={() => navigation.navigate("EditCategory")}
-      >
+      <TouchableOpacity style={styles.edit_button}>
         <Text style={{ color: Color.DEFAULT_WHITE }}>Thêm danh mục</Text>
       </TouchableOpacity>
       <FlatList
@@ -54,6 +65,67 @@ export default function EditCategory() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
       />
+      {isModalVisible && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isModalVisible}
+          onRequestClose={() => {
+            setModalVisible(false);
+            setEditingCategory(null);
+            setCategoryInput("");
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Chỉnh sửa danh mục</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Tên danh mục"
+                value={categoryInput}
+                onChangeText={(text) => setCategoryInput(text)}
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    { backgroundColor: Color.DEFAULT_YELLOW },
+                  ]}
+                  onPress={() => {
+                    setModalVisible(false);
+                    setEditingCategory(null);
+                    setCategoryInput("");
+                  }}
+                >
+                  <Text style={styles.buttonText}>Hủy bỏ</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    { backgroundColor: Color.DEFAULT_GREEN },
+                  ]}
+                  onPress={() => {
+                    if (editingCategory) {
+                      setCategoryName((prev) =>
+                        prev.map((cat) =>
+                          cat.id === editingCategory.id
+                            ? { ...cat, name: categoryInput }
+                            : cat
+                        )
+                      );
+                    }
+                    setModalVisible(false);
+                    setEditingCategory(null);
+                    setCategoryInput("");
+                  }}
+                >
+                  <Text style={styles.buttonText}>Lưu</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -100,5 +172,45 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "90%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    gap: 20,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: Color.DEFAULT_GREEN,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: Color.GRAY_BORDER,
+    borderRadius: 5,
+    padding: 10,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "500",
   },
 });

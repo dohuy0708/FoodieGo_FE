@@ -33,14 +33,14 @@ export default function Register() {
   const [selectedImage, setSelectedImage] = useState(null);
   const selectImage = async () => {
     try {
-      // Xin quyền truy cập thư viện ảnh
+      
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         alert('Xin lỗi, chúng tôi cần quyền truy cập thư viện ảnh!');
         return;
       }
   
-      // Mở thư viện ảnh
+      
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -214,7 +214,7 @@ export default function Register() {
               style={[styles.button, styles.addImageButton]}
               onPress={selectImage}
             >
-              <Text style={{ color: "white" }}>{selectImage?"Thay đổi ảnh":"Thêm ảnh bìa"}</Text>
+              <Text style={{ color: "white" }}>{selectedImage?"Thay đổi ảnh":"Thêm ảnh bìa"}</Text>
             </TouchableOpacity>
           </View>
 

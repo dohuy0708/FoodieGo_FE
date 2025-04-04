@@ -27,6 +27,8 @@ export default function HomeVendor({ navigation }) {
       price: "50.000đ",
       status: "Đang bán",
       numSell: "1000",
+      description:
+        "Cháo ếch Singapore là một món ăn nổi tiếng của Singapore, được làm từ gạo nấu nhừ với nước dùng thơm ngon và thịt ếch tươi ngon.",
     },
     {
       id: 2,
@@ -34,6 +36,8 @@ export default function HomeVendor({ navigation }) {
       price: "45.000đ",
       status: "Đang bán",
       numSell: "500",
+      description:
+        "Cháo ếch om là một món ăn truyền thống của Việt Nam, được chế biến từ gạo nấu nhừ với nước dùng thơm ngon và thịt ếch tươi ngon.",
     },
     {
       id: 3,
@@ -41,6 +45,8 @@ export default function HomeVendor({ navigation }) {
       price: "60.000đ",
       status: "Đang bán",
       numSell: "200",
+      description:
+        "Cháo ếch xào là một món ăn ngon miệng, được chế biến từ gạo nấu nhừ với nước dùng thơm ngon và thịt ếch tươi ngon.",
     },
     {
       id: 4,
@@ -48,6 +54,8 @@ export default function HomeVendor({ navigation }) {
       price: "40.000đ",
       status: "Đang bán",
       numSell: "300",
+      description:
+        "Cháo ếch chiên là một món ăn ngon miệng, được chế biến từ gạo nấu nhừ với nước dùng thơm ngon và thịt ếch tươi ngon.",
     },
     {
       id: 5,
@@ -55,6 +63,8 @@ export default function HomeVendor({ navigation }) {
       price: "55.000đ",
       status: "Đang bán",
       numSell: "800",
+      description:
+        "Cháo ếch hấp là một món ăn ngon miệng, được chế biến từ gạo nấu nhừ với nước dùng thơm ngon và thịt ếch tươi ngon.",
     },
     {
       id: 6,
@@ -62,6 +72,8 @@ export default function HomeVendor({ navigation }) {
       price: "70.000đ",
       status: "Đang bán",
       numSell: "600",
+      description:
+        "Cháo ếch nướng là một món ăn ngon miệng, được chế biến từ gạo nấu nhừ với nước dùng thơm ngon và thịt ếch tươi ngon.",
     },
     {
       id: 7,
@@ -69,6 +81,8 @@ export default function HomeVendor({ navigation }) {
       price: "80.000đ",
       status: "Đang bán",
       numSell: "400",
+      description:
+        "Cháo ếch xào lăn là một món ăn ngon miệng, được chế biến từ gạo nấu nhừ với nước dùng thơm ngon và thịt ếch tươi ngon.",
     },
   ]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -136,9 +150,9 @@ export default function HomeVendor({ navigation }) {
         <View style={{ alignItems: "flex-end" }}>
           <TouchableOpacity
             style={styles.edit_button}
-            onPress={() => navigation.navigate("EditVendor")}
+            onPress={() => navigation.navigate("AddDish")}
           >
-            <Text style={{ color: Color.DEFAULT_WHITE }}>Chỉnh sửa món ăn</Text>
+            <Text style={{ color: Color.DEFAULT_WHITE }}>Thêm món ăn mới</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -156,7 +170,7 @@ export default function HomeVendor({ navigation }) {
           data={dishes}
           renderItem={({ item }) => (
             <View style={styles.dishContainer}>
-              <Dish data={item} />
+              <Dish data={item} navigation={navigation} />
             </View>
           )}
           keyExtractor={(item) => item.id.toString()}
@@ -193,7 +207,7 @@ const styles = {
   },
   edit_button: {
     backgroundColor: Color.DEFAULT_YELLOW,
-    paddingVertical: 10,
+    paddingVertical: 13,
     paddingHorizontal: 20,
     borderRadius: 5,
     alignItems: "center",
