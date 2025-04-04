@@ -6,6 +6,8 @@ import Splash from "../Screens/Customer/Splash";
 import Register from "../Screens/vendor/Register";
 import HomeVendor from "../Screens/vendor/HomeVendor";
 import EditVendor from "../Screens/vendor/EditVendor";
+import EditCategory from "../Screens/vendor/EditCategory";
+import DishDetail from "../Screens/vendor/DishDetail";
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +20,8 @@ export default function Navigation() {
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="EditVendor" component={EditVendor} />
+        <Stack.Screen name="EditCategory" component={EditCategory} />
+        <Stack.Screen name="DishDetail" component={DishDetail} />
       </Stack.Navigator>
     </NavigationContainer>
   );

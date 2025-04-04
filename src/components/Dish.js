@@ -8,29 +8,32 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-export default function Dish() {
+export default function Dish({ data, navigation }) {
   return (
-    <View style={styles.container}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => navigation.navigate("DishDetail", { data })}
+    >
       <Image
         source={require("../assets/images/dish.png")}
         style={styles.image}
       />
       <View style={{ gap: 10 }}>
-        <Text>Cháo ếch thập cẩm</Text>
-        <View style={{ flexDirection: "row",gap: 30 }}>
-          <Text>1000 đã bán</Text>
-          <Text style={{ color:Color.DEFAULT_YELLOW }}>300.000đ</Text>
-          </View>
-          <Text style={{ color:Color.DEFAULT_GREEN }}>Đang bán</Text>
+        <Text>{data.name}</Text>
+        <View style={{ flexDirection: "row", gap: 30 }}>
+          <Text>{data.numSell}</Text>
+          <Text style={{ color: Color.DEFAULT_YELLOW }}>{data.price}</Text>
+        </View>
+        <Text style={{ color: Color.DEFAULT_GREEN }}>{data.status}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 const styles = {
   container: {
     flexDirection: "row",
     width: "100%",
-    justifyContent: "space-between",
+    gap: 20,
     backgroundColor: "#fff",
   },
   image: {

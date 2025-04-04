@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  FlatList,
 } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Picker } from "@react-native-picker/picker";
@@ -19,28 +20,84 @@ export default function HomeVendor({ navigation }) {
     { id: 2, name: "Bánh mì" },
     { id: 3, name: "Phở" },
   ]);
-
+  const [dishes, setDishes] = useState([
+    {
+      id: 1,
+      name: "Cháo ếch Singapore",
+      price: "50.000đ",
+      status: "Đang bán",
+      numSell: "1000",
+    },
+    {
+      id: 2,
+      name: "Cháo ếch om",
+      price: "45.000đ",
+      status: "Đang bán",
+      numSell: "500",
+    },
+    {
+      id: 3,
+      name: "Cháo ếch xào",
+      price: "60.000đ",
+      status: "Đang bán",
+      numSell: "200",
+    },
+    {
+      id: 4,
+      name: "Cháo ếch chiên",
+      price: "40.000đ",
+      status: "Đang bán",
+      numSell: "300",
+    },
+    {
+      id: 5,
+      name: "Cháo ếch hấp",
+      price: "55.000đ",
+      status: "Đang bán",
+      numSell: "800",
+    },
+    {
+      id: 6,
+      name: "Cháo ếch nướng",
+      price: "70.000đ",
+      status: "Đang bán",
+      numSell: "600",
+    },
+    {
+      id: 7,
+      name: "Cháo ếch xào lăn",
+      price: "80.000đ",
+      status: "Đang bán",
+      numSell: "400",
+    },
+  ]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  return (
-    <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/store.png")}
-        style={styles.image}
-      />
-      <ScrollView
-        style={styles.view_information}
-        contentContainerStyle={styles.scrollViewContent}
-      >
+  const HeaderComponent = () => (
+    <>
+      <View style={{ gap: 10 }}>
+        <View style={{ alignItems: "flex-end" }}>
+          <TouchableOpacity
+            style={styles.edit_button}
+            onPress={() => navigation.navigate("EditVendor")}
+          >
+            <Text style={{ color: Color.DEFAULT_WHITE }}>
+              Chỉnh sửa thông tin
+            </Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.name_vendor}>Cháo ếch Singapore</Text>
+
         <View style={styles.evaluation}>
           <View style={styles.evaluation}>
-            <FontAwesome name="star" size={24} color={Color.DEFAULT_YELLOW} />
-            <FontAwesome name="star" size={24} color={Color.DEFAULT_YELLOW} />
-            <FontAwesome name="star" size={24} color={Color.DEFAULT_YELLOW} />
-            <FontAwesome name="star" size={24} color={Color.DEFAULT_YELLOW} />
-            <Text>(4.0)</Text>
+            <View style={styles.evaluation}>
+              <FontAwesome name="star" size={24} color={Color.DEFAULT_YELLOW} />
+              <FontAwesome name="star" size={24} color={Color.DEFAULT_YELLOW} />
+              <FontAwesome name="star" size={24} color={Color.DEFAULT_YELLOW} />
+              <FontAwesome name="star" size={24} color={Color.DEFAULT_YELLOW} />
+              <Text>(4.0)</Text>
+            </View>
+            <Text>(300 Bình luận)</Text>
           </View>
-          <Text>(300 Bình luận)</Text>
         </View>
         <Text>Cháo ếch ngon nhất, rẻ nhất</Text>
         <Text>VQCX+Q8M, Phường Linh Trung, Thủ Đức, Hồ Chí Minh</Text>
@@ -48,20 +105,10 @@ export default function HomeVendor({ navigation }) {
         <View style={{ alignItems: "flex-end" }}>
           <TouchableOpacity
             style={styles.edit_button}
-            onPress={() =>
-              navigation.navigate("EditVendor", {
-                vendorData: {
-                  name: "Cháo ếch Singapore",
-                  description: "Cháo ếch ngon nhất, rẻ nhất",
-                  address: "VQCX+Q8M, Phường Linh Trung, Thủ Đức, Hồ Chí Minh",
-                  openTime: "6h30 am - 21h30 pm",
-                  image: require("../../assets/images/store.png"),
-                },
-              })
-            }
+            onPress={() => navigation.navigate("EditCategory")}
           >
             <Text style={{ color: Color.DEFAULT_WHITE }}>
-              Chỉnh sửa thông tin
+              Chỉnh sửa danh mục
             </Text>
           </TouchableOpacity>
         </View>
@@ -87,31 +134,36 @@ export default function HomeVendor({ navigation }) {
           </Picker>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <TouchableOpacity style={styles.edit_button}>
-            <Text style={{ color: Color.DEFAULT_WHITE }}>
-              Chỉnh sửa danh mục
-            </Text>
+          <TouchableOpacity
+            style={styles.edit_button}
+            onPress={() => navigation.navigate("EditVendor")}
+          >
+            <Text style={{ color: Color.DEFAULT_WHITE }}>Chỉnh sửa món ăn</Text>
           </TouchableOpacity>
         </View>
-
-        <View style={styles.dishListContainer}>
-          <ScrollView nestedScrollEnabled={true}>
-            <View style={styles.dishGrid}>
-              <Dish />
-              <Dish />
-              <Dish />
-              <Dish />
-              <Dish />
-              <Dish />
+      </View>
+    </>
+  );
+  return (
+    <View style={styles.container}>
+      <Image
+        source={require("../../assets/images/store.png")}
+        style={styles.image}
+      />
+      <View style={styles.view_information}>
+        <FlatList
+          ListHeaderComponent={HeaderComponent}
+          data={dishes}
+          renderItem={({ item }) => (
+            <View style={styles.dishContainer}>
+              <Dish data={item} />
             </View>
-          </ScrollView>
-        </View>
-        <View style={{ alignItems: "flex-end", marginBottom: 40 }}>
-          <TouchableOpacity style={styles.edit_button}>
-            <Text style={{ color: Color.DEFAULT_WHITE }}>Thêm món ăn</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+          )}
+          keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContentContainer}
+        />
+      </View>
     </View>
   );
 }
@@ -154,10 +206,7 @@ const styles = {
     borderRadius: 10,
     overflow: "hidden",
   },
-  scrollView: {
-    flex: 1,
-    width: "100%",
-  },
+
   picker: {
     height: 50,
     width: "100%",
@@ -166,9 +215,8 @@ const styles = {
   view_information: {
     flex: 1,
     width: "100%",
-    height: "72%", // Tăng chiều cao lên
+    height: "72%",
     paddingHorizontal: 20,
-    paddingVertical: 20,
     backgroundColor: "#fff",
     borderRadius: 10,
     position: "absolute",
@@ -183,17 +231,8 @@ const styles = {
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  scrollViewContent: {
-    flexGrow: 1,
-    rowGap: 10,
-  },
-  dishListContainer: {
-    maxHeight: 400,
-    marginTop: 10,
-  },
-  dishGrid: {
-    width: "100%",
-    paddingBottom: 10,
-    gap: 20,
+  listContentContainer: {
+    paddingVertical: 20,
+    gap: 10,
   },
 };

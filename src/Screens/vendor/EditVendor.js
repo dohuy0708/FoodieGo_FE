@@ -17,7 +17,7 @@ import {
   getDistrictsByProvinceCode,
   getWardsByDistrictCode,
 } from "../../services/locationService";
-export default function EditVendor() {
+export default function EditVendor({navigation}) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [openTime, setOpenTime] = useState("");
@@ -213,6 +213,7 @@ export default function EditVendor() {
          <View style={{ flexDirection: "row", gap: 10, alignSelf: "flex-end" }}>
               <TouchableOpacity
                 style={[styles.button, { marginTop: 10,backgroundColor:Color.DEFAULT_YELLOW }]}
+                onPress={() => navigation.navigate("HomeVendor")}
               >
                 <Text style={{ color: "white" }}>Hủy bỏ</Text>
               </TouchableOpacity>
