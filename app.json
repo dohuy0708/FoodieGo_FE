@@ -12,6 +12,11 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "@react-native-community/datetimepicker"
+      ]
+    ],
     "ios": {
       "supportsTablet": true
     },

@@ -10,13 +10,16 @@ import EditCategory from "../Screens/vendor/EditCategory";
 import DishDetail from "../Screens/vendor/DishDetail";
 import AddDish from "../Screens/vendor/AddDish";
 import EditDish from "../Screens/vendor/EditDish";
+import OrderList from "../Screens/vendor/OrderList";
 
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
   return (
     <NavigationContainer>
+       
       <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="OrderList" component={OrderList} />
         <Stack.Screen name="HomeVendor" component={HomeVendor} />
         <Stack.Screen name="Register" component={Register} />
         <Stack.Screen name="Splash" component={Splash} />
@@ -26,6 +29,7 @@ export default function Navigation() {
         <Stack.Screen name="DishDetail" component={DishDetail} />
         <Stack.Screen name="AddDish" component={AddDish} />
         <Stack.Screen name="EditDish" component={EditDish} />
+       
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -4,10 +4,8 @@ import { useState } from "react";
 import {
   View,
   Text,
-  SafeAreaView,
   Image,
   TouchableOpacity,
-  ScrollView,
   FlatList,
 } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
