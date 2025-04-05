@@ -4,7 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Color } from "../../constants";
 import Feather from "@expo/vector-icons/Feather";
 import { useState } from "react";
-export default function OrderList() {
+export default function OrderList({navigation }) {
     const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [orders, setOrders] = useState([
@@ -113,15 +113,17 @@ export default function OrderList() {
           <Text>Ngày</Text>
           <Text>{formatDate(item.date)}</Text>
         </View>
-        <Text
-          style={{
-            color: Color.DEFAULT_GREEN,
-            textDecorationLine: "underline",
-            textAlign: "right",
-          }}
-        >
-          Xem chi tiết
-        </Text>
+        <TouchableOpacity onPress={() => navigation.navigate("OrderDetail", { orderId: item.id })}>
+          <Text
+            style={{
+              color: Color.DEFAULT_GREEN,
+              textDecorationLine: "underline",
+              textAlign: "right",
+            }}
+          >
+            Xem chi tiết
+          </Text>
+        </TouchableOpacity >
       </View>
     );
   };
@@ -192,6 +194,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     backgroundColor: "#fff",
+    gap: 10,
+  },
+  listContentContainer: {
+    paddingVertical: 20,
     gap: 10,
   },
 });

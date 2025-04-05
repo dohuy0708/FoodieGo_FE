@@ -11,6 +11,7 @@ import DishDetail from "../Screens/vendor/DishDetail";
 import AddDish from "../Screens/vendor/AddDish";
 import EditDish from "../Screens/vendor/EditDish";
 import OrderList from "../Screens/vendor/OrderList";
+import OrderDetail from "../Screens/vendor/OrderDetail";
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +30,7 @@ export default function Navigation() {
         <Stack.Screen name="DishDetail" component={DishDetail} />
         <Stack.Screen name="AddDish" component={AddDish} />
         <Stack.Screen name="EditDish" component={EditDish} />
+        <Stack.Screen name="OrderDetail" component={OrderDetail} />
        
       </Stack.Navigator>
     </NavigationContainer>
