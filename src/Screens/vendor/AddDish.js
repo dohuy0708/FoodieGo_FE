@@ -7,11 +7,15 @@ import {
   TouchableOpacity,
   TextInput,
   KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { Color } from "../../constants";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
-export default function AddDish({navigation}) {
+export default function AddDish({ navigation }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [name, setName] = useState(null);
   const [description, setDescription] = useState(null);
@@ -58,98 +62,118 @@ export default function AddDish({navigation}) {
     }
   };
   return (
-    <View style={styles.container}>
-      <View style={styles.view_image}>
-        {selectedImage && (
-          <Image
-            source={{ uri: selectedImage.uri }}
-            style={styles.previewImage}
-          />
-        )}
-        <TouchableOpacity
-          style={[styles.button, styles.addImageButton]}
-          onPress={selectImage}
-        >
-          <Text style={{ color: "white" }}>
-            {selectedImage ? "Thay đổi ảnh" : "Thêm ảnh cho món ăn"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <View style={{ width: "100%", paddingHorizontal: 20, gap: 20 }}>
-        <View style={styles.input_container}>
-          <TextInput
-            style={styles.input_text}
-            placeholder="Tên món ăn"
-            value={name}
-            onChangeText={(Text) => setName(Text)}
-          ></TextInput>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "android" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <TouchableWithoutFeedback style={{ flex: 1 }} onPress={Keyboard.dismiss}>
+        <View style={{ flex: 1 }}>
+          <ScrollView style={styles.container}>
+            <View style={styles.view_image}>
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage.uri }}
+                  style={styles.previewImage}
+                />
+              )}
+              <TouchableOpacity
+                style={[styles.button, styles.addImageButton]}
+                onPress={selectImage}
+              >
+                <Text style={{ color: "white" }}>
+                  {selectedImage ? "Thay đổi ảnh" : "Thêm ảnh cho món ăn"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.contentContainer}>
+              <View style={{ width: "100%", paddingHorizontal: 0, gap: 20 }}>
+                <View style={styles.input_container}>
+                  <TextInput
+                    style={styles.input_text}
+                    placeholder="Tên món ăn"
+                    value={name}
+                    onChangeText={(Text) => setName(Text)}
+                  ></TextInput>
+                </View>
+                <View style={styles.input_container}>
+                  <TextInput
+                    style={styles.input_text}
+                    placeholder="Mô tả món ăn"
+                    value={description}
+                    onChangeText={(Text) => setDescription(Text)}
+                    multiline={true}
+                    numberOfLines={4}
+                  ></TextInput>
+                </View>
+                <View style={styles.input_container}>
+                  <TextInput
+                    style={styles.input_text}
+                    placeholder="Giá món ăn"
+                    value={price}
+                    keyboardType="numeric"
+                    onChangeText={formatPrice}
+                  ></TextInput>
+                </View>
+                <View style={styles.picker_container}>
+                  <Picker
+                    selectedValue={selectedStatus}
+                    onValueChange={(itemValue) => setSelectedStatus(itemValue)}
+                    style={styles.picker}
+                    enabled={true}
+                  >
+                    <Picker.Item label="Tình trạng món ăn" value={null} />
+                    {status.map((status) => (
+                      <Picker.Item
+                        key={status.id}
+                        label={status.name}
+                        value={status.id}
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                {
+                  backgroundColor: Color.DEFAULT_YELLOW,
+                  paddingHorizontal: 30,
+                },
+              ]}
+              onPress={() => navigation.navigate("HomeVendor")}
+            >
+              <Text style={{ color: "white" }}>Hủy bỏ</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: Color.DEFAULT_GREEN }]}
+            >
+              <Text style={{ color: "white" }}>Chấp nhận</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.input_container}>
-          <TextInput
-            style={styles.input_text}
-            placeholder="Mô tả món ăn"
-            value={description}
-            onChangeText={(Text) => setDescription(Text)}
-            multiline={true}
-            numberOfLines={4}
-          ></TextInput>
-        </View>
-        <View style={styles.input_container}>
-          <TextInput
-            style={styles.input_text}
-            placeholder="Giá món ăn"
-            value={price}
-            keyboardType="numeric"
-            onChangeText={formatPrice}
-          ></TextInput>
-        </View>
-        <View style={styles.picker_container}>
-          <Picker
-            selectedValue={selectedStatus}
-            onValueChange={(itemValue) => setSelectedStatus(itemValue)}
-            style={styles.picker}
-            enabled={true}
-          >
-            <Picker.Item label="Tình trạng món ăn" value={null} />
-            {status.map((status) => (
-              <Picker.Item
-                key={status.id}
-                label={status.name}
-                value={status.id}
-              />
-            ))}
-          </Picker>
-        </View>
-        
-      </View>
-      <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: Color.DEFAULT_YELLOW,paddingHorizontal: 30 }]}
-            onPress={() => navigation.navigate("HomeVendor")}
-          >
-            <Text style={{ color: "white" }}>Hủy bỏ</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, {backgroundColor: Color.DEFAULT_GREEN }]}>
-            <Text style={{ color: "white" }}>Chấp nhận</Text>
-          </TouchableOpacity>
-        </View>
-    </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 const styles = StyleSheet.create({
-  container: {
+  contentContainer: {
     flex: 1,
-    width: "100%",
-    backgroundColor: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 20,
     gap: 30,
+  },
+  formContainer: {
+    width: "100%",
+    gap: 20,
   },
   buttonContainer: {
     flexDirection: "row",
     gap: 10,
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    alignSelf: "flex-end"
+    justifyContent: "flex-end",
+    marginVertical: 20,
   },
   view_image: {
     position: "relative",
