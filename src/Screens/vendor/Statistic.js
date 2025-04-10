@@ -12,10 +12,10 @@ import { BarChart } from "react-native-chart-kit";
 import { Calendar } from "react-native-calendars";
 import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../../constants";
+import Nav from "../../components/Nav";
 
 
-
-export default function Statistic() {
+export default function Statistic({navigation }) {
   const [isOpen, setIsOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const screenHeight = Dimensions.get("window").height;
@@ -313,7 +313,7 @@ export default function Statistic() {
 
 
         
-        {renderChart()}
+        {viewType=="week"&&renderChart()}
 
      
         <View >
@@ -336,7 +336,7 @@ export default function Statistic() {
      
 
       </ScrollView>
-
+          <Nav nav={navigation}/>
  
       <Animated.View
         style={[

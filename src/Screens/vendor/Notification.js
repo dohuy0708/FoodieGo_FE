@@ -1,8 +1,15 @@
 import React from "react";
-import { View, Text, StyleSheet, FlatList,TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
 import { Color } from "../../constants";
 import { useState } from "react";
-export default function Notification({navigation }) {
+import Nav from "../../components/Nav";
+export default function Notification({ navigation }) {
   const [orders, setOrders] = useState([
     {
       id: "DH1",
@@ -71,18 +78,18 @@ export default function Notification({navigation }) {
   ]);
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
- 
+
   const renderItem = ({ item }) => {
     return (
       <View style={styles.orderItem}>
         <View style={styles.divider} />
-        <View >
-          <Text style={{ fontWeight:"bold" }}>{item.id}</Text>
+        <View>
+          <Text style={{ fontWeight: "bold" }}>{item.id}</Text>
         </View>
         <View style={styles.viewText}>
           <Text>Tổng tiền</Text>
@@ -98,12 +105,12 @@ export default function Notification({navigation }) {
           <Text>Ngày</Text>
           <Text>{formatDate(item.date)}</Text>
         </View>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("OrderList")}>
-          <Text style={{ color: "#fff"}}
-          >
-            Xem chi tiết
-          </Text>
-        </TouchableOpacity >
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("OrderList")}
+        >
+          <Text style={{ color: "#fff" }}>Xem chi tiết</Text>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -119,14 +126,27 @@ export default function Notification({navigation }) {
         style={{ width: "100%" }}
         contentContainerStyle={{ paddingBottom: 20 }}
       />
+      <View style={styles.navContainer}>
+        <Nav nav={navigation} />
+      </View>
     </View>
   );
 }
 const styles = StyleSheet.create({
+  navContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+
+    backgroundColor: Color.DEFAULT_WHITE || "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+  },
   divider: {
     width: "100%",
     height: 1,
-    backgroundColor: Color.GRAY_BORDER, 
+    backgroundColor: Color.GRAY_BORDER,
   },
   container: {
     paddingHorizontal: 10,
@@ -161,12 +181,11 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     gap: 10,
   },
-  button:
-  {
+  button: {
     backgroundColor: Color.DEFAULT_GREEN,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
     alignSelf: "flex-end",
-  }
+  },
 });
