@@ -16,12 +16,14 @@ import Notification from "../Screens/vendor/Notification";
 import Statistic from "../Screens/vendor/Statistic";
 import Category from "../Screens/Admin/Category";
 import ListVendor from "../Screens/Admin/ListVendor";
+import Comment from "../Screens/Admin/Comment";
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Comment" component={Comment} />
         <Stack.Screen name="ListVendor" component={ListVendor} />
         <Stack.Screen name="Category" component={Category} />
         <Stack.Screen name="Statistic" component={Statistic} />

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from "react-native"; // Import Platform
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from "react-native"; 
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Color } from "../../constants";
 import Feather from "@expo/vector-icons/Feather";
