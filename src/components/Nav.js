@@ -49,7 +49,7 @@ export default function Nav({ nav }) {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => nav.navigate("Account")}>
         <MaterialCommunityIcons 
           name="account-outline" 
           size={24} 

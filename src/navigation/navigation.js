@@ -17,19 +17,24 @@ import Statistic from "../Screens/vendor/Statistic";
 import Category from "../Screens/Admin/Category";
 import ListVendor from "../Screens/Admin/ListVendor";
 import Comment from "../Screens/Admin/Comment";
+import StatisticAdmin from "../Screens/Admin/StatisticAdmin";
+import Account from "../Screens/vendor/Account";
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeVendor" component={HomeVendor} />
+        <Stack.Screen name="Account" component={Account} />
+        <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
         <Stack.Screen name="Comment" component={Comment} />
         <Stack.Screen name="ListVendor" component={ListVendor} />
         <Stack.Screen name="Category" component={Category} />
         <Stack.Screen name="Statistic" component={Statistic} />
         <Stack.Screen name="Notification" component={Notification} />
         <Stack.Screen name="OrderList" component={OrderList} />
-        <Stack.Screen name="HomeVendor" component={HomeVendor} />
+        
         <Stack.Screen name="Register" component={Register} />
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Home" component={Home} />

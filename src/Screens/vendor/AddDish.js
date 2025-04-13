@@ -95,15 +95,18 @@ export default function AddDish({ navigation }) {
                     onChangeText={(Text) => setName(Text)}
                   ></TextInput>
                 </View>
-                <View style={styles.input_container}>
+                <View
+                  style={[styles.input_container, styles.textAreaContainer]}
+                >
                   <TextInput
-                    style={styles.input_text}
+                    style={[styles.input_text, styles.textArea]}
                     placeholder="Mô tả món ăn"
                     value={description}
-                    onChangeText={(Text) => setDescription(Text)}
+                    onChangeText={setDescription}
                     multiline={true}
                     numberOfLines={4}
-                  ></TextInput>
+                    textAlignVertical="top"
+                  />
                 </View>
                 <View style={styles.input_container}>
                   <TextInput
@@ -150,7 +153,7 @@ export default function AddDish({ navigation }) {
             <TouchableOpacity
               style={[styles.button, { backgroundColor: Color.DEFAULT_GREEN }]}
             >
-              <Text style={{ color: "white" }}>Chấp nhận</Text>
+              <Text style={{ color: "white" }}>Thêm món</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -174,6 +177,7 @@ const styles = StyleSheet.create({
     gap: 10,
     justifyContent: "flex-end",
     marginVertical: 20,
+    paddingHorizontal: 10,
   },
   view_image: {
     position: "relative",
@@ -227,5 +231,13 @@ const styles = StyleSheet.create({
     width: "100%",
 
     color: Color.SECONDARY_BLACK,
+  },
+  textAreaContainer: {
+    paddingVertical: 10,
+  },
+
+  textArea: {
+    height: 100,
+    textAlignVertical: "top",
   },
 });

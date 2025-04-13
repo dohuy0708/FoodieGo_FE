@@ -14,6 +14,8 @@ import {
 } from "react-native";
 export default function EditCategory() {
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isModalAddVisible, setModalAddVisible] = useState(false);
+  const [isModalDeleteVisible, setModalDeleteVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryInput, setCategoryInput] = useState("");
   const renderItem = ({ item }) => (
@@ -30,7 +32,15 @@ export default function EditCategory() {
             setModalVisible(true);
           }}
         />
-        <Ionicons name="remove-circle-outline" size={24} color="black" />
+        <Ionicons
+          name="remove-circle-outline"
+          size={24}
+          color="black"
+          onPress={() => {
+            setEditingCategory(item);
+            setModalDeleteVisible(true);
+          }}
+        />
       </View>
     </View>
   );
@@ -55,7 +65,10 @@ export default function EditCategory() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Chỉnh sửa danh mục</Text>
-      <TouchableOpacity style={styles.edit_button}>
+      <TouchableOpacity
+        style={styles.edit_button}
+        onPress={() => setModalAddVisible(true)}
+      >
         <Text style={{ color: Color.DEFAULT_WHITE }}>Thêm danh mục</Text>
       </TouchableOpacity>
       <FlatList
@@ -119,7 +132,110 @@ export default function EditCategory() {
                     setCategoryInput("");
                   }}
                 >
-                  <Text style={styles.buttonText}>Lưu</Text>
+                  <Text style={[styles.buttonText, { paddingHorizontal: 10 }]}>
+                    Lưu
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+      {isModalAddVisible && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isModalAddVisible}
+          onRequestClose={() => {
+            setModalAddVisible(false);
+            setCategoryInput("");
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Thêm danh mục</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Tên danh mục"
+                value={categoryInput}
+                onChangeText={(text) => setCategoryInput(text)}
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    { backgroundColor: Color.DEFAULT_YELLOW },
+                  ]}
+                  onPress={() => {
+                    setModalAddVisible(false);
+                    setCategoryInput("");
+                  }}
+                >
+                  <Text style={styles.buttonText}>Hủy bỏ</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    { backgroundColor: Color.DEFAULT_GREEN },
+                  ]}
+                  onPress={() => {
+                    setCategoryName((prev) => [
+                      ...prev,
+                      { id: prev.length + 1, name: categoryInput },
+                    ]);
+                    setModalAddVisible(false);
+                    setCategoryInput("");
+                  }}
+                >
+                  <Text style={[styles.buttonText, { paddingHorizontal: 10 }]}>
+                    Lưu
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+      {isModalDeleteVisible && (
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isModalDeleteVisible}
+          onRequestClose={() => {
+            setModalDeleteVisible(false);
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Xóa danh mục</Text>
+              <Text>Bạn có chắc chắn muốn xóa danh mục này không?</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    { backgroundColor: Color.DEFAULT_YELLOW },
+                  ]}
+                  onPress={() => {
+                    setModalDeleteVisible(false);
+                  }}
+                >
+                  <Text style={styles.buttonText}>Hủy bỏ</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    { backgroundColor: Color.DEFAULT_GREEN },
+                  ]}
+                  onPress={() => {
+                    setCategoryName((prev) =>
+                      prev.filter((cat) => cat.id !== editingCategory.id)
+                    );
+                    setModalDeleteVisible(false);
+                  }}
+                >
+                  <Text style={[styles.buttonText, { paddingHorizontal: 10 }]}>
+                    Xóa
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
