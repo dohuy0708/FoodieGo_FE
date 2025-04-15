@@ -1,2 +1,3 @@
-import Color from "./color";
-export { Color };
+import Color from "./Color";
+import Fonts from "./Fonts";
+export { Color, Fonts };
