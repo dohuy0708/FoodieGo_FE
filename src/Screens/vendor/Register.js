@@ -8,10 +8,11 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 import { Color } from "../../constants";
 import React, { useState, useEffect } from "react";
 import { Picker } from "@react-native-picker/picker";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 import {
   getProvinces,
   getDistrictsByProvinceCode,
@@ -31,28 +32,40 @@ export default function Register() {
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedWard, setSelectedWard] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [location, setLocation] = useState({
+    latitude: 10.8231,
+    longitude: 106.6297,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
+
+  const [selectedLocation, setSelectedLocation] = useState(null);
+
+  const onMapPress = (e) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+    setSelectedLocation({ latitude, longitude });
+  };
   const selectImage = async () => {
     try {
-      
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Xin lỗi, chúng tôi cần quyền truy cập thư viện ảnh!');
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Xin lỗi, chúng tôi cần quyền truy cập thư viện ảnh!");
         return;
       }
-  
-      
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [16, 9],
         quality: 1,
       });
-  
+
       if (!result.canceled) {
         setSelectedImage(result.assets[0]);
       }
     } catch (error) {
-      console.log('ImagePicker Error: ', error);
+      console.log("ImagePicker Error: ", error);
     }
   };
   useEffect(() => {
@@ -98,7 +111,7 @@ export default function Register() {
               style={styles.input_text}
               placeholder="Tên Nhà Hàng/Quán ăn"
               value={name}
-              onChangeText={Text => setName(Text)}
+              onChangeText={(Text) => setName(Text)}
             ></TextInput>
           </View>
           <View style={styles.input_container}>
@@ -106,7 +119,7 @@ export default function Register() {
               style={styles.input_text}
               placeholder="Mô tả Nhà Hàng/Quán ăn"
               value={description}
-              onChangeText={Text => setDescription(Text)}
+              onChangeText={(Text) => setDescription(Text)}
               multiline={true}
               numberOfLines={4}
             ></TextInput>
@@ -152,55 +165,69 @@ export default function Register() {
               selectedValue={selectedWard}
               onValueChange={(itemValue) => setSelectedWard(itemValue)}
               style={styles.picker}
-              
               enabled={!!selectedDistrict}
             >
               <Picker.Item label="Chọn phường/xã" value={null} />
               {wards.map((ward) => (
-                <Picker.Item key={ward.code} label={ward.name}  style={{ fontSize: 14 }} value={ward} />
+                <Picker.Item
+                  key={ward.code}
+                  label={ward.name}
+                  style={{ fontSize: 14 }}
+                  value={ward}
+                />
               ))}
             </Picker>
           </View>
           <View style={styles.input_container}>
             <View style={styles.input_time_container}>
-              <Text>Giờ mở cửa</Text>
+              <Text style={styles.timeLabel}>Giờ mở cửa:</Text>
               <TextInput
                 style={styles.input_time}
+                placeholder="Giờ"
                 keyboardType="numeric"
                 value={openTime}
-                onChangeText={Text => setOpenTime(Text)}
+                onChangeText={(text) =>
+                  setOpenTime(text.replace(/[^0-9]/g, ""))
+                }
                 maxLength={2}
-              ></TextInput>
-              <Text>giờ</Text>
+              />
+              <Text style={styles.timeSeparator}>:</Text>
               <TextInput
                 style={styles.input_time}
+                placeholder="Phút"
                 keyboardType="numeric"
                 value={minuteOpenTime}
-                onChangeText={Text => setMinuteOpenTime(Text)}
+                onChangeText={(text) =>
+                  setMinuteOpenTime(text.replace(/[^0-9]/g, ""))
+                }
                 maxLength={2}
-              ></TextInput>
-              <Text>phút</Text>
+              />
             </View>
           </View>
           <View style={styles.input_container}>
             <View style={styles.input_time_container}>
-              <Text>Giờ đóng cửa</Text>
+              <Text style={styles.timeLabel}>Giờ đóng cửa:</Text>
               <TextInput
                 style={styles.input_time}
+                placeholder="Giờ"
                 keyboardType="numeric"
                 value={closeTime}
-                onChangeText={Text => setCloseTime(Text)}
+                onChangeText={(text) =>
+                  setCloseTime(text.replace(/[^0-9]/g, ""))
+                }
                 maxLength={2}
-              ></TextInput>
-              <Text>giờ</Text>
+              />
+              <Text style={styles.timeSeparator}>:</Text>
               <TextInput
                 style={styles.input_time}
+                placeholder="Phút"
                 keyboardType="numeric"
                 value={minuteCloseTime}
-                onChangeText={Text => setMinuteCloseTime(Text)}
+                onChangeText={(text) =>
+                  setMinuteCloseTime(text.replace(/[^0-9]/g, ""))
+                }
                 maxLength={2}
-              ></TextInput>
-              <Text>phút</Text>
+              />
             </View>
           </View>
           <View style={styles.view_image}>
@@ -214,10 +241,30 @@ export default function Register() {
               style={[styles.button, styles.addImageButton]}
               onPress={selectImage}
             >
-              <Text style={{ color: "white" }}>{selectedImage?"Thay đổi ảnh":"Thêm ảnh bìa"}</Text>
+              <Text style={{ color: "white" }}>
+                {selectedImage ? "Thay đổi ảnh" : "Thêm ảnh bìa"}
+              </Text>
             </TouchableOpacity>
           </View>
 
+          <View style={styles.mapContainer}>
+            <Text style={styles.input_text}>Chọn vị trí trên bản đồ (*)</Text>
+            <MapView
+              style={styles.map}
+              initialRegion={location}
+              onPress={onMapPress}
+            >
+              {selectedLocation && (
+                <Marker coordinate={selectedLocation} title="Vị trí của bạn" />
+              )}
+            </MapView>
+            {selectedLocation && (
+              <Text style={styles.locationText}>
+                Đã chọn: {selectedLocation.latitude.toFixed(6)},{" "}
+                {selectedLocation.longitude.toFixed(6)}
+              </Text>
+            )}
+          </View>
           <TouchableOpacity
             style={[styles.button, { marginTop: 10, width: "100%" }]}
           >
@@ -230,6 +277,24 @@ export default function Register() {
 }
 
 const styles = StyleSheet.create({
+  mapContainer: {
+    width: "100%",
+    height: 300,
+    marginVertical: 10,
+  },
+  map: {
+    flex: 1,
+    width: "100%",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Color.GRAY_BORDER,
+  },
+  locationText: {
+    marginTop: 5,
+    fontSize: 12,
+    color: Color.SECONDARY_BLACK,
+    textAlign: "center",
+  },
   container: {
     paddingHorizontal: 10,
     paddingVertical: 30,
@@ -249,11 +314,10 @@ const styles = StyleSheet.create({
   },
   input_container: {
     width: "100%",
-    alignItems: "left",
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
-    borderRadius: 10,
-    paddingHorizontal: 10,
+    borderRadius: 8,
+    paddingHorizontal: 15,
     paddingVertical: 5,
   },
   input_text: {
@@ -277,18 +341,30 @@ const styles = StyleSheet.create({
   },
   input_time_container: {
     flexDirection: "row",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
     alignItems: "center",
-    gap: 10,
+    paddingVertical: 5,
+    gap: 5,
+  },
+  timeLabel: {
+    fontSize: 15,
+    color: Color.SECONDARY_BLACK,
+    marginRight: 10,
   },
   input_time: {
-    width: "15%",
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
-    borderRadius: 10,
+    borderRadius: 5,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 8,
+    width: 80,
+    textAlign: "center",
+    fontSize: 15,
+    backgroundColor: Color.DEFAULT_WHITE,
+  },
+  timeSeparator: {
+    fontSize: 15,
+    color: Color.SECONDARY_BLACK,
+    fontWeight: "bold",
   },
   view_image: {
     position: "relative",
@@ -313,8 +389,8 @@ const styles = StyleSheet.create({
     right: 10,
   },
   previewImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 10,
-  }
+  },
 });

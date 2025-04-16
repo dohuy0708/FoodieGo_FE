@@ -26,16 +26,18 @@ export default function Navigation() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeVendor" component={HomeVendor} />
+      <Stack.Screen name="Register" component={Register} />
+        <Stack.Screen name="Category" component={Category} />
+       
+        
         <Stack.Screen name="Account" component={Account} />
         <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
         <Stack.Screen name="Comment" component={Comment} />
         <Stack.Screen name="ListVendor" component={ListVendor} />
-        <Stack.Screen name="Category" component={Category} />
+
         <Stack.Screen name="Statistic" component={Statistic} />
         <Stack.Screen name="Notification" component={Notification} />
         <Stack.Screen name="OrderList" component={OrderList} />
-        
-        <Stack.Screen name="Register" component={Register} />
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="EditVendor" component={EditVendor} />
