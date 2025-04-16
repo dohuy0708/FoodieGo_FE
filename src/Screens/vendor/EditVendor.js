@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Dimensions, 
+  Dimensions,
 } from "react-native";
 import { Color } from "../../constants";
 import React, { useState, useEffect } from "react";
@@ -18,13 +18,18 @@ import {
   getDistrictsByProvinceCode,
   getWardsByDistrictCode,
 } from "../../services/locationService";
+import Display from "../../utils/Display";
 
+const IMAGE_ASPECT_RATIO = 16 / 9;
 
-const IMAGE_ASPECT_RATIO = 16/9;
+const screenWidth = Dimensions.get("window").width;
+const calculatedImageHeight = screenWidth / IMAGE_ASPECT_RATIO;
 
+const changeImageButtonOverlap = Display.setHeight(3);
 
 export default function EditVendor({ navigation }) {
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [description, setDescription] = useState("");
   const [openTime, setOpenTime] = useState("");
   const [closeTime, setCloseTime] = useState("");
@@ -37,7 +42,17 @@ export default function EditVendor({ navigation }) {
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedWard, setSelectedWard] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [status, setStatus] = useState([
+    {
+      id: 1,
+      name: "Đang mở cửa",
+    },
+    {
+      id: 2,
+      name: "Tạm đóng cửa",
+    },
+  ]);
   const selectImage = async () => {
     try {
       const { status } =
@@ -50,8 +65,7 @@ export default function EditVendor({ navigation }) {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-       
-        aspect: [16, 9], 
+        aspect: [16, 9],
         quality: 1,
       });
 
@@ -66,12 +80,12 @@ export default function EditVendor({ navigation }) {
 
   useEffect(() => {
     const fetchProvinces = async () => {
-      try { 
-          const data = await getProvinces();
-          setProvinces(data || []); 
-      } catch(error) {
-          console.error("Failed to fetch provinces:", error);
-          setProvinces([]);
+      try {
+        const data = await getProvinces();
+        setProvinces(data || []);
+      } catch (error) {
+        console.error("Failed to fetch provinces:", error);
+        setProvinces([]);
       }
     };
     fetchProvinces();
@@ -79,20 +93,20 @@ export default function EditVendor({ navigation }) {
 
   useEffect(() => {
     const fetchDistricts = async () => {
-      if (selectedProvince && selectedProvince.code) { 
+      if (selectedProvince && selectedProvince.code) {
         try {
           const data = await getDistrictsByProvinceCode(selectedProvince.code);
-          setDistricts(data || []); 
-          setSelectedDistrict(null); 
-          setWards([]);          
-        } catch(error) {
-           console.error("Failed to fetch districts:", error);
-           setDistricts([]); 
-           setWards([]);
+          setDistricts(data || []);
+          setSelectedDistrict(null);
+          setWards([]);
+        } catch (error) {
+          console.error("Failed to fetch districts:", error);
+          setDistricts([]);
+          setWards([]);
         }
       } else {
-         setDistricts([]); 
-         setWards([]);
+        setDistricts([]);
+        setWards([]);
       }
     };
     fetchDistricts();
@@ -100,30 +114,25 @@ export default function EditVendor({ navigation }) {
 
   useEffect(() => {
     const fetchWards = async () => {
-      if (selectedDistrict && selectedDistrict.code) { 
+      if (selectedDistrict && selectedDistrict.code) {
         try {
           const data = await getWardsByDistrictCode(selectedDistrict.code);
-          setWards(data || []); 
-          setSelectedWard(null); 
-        } catch(error) {
-            console.error("Failed to fetch wards:", error);
-            setWards([]); 
+          setWards(data || []);
+          setSelectedWard(null);
+        } catch (error) {
+          console.error("Failed to fetch wards:", error);
+          setWards([]);
         }
       } else {
-        setWards([]); 
+        setWards([]);
       }
     };
     fetchWards();
   }, [selectedDistrict]);
 
-  
-  const screenWidth = Dimensions.get('window').width;
-  const calculatedImageHeight = screenWidth / IMAGE_ASPECT_RATIO;
-
   return (
     <SafeAreaView style={styles.container1}>
       <ScrollView style={styles.scrollView}>
-       
         <View style={styles.imageContainer}>
           <Image
             source={
@@ -131,12 +140,14 @@ export default function EditVendor({ navigation }) {
                 ? { uri: selectedImage.uri }
                 : require("../../assets/images/store.png")
             }
-            style={styles.image} 
-            resizeMode="Cover" 
+            style={styles.image}
+            resizeMode="cover"
           />
           <TouchableOpacity
-           
-            style={[styles.changeImageButton, { top: calculatedImageHeight - 25 }]} 
+            style={[
+              styles.changeImageButton,
+              { top: calculatedImageHeight - changeImageButtonOverlap },
+            ]} // Sử dụng giá trị đã tính
             onPress={selectImage}
           >
             <Text style={{ color: Color.DEFAULT_WHITE }}>Thay đổi ảnh</Text>
@@ -150,7 +161,16 @@ export default function EditVendor({ navigation }) {
               style={styles.input_text}
               placeholder="Tên Nhà Hàng/Quán ăn"
               value={name}
-              onChangeText={setName} 
+              onChangeText={setName}
+            />
+          </View>
+          <View style={styles.input_container}>
+            <TextInput
+              style={styles.input_text}
+              placeholder="Số điện thoại"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="numeric"
             />
           </View>
           <View style={[styles.input_container, styles.textAreaContainer]}>
@@ -158,33 +178,37 @@ export default function EditVendor({ navigation }) {
               style={[styles.input_text, styles.textArea]}
               placeholder="Mô tả Nhà Hàng/Quán ăn"
               value={description}
-              onChangeText={setDescription} 
+              onChangeText={setDescription}
               multiline={true}
               numberOfLines={4}
-              textAlignVertical="top" 
+              textAlignVertical="top"
             />
           </View>
-       
+
           <View style={styles.picker_container}>
             <Picker
               selectedValue={selectedProvince}
               onValueChange={(itemValue, itemIndex) => {
-               
                 if (itemIndex === 0) {
-                   setSelectedProvince(null);
+                  setSelectedProvince(null);
                 } else {
-                   setSelectedProvince(itemValue);
+                  setSelectedProvince(itemValue);
                 }
               }}
               style={styles.picker}
-              mode="dropdown" 
+              mode="dropdown"
             >
-              <Picker.Item label="-- Chọn tỉnh/thành phố --" value={null} style={styles.pickerPlaceholder} enabled={false} />
+              <Picker.Item
+                label="-- Chọn tỉnh/thành phố --"
+                value={null}
+                style={styles.pickerPlaceholder}
+                enabled={false}
+              />
               {provinces.map((province) => (
                 <Picker.Item
                   key={province.code}
                   label={province.name}
-                  value={province} 
+                  value={province}
                   style={styles.pickerItem}
                 />
               ))}
@@ -196,21 +220,26 @@ export default function EditVendor({ navigation }) {
               selectedValue={selectedDistrict}
               onValueChange={(itemValue, itemIndex) => {
                 if (itemIndex === 0) {
-                    setSelectedDistrict(null);
+                  setSelectedDistrict(null);
                 } else {
-                    setSelectedDistrict(itemValue);
+                  setSelectedDistrict(itemValue);
                 }
               }}
               style={styles.picker}
-              enabled={!!selectedProvince} 
+              enabled={!!selectedProvince}
               mode="dropdown"
             >
-              <Picker.Item label="-- Chọn quận/huyện --" value={null} style={styles.pickerPlaceholder} enabled={false}/>
+              <Picker.Item
+                label="-- Chọn quận/huyện --"
+                value={null}
+                style={styles.pickerPlaceholder}
+                enabled={false}
+              />
               {districts.map((district) => (
                 <Picker.Item
                   key={district.code}
                   label={district.name}
-                  value={district} 
+                  value={district}
                   style={styles.pickerItem}
                 />
               ))}
@@ -221,28 +250,34 @@ export default function EditVendor({ navigation }) {
             <Picker
               selectedValue={selectedWard}
               onValueChange={(itemValue, itemIndex) => {
-                 if(itemIndex === 0){
-                    setSelectedWard(null);
-                 } else {
-                    setSelectedWard(itemValue);
-                 }
+                if (itemIndex === 0) {
+                  setSelectedWard(null);
+                } else {
+                  setSelectedWard(itemValue);
+                }
               }}
               style={styles.picker}
-              enabled={!!selectedDistrict} 
+              enabled={!!selectedDistrict}
               mode="dropdown"
             >
-              <Picker.Item label="-- Chọn phường/xã --" value={null} style={styles.pickerPlaceholder} enabled={false}/>
+              <Picker.Item
+                label="-- Chọn phường/xã --"
+                value={null}
+                style={styles.pickerPlaceholder}
+                enabled={false}
+              />
               {wards.map((ward) => (
                 <Picker.Item
                   key={ward.code}
                   label={ward.name}
-                  value={ward} 
+                  value={ward}
                   style={styles.pickerItem}
                 />
               ))}
             </Picker>
           </View>
-         
+          {/* --------------------------------- */}
+
           <View style={styles.input_container}>
             <View style={styles.input_time_container}>
               <Text style={styles.timeLabel}>Giờ mở cửa:</Text>
@@ -251,7 +286,9 @@ export default function EditVendor({ navigation }) {
                 placeholder="Giờ"
                 keyboardType="numeric"
                 value={openTime}
-                onChangeText={(text) => setOpenTime(text.replace(/[^0-9]/g, ''))} 
+                onChangeText={(text) =>
+                  setOpenTime(text.replace(/[^0-9]/g, ""))
+                }
                 maxLength={2}
               />
               <Text style={styles.timeSeparator}>:</Text>
@@ -260,7 +297,9 @@ export default function EditVendor({ navigation }) {
                 placeholder="Phút"
                 keyboardType="numeric"
                 value={minuteOpenTime}
-                onChangeText={(text) => setMinuteOpenTime(text.replace(/[^0-9]/g, ''))} 
+                onChangeText={(text) =>
+                  setMinuteOpenTime(text.replace(/[^0-9]/g, ""))
+                }
                 maxLength={2}
               />
             </View>
@@ -273,21 +312,41 @@ export default function EditVendor({ navigation }) {
                 placeholder="Giờ"
                 keyboardType="numeric"
                 value={closeTime}
-                onChangeText={(text) => setCloseTime(text.replace(/[^0-9]/g, ''))} 
+                onChangeText={(text) =>
+                  setCloseTime(text.replace(/[^0-9]/g, ""))
+                }
                 maxLength={2}
               />
-               <Text style={styles.timeSeparator}>:</Text>
+              <Text style={styles.timeSeparator}>:</Text>
               <TextInput
                 style={styles.input_time}
                 placeholder="Phút"
                 keyboardType="numeric"
                 value={minuteCloseTime}
-                onChangeText={(text) => setMinuteCloseTime(text.replace(/[^0-9]/g, ''))} 
+                onChangeText={(text) =>
+                  setMinuteCloseTime(text.replace(/[^0-9]/g, ""))
+                }
                 maxLength={2}
               />
             </View>
           </View>
-         
+          <View style={styles.picker_container}>
+            <Picker
+              selectedValue={selectedStatus}
+              onValueChange={(itemValue) => setSelectedStatus(itemValue)}
+              style={styles.picker}
+              enabled={true}
+            >
+              <Picker.Item label="Tình trạng cửa hàng" value={null} />
+              {status.map((status) => (
+                <Picker.Item
+                  key={status.id}
+                  label={status.name}
+                  value={status.id}
+                />
+              ))}
+            </Picker>
+          </View>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -299,18 +358,18 @@ export default function EditVendor({ navigation }) {
             <TouchableOpacity
               style={[styles.button, styles.saveButton]}
               onPress={() => {
-               
                 console.log({
-                    name,
-                    description,
-                    selectedProvince,
-                    selectedDistrict,
-                    selectedWard,
-                    openTime, minuteOpenTime,
-                    closeTime, minuteCloseTime,
-                    selectedImageUri: selectedImage?.uri
+                  name,
+                  description,
+                  province: selectedProvince?.name,
+                  district: selectedDistrict?.name,
+                  ward: selectedWard?.name,
+                  openTime,
+                  minuteOpenTime,
+                  closeTime,
+                  minuteCloseTime,
+                  selectedImageUri: selectedImage?.uri,
                 });
-              
                 navigation.goBack();
               }}
             >
@@ -332,142 +391,141 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
   },
-  imageContainer: { 
-    width: '100%',
-    position: 'relative',
-  
+  imageContainer: {
+    width: "100%",
+    position: "relative",
   },
   image: {
-    width: "100%", 
-    aspectRatio: IMAGE_ASPECT_RATIO, 
-   
+    width: "100%",
+
+    aspectRatio: IMAGE_ASPECT_RATIO,
   },
   changeImageButton: {
-    position: "absolute", 
-    right: 15,
-    backgroundColor: Color.DEFAULT_GREEN, 
-    paddingHorizontal: 15, 
-    paddingVertical: 10,
-    borderRadius: 10, 
-    height: 50, 
+    position: "absolute",
+    right: Display.setWidth(4),
+    backgroundColor: Color.DEFAULT_GREEN,
+    paddingHorizontal: Display.setWidth(4),
+    paddingVertical: Display.setHeight(1.2),
+    borderRadius: 10,
+    height: Display.setHeight(6),
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 10, 
-    shadowColor: "#000", 
+    zIndex: 10,
+
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
   },
   container: {
-    paddingHorizontal: 20, 
-    paddingVertical: 30,
+    paddingHorizontal: Display.setWidth(5),
+    paddingVertical: Display.setHeight(4),
     width: "100%",
-    backgroundColor: Color.DEFAULT_WHITE, 
+    backgroundColor: Color.DEFAULT_WHITE,
     alignItems: "center",
-    gap: 18,
+    gap: Display.setHeight(2.2),
   },
   header: {
     textAlign: "center",
     fontWeight: "bold",
-    fontSize: 22, 
-    color: Color.PRIMARY, 
-    marginBottom: 10, 
+    fontSize: 22,
+    color: Color.PRIMARY,
+    marginBottom: Display.setHeight(1.2),
   },
   input_container: {
     width: "100%",
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 5,
-   
+    paddingHorizontal: Display.setWidth(4),
+    paddingVertical: Display.setHeight(0.6),
   },
-   textAreaContainer: {
-     paddingVertical: 10, 
-   },
+  textAreaContainer: {
+    paddingVertical: Display.setHeight(1.2),
+  },
   input_text: {
     color: Color.SECONDARY_BLACK,
     fontSize: 15,
-    paddingVertical: 8,
+
+    paddingVertical: Display.setHeight(1),
   },
-   textArea: {
-      height: 100, 
-      textAlignVertical: 'top', 
-   },
+  textArea: {
+    height: Display.setHeight(12),
+    textAlignVertical: "top",
+  },
   picker_container: {
     width: "100%",
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 8,
-    overflow: "hidden", 
-    backgroundColor: '#f9f9f9'
+    overflow: "hidden",
+    backgroundColor: "#f9f9f9",
   },
   picker: {
     width: "100%",
-    height: 50, 
+    height: Display.setHeight(6),
     color: Color.SECONDARY_BLACK,
-    backgroundColor: 'transparent', 
+    backgroundColor: "transparent",
   },
   pickerPlaceholder: {
-      fontSize: 14,
-      color: Color.GRAY_BORDER, 
+    fontSize: 14,
+    color: Color.GRAY_BORDER,
   },
   pickerItem: {
-      fontSize: 15, 
+    fontSize: 15,
   },
   input_time_container: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 5,
-    gap: 5, 
+    paddingVertical: Display.setHeight(0.6),
+    gap: Display.setWidth(1.2),
   },
   timeLabel: {
     fontSize: 15,
     color: Color.SECONDARY_BLACK,
-    marginRight: 10, 
+    marginRight: Display.setWidth(2.5),
   },
   input_time: {
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    width: 80, 
-    textAlign: 'center',
+    paddingHorizontal: Display.setWidth(2.5),
+    paddingVertical: Display.setHeight(1),
+    width: Display.setWidth(20),
+    textAlign: "center",
     fontSize: 15,
-    backgroundColor: Color.DEFAULT_WHITE, 
+    backgroundColor: Color.DEFAULT_WHITE,
   },
   timeSeparator: {
     fontSize: 15,
     color: Color.SECONDARY_BLACK,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  buttonContainer: { 
+  buttonContainer: {
     flexDirection: "row",
-    gap: 15,
+    gap: Display.setWidth(4),
     alignSelf: "flex-end",
-    marginTop: 20,
-    width: '100%', 
-    justifyContent: 'flex-end',
+    marginTop: Display.setHeight(2.5),
+    width: "100%",
+    justifyContent: "flex-end",
   },
   button: {
-    paddingHorizontal: 25, 
-    paddingVertical: 12,
+    paddingHorizontal: Display.setWidth(6),
+    paddingVertical: Display.setHeight(1.5),
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    minWidth: 100, 
+    minWidth: Display.setWidth(25),
   },
   buttonText: {
-    color: Color.DEFAULT_WHITE, 
+    color: Color.DEFAULT_WHITE,
     fontSize: 15,
   },
   cancelButton: {
-    backgroundColor: Color.DEFAULT_YELLOW, 
+    backgroundColor: Color.DEFAULT_YELLOW,
   },
   saveButton: {
-    backgroundColor: Color.DEFAULT_GREEN, 
+    backgroundColor: Color.DEFAULT_GREEN,
   },
- 
 });

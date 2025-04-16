@@ -1,8 +1,15 @@
 import { View, Text, Image, StyleSheet } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { Color } from "../../constants";
 import Logo from "../../assets/images/Logo.png";
-export default function Splash() {
+export default function SplashScreen({ navigation }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigation.replace("MainApp");
+    }, 2000); // 2 seconds
+
+    return () => clearTimeout(timer); // Cleanup the timer on unmount
+  }, [navigation]);
   return (
     <View style={styles.container}>
       <Image source={Logo} resizeMode="contain" style={styles.image}></Image>

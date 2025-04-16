@@ -1,4 +1,5 @@
 import Navigation from "./src/navigation/navigation.js";
+
 import { LocaleConfig } from 'react-native-calendars';
 LocaleConfig.locales['vi'] = {
   monthNames: [
@@ -14,6 +15,14 @@ LocaleConfig.locales['vi'] = {
   today: "Hôm nay" // Văn bản cho nút "Hôm nay" nếu có
 };
 LocaleConfig.defaultLocale = 'vi';
+
+import { SafeAreaProvider } from "react-native-safe-area-context";
+
+
 export default function App() {
-  return <Navigation />;
+  return (
+    <SafeAreaProvider>
+      <Navigation />
+    </SafeAreaProvider>
+  );
 }

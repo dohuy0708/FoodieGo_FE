@@ -53,7 +53,7 @@ export default function Nav({ nav }) {
         <MaterialCommunityIcons 
           name="account-outline" 
           size={24} 
-          color={currentRoute === "Profile" ? Color.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "Account" ? Color.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
     </View>

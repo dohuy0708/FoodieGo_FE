@@ -14,10 +14,16 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Picker } from "@react-native-picker/picker";
 import Dish from "../../components/Dish";
 import Nav from "../../components/Nav";
+import Display from "../../utils/Display";
 
-const NAV_HEIGHT = 60;
+const NAV_HEIGHT = Display.setHeight(7); 
+
 const IMAGE_ASPECT_RATIO = 16 / 9;
-const IMAGE_HEIGHT = Dimensions.get("window").width / IMAGE_ASPECT_RATIO;
+const IMAGE_WIDTH = Dimensions.get("window").width; 
+const IMAGE_HEIGHT = IMAGE_WIDTH / IMAGE_ASPECT_RATIO; 
+
+
+const VIEW_INFO_OVERLAP = Display.setHeight(2.5);
 
 export default function HomeVendor({ navigation }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -113,10 +119,12 @@ export default function HomeVendor({ navigation }) {
           <Text style={styles.reviewCount}>(300 Bình luận)</Text>
         </View>
         <Text style={styles.descriptionText}>Cháo ếch ngon nhất, rẻ nhất</Text>
+        <Text style={styles.descriptionText}>Liên hệ: 0123456789</Text>
         <Text style={styles.addressText}>
           VQCX+Q8M, Phường Linh Trung, Thủ Đức, Hồ Chí Minh
         </Text>
         <Text style={styles.openingHoursText}>Mở cửa: 6h30 am - 21h30 pm</Text>
+        <Text style={[styles.descriptionText,{color:Color.DEFAULT_GREEN,fontSize:20}]}>Đang mở cửa</Text>
         <View style={{ alignItems: "flex-end" }}>
           <TouchableOpacity
             style={styles.edit_button}
@@ -185,7 +193,7 @@ export default function HomeVendor({ navigation }) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.listContentContainer,
-            { paddingBottom: NAV_HEIGHT + 10 },
+            { paddingBottom: NAV_HEIGHT + Display.setHeight(1.5) },
           ]}
         />
       </View>
@@ -200,124 +208,124 @@ export default function HomeVendor({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: "100%",
+    width: "100%", 
     backgroundColor: "#fff",
   },
   image: {
-    width: "100%",
-    height: IMAGE_HEIGHT,
+    width: "100%", 
+    height: IMAGE_HEIGHT, 
   },
   view_information: {
-    width: "100%",
-    paddingHorizontal: 20,
+    width: "100%", 
+    paddingHorizontal: Display.setWidth(5), 
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 20, 
+    borderTopRightRadius: 20, 
     position: "absolute",
-
-    top: IMAGE_HEIGHT - 20,
+    top: IMAGE_HEIGHT - VIEW_INFO_OVERLAP, 
     left: 0,
     right: 0,
     bottom: 0,
-    elevation: 8,
+    elevation: 8, 
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
+    shadowOffset: { width: 0, height: -4 }, 
     shadowOpacity: 0.15,
     shadowRadius: 6,
   },
   listContentContainer: {
-    paddingTop: 20,
-    gap: 15,
+    paddingTop: Display.setHeight(2.5), 
+    gap: Display.setHeight(1.8), 
+   
   },
-
   name_vendor: {
     fontWeight: "bold",
-    fontSize: 22,
+    fontSize: 22, 
     textAlign: "center",
     color: "#333",
-    marginTop: 10,
+    marginTop: Display.setHeight(1.2), 
   },
   evaluation: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 15,
-    marginTop: 8,
-    marginBottom: 8,
+    gap: Display.setWidth(4), 
+    marginTop: Display.setHeight(1), 
+    marginBottom: Display.setHeight(1), 
   },
   ratingStars: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
+    gap: Display.setWidth(1), 
   },
   ratingText: {
-    marginLeft: 5,
-    fontSize: 14,
+    marginLeft: Display.setWidth(1.2), 
+    fontSize: 14, 
     color: "#555",
   },
   reviewCount: {
-    fontSize: 14,
+    fontSize: 14, 
     color: "#555",
   },
   descriptionText: {
-    fontSize: 15,
+    fontSize: 15, 
     color: "#444",
     textAlign: "center",
-    marginTop: 5,
+    marginTop: Display.setHeight(0.7), 
   },
   addressText: {
-    fontSize: 14,
+    fontSize: 14, 
     color: "#666",
     textAlign: "center",
-    marginTop: 10,
+    marginTop: Display.setHeight(1.2), 
   },
   openingHoursText: {
-    fontSize: 14,
+    fontSize: 14, 
     color: "#666",
     textAlign: "center",
-    marginTop: 5,
-    marginBottom: 15,
+    marginTop: Display.setHeight(0.7), 
+    marginBottom: Display.setHeight(1.8), 
   },
   edit_button: {
     backgroundColor: Color.DEFAULT_GREEN,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+    paddingVertical: Display.setHeight(1.2), 
+    paddingHorizontal: Display.setWidth(4), 
+    borderRadius: 8, 
     alignItems: "center",
-    alignSelf: "flex-end",
+    alignSelf: "flex-end", 
   },
   addDishButton: {
     backgroundColor: Color.DEFAULT_ORANGE || "#FFA500",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+    paddingVertical: Display.setHeight(1.2), 
+    paddingHorizontal: Display.setWidth(4), 
+    borderRadius: 8, 
     alignItems: "center",
-    alignSelf: "flex-end",
-    marginTop: 15,
+    alignSelf: "flex-end", 
+    marginTop: Display.setHeight(1.8), 
   },
   picker_container: {
-    width: "100%",
-    borderWidth: 1,
+    width: "100%", 
+    borderWidth: 1, 
     borderColor: Color.GRAY_BORDER || "#ccc",
-    borderRadius: 8,
+    borderRadius: 8, 
     overflow: "hidden",
-    marginTop: 15,
+    marginTop: Display.setHeight(1.8), 
     backgroundColor: "#fafafa",
   },
   picker: {
-    height: 50,
-    width: "100%",
+    height: Display.setHeight(6), 
+    width: "100%", 
     color: Color.SECONDARY_BLACK || "#333",
     backgroundColor: "transparent",
   },
+
   navContainer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: NAV_HEIGHT,
+    height: NAV_HEIGHT, 
     backgroundColor: Color.DEFAULT_WHITE || "#fff",
-    borderTopWidth: 1,
+    borderTopWidth: 1, 
     borderTopColor: "#e0e0e0",
   },
 });
