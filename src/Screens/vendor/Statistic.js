@@ -7,23 +7,29 @@ import {
   Animated,
   Dimensions,
   ScrollView,
+  Platform, // Import Platform for potential adjustments
 } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 import { Calendar } from "react-native-calendars";
 import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../../constants";
 import Nav from "../../components/Nav";
+import Display from "../../utils/Display"; // Import Display
 
+const screenWidth = Dimensions.get("window").width;
+const screenHeight = Dimensions.get("window").height;
+const NAV_HEIGHT = Display.setHeight(8); // Example Nav height
 
-export default function Statistic({navigation }) {
+export default function Statistic({ navigation }) {
   const [isOpen, setIsOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const screenHeight = Dimensions.get("window").height;
   const [viewType, setViewType] = useState("week");
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+
+  // Mock Data - Keep as is
   const orderNumber = 1000;
   const orderRevenue = 1000000;
   const topDish = [
@@ -38,19 +44,20 @@ export default function Statistic({navigation }) {
     { name: "Sushi", quantity: 5 },
     { name: "Pizza", quantity: 2 },
   ];
-  /////////Set up Bottom Sheet//////////
+
+  // --- Bottom Sheet Animation Logic - Keep as is ---
   const toggleBottomSheet = () => {
     const toValue = isOpen ? 0 : 1;
-
     Animated.spring(slideAnim, {
       toValue,
-      friction: 9, 
+      friction: 9,
       tension: 70,
       useNativeDriver: true,
     }).start();
-
     setIsOpen(!isOpen);
   };
+
+  // --- Helper Functions - Keep as is ---
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -62,23 +69,20 @@ export default function Statistic({navigation }) {
   const formatCurrency = (amount) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
-
   const getWeekDates = (selectedDate) => {
     const date = new Date(selectedDate);
-    const day = date.getDay(); 
-
+    const day = date.getDay();
     const startDate = new Date(date);
-  
     startDate.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
-
     const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6); 
-
+    endDate.setDate(startDate.getDate() + 6);
     return {
       start: startDate.toISOString().split("T")[0],
       end: endDate.toISOString().split("T")[0],
     };
   };
+
+  // --- Event Handlers - Keep as is ---
   const onMonthPress = (month) => {
     setCurrentMonth(month);
   };
@@ -88,25 +92,20 @@ export default function Statistic({navigation }) {
     setSelectedEndDate(weekDates.end);
   };
 
+  // --- Picker Render Functions - Apply Display ---
   const renderWeekPicker = () => {
     const markedDates = {};
-
     if (selectedStartDate && selectedEndDate) {
       let currentDate = new Date(selectedStartDate);
       const endDate = new Date(selectedEndDate);
-     
-      endDate.setHours(12, 0, 0, 0); 
-
+      endDate.setHours(12, 0, 0, 0);
       while (currentDate <= endDate) {
         const dateString = currentDate.toISOString().split("T")[0];
         markedDates[dateString] = {
           selected: true,
-        
-          color: Color.DEFAULT_WHITE, 
-          textColor: Color.DEFAULT_GREEN, 
+          color: Color.DEFAULT_WHITE,
+          textColor: Color.DEFAULT_GREEN,
         };
-       
-
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
@@ -124,37 +123,35 @@ export default function Statistic({navigation }) {
         <Calendar
           onDayPress={onDayPress}
           markedDates={markedDates}
-       
           theme={{
             backgroundColor: Color.DEFAULT_GREEN,
             calendarBackground: Color.DEFAULT_GREEN,
             textSectionTitleColor: "white",
-            selectedDayBackgroundColor: Color.DEFAULT_WHITE, 
-            selectedDayTextColor: Color.DEFAULT_GREEN, 
+            selectedDayBackgroundColor: Color.DEFAULT_WHITE,
+            selectedDayTextColor: Color.DEFAULT_GREEN,
             todayTextColor: Color.DEFAULT_YELLOW,
             dayTextColor: "white",
             monthTextColor: "white",
             arrowColor: "white",
             textDisabledColor: Color.DEFAULT_GREY,
-            'stylesheet.calendar.header': { 
+            "stylesheet.calendar.header": {
               week: {
-                marginTop: 5,
-                flexDirection: 'row',
-                justifyContent: 'space-between'
-              }
+                marginTop: Display.setHeight(0.6), // 5
+                flexDirection: "row",
+                justifyContent: "space-between",
+              },
             },
-            textMonthFontSize: 16,
-            textDayHeaderFontSize: 14,
+            textMonthFontSize: 16, // Keep fixed
+            textDayHeaderFontSize: 14, // Keep fixed
           }}
-          firstDay={1} // Start week on Monday
-         
+          firstDay={1}
         />
       </View>
     );
   };
+
   const renderMonthPicker = () => {
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
     return (
       <View style={styles.monthPickerContainer}>
         <View style={styles.yearSelector}>
@@ -164,9 +161,7 @@ export default function Statistic({navigation }) {
           >
             <Feather name="chevron-left" size={24} color="white" />
           </TouchableOpacity>
-
           <Text style={styles.yearText}>{currentYear}</Text>
-
           <TouchableOpacity
             style={styles.yearArrowButton}
             onPress={() => setCurrentYear((year) => year + 1)}
@@ -174,7 +169,6 @@ export default function Statistic({navigation }) {
             <Feather name="chevron-right" size={24} color="white" />
           </TouchableOpacity>
         </View>
-
         <View style={styles.monthsGrid}>
           {months.map((month) => (
             <TouchableOpacity
@@ -199,41 +193,43 @@ export default function Statistic({navigation }) {
       </View>
     );
   };
-  /////////////////Set Up Chart//////////////////////
+
+  // --- Chart Setup - Apply Display ---
   const [weeklyData, setWeeklyData] = useState({
     labels: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
-   
-    data: [300, 500, 400, 700, 600, 800, 900], 
+    data: [300, 500, 400, 700, 600, 800, 900],
   });
   const chartConfig = {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",
-   
     color: (opacity = 1) => {
-     
       const rgb = Color.DEFAULT_GREEN.replace("#", "");
       const r = parseInt(rgb.substring(0, 2), 16);
       const g = parseInt(rgb.substring(2, 4), 16);
       const b = parseInt(rgb.substring(4, 6), 16);
       return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     },
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, 
-    strokeWidth: 2, 
-    barPercentage: 0.8, 
-    useShadowColorFromDataset: false, 
-    decimalPlaces: 0, 
-    propsForDots: { 
-      r: "6",
-      strokeWidth: "2",
-      stroke: Color.DEFAULT_GREEN
+    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    strokeWidth: 2, // Keep fixed
+    barPercentage: 0.8, // Keep fixed
+    useShadowColorFromDataset: false,
+    decimalPlaces: 0,
+    propsForDots: {
+      r: "6", // Keep fixed
+      strokeWidth: "2", // Keep fixed
+      stroke: Color.DEFAULT_GREEN,
     },
-    propsForBackgroundLines: { 
-      strokeDasharray: "", 
-      stroke: "#e3e3e3" 
-    }
+    propsForBackgroundLines: {
+      strokeDasharray: "",
+      stroke: "#e3e3e3",
+    },
   };
 
   const renderChart = () => {
+    const chartWidth = Math.max(
+      screenWidth - Display.setWidth(10),
+      weeklyData.labels.length * Display.setWidth(15)
+    ); // Adjusted width calculation
     return (
       <View style={styles.chartOuterContainer}>
         <Text style={styles.chartTitle}>Doanh thu theo ngày</Text>
@@ -241,45 +237,34 @@ export default function Statistic({navigation }) {
           <BarChart
             data={{
               labels: weeklyData.labels,
-              datasets: [
-                {
-                  data: weeklyData.data,
-                 
-                },
-              ],
-       
+              datasets: [{ data: weeklyData.data }],
             }}
-            width={Math.max(Dimensions.get("window").width - 40, weeklyData.labels.length * 60)} 
-            height={300}
+            width={chartWidth} // Use calculated responsive width
+            height={Display.setHeight(37)} // ~300px
             chartConfig={chartConfig}
             style={styles.chart}
             showValuesOnTopOfBars={true}
             fromZero={true}
-            yAxisLabel="" 
-            yAxisSuffix="k" 
+            yAxisLabel=""
+            yAxisSuffix="k"
             verticalLabelRotation={0}
-           
-
           />
         </ScrollView>
-        <Text style={styles.chartUnitText}>
-          Đơn vị : nghìn VNĐ
-        </Text>
+        <Text style={styles.chartUnitText}>Đơn vị : nghìn VNĐ</Text>
       </View>
     );
   };
-  //////////////////////////////////////
+
+  // --- Main Render - Apply Display ---
   return (
-   
     <View style={styles.mainContainer}>
-  
       <ScrollView
         style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContentContainer} 
+        contentContainerStyle={styles.scrollContentContainer}
+        showsVerticalScrollIndicator={false}
       >
         <Text style={styles.header}>Thống kê</Text>
 
-       
         <View style={styles.dateDisplayContainer}>
           {viewType === "week" ? (
             selectedStartDate && selectedEndDate ? (
@@ -299,45 +284,55 @@ export default function Statistic({navigation }) {
           </TouchableOpacity>
         </View>
 
-      
         <View style={styles.statsRow}>
-            <View style={styles.statisticBox}>
-                <Text style={styles.statisticLabel}>Tổng số đơn hàng</Text>
-                <Text style={styles.statisticValue}>{orderNumber}</Text>
-            </View>
-            <View style={styles.statisticBox}>
-                <Text style={styles.statisticLabel}>Tổng doanh thu</Text>
-                <Text style={styles.statisticValue}>{formatCurrency(orderRevenue)} VNĐ</Text>
-            </View>
+          <View style={styles.statisticBox}>
+            <Text style={styles.statisticLabel}>Tổng số đơn hàng</Text>
+            <Text style={styles.statisticValue}>{orderNumber}</Text>
+          </View>
+          <View style={styles.statisticBox}>
+            <Text style={styles.statisticLabel}>Tổng doanh thu</Text>
+            <Text style={styles.statisticValue}>
+              {formatCurrency(orderRevenue)} VNĐ
+            </Text>
+          </View>
         </View>
 
+        {viewType === "week" && renderChart()}
 
-        
-        {viewType=="week"&&renderChart()}
-
-     
-        <View >
-          <Text style={styles.topDishesTitle}>Top 10 món ăn đặt nhiều nhất</Text>
-            {topDish.map((dish, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.topDishItem,
-                  { backgroundColor: index % 2 === 0 ? Color.LIGHT_GREY : Color.DEFAULT_WHITE }
-                ]}
+        <View style={styles.topDishesContainer}>
+          <Text style={styles.topDishesTitle}>
+            Top 10 món ăn đặt nhiều nhất
+          </Text>
+          {topDish.map((dish, index) => (
+            <View
+              key={index}
+              style={[
+                styles.topDishItem,
+                {
+                  backgroundColor:
+                    index % 2 === 0 ? Color.LIGHT_GREY : Color.DEFAULT_WHITE,
+                },
+              ]}
+            >
+              <Text
+                style={styles.topDishText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
               >
-                <Text style={styles.topDishText} numberOfLines={1} ellipsizeMode="tail">
-                    {index + 1}. {dish.name}
-                </Text>
-                <Text style={styles.topDishQuantity}>{dish.quantity} lượt</Text>
-              </View>
-            ))}
+                {index + 1}. {dish.name}
+              </Text>
+              <Text style={styles.topDishQuantity}>{dish.quantity} lượt</Text>
+            </View>
+          ))}
         </View>
-     
-
       </ScrollView>
-          <Nav nav={navigation}/>
- 
+
+      {/* Nav Component Area */}
+      <View style={styles.navArea}>
+        <Nav nav={navigation} />
+      </View>
+
+      {/* Bottom Sheet */}
       <Animated.View
         style={[
           styles.bottomSheet,
@@ -346,19 +341,17 @@ export default function Statistic({navigation }) {
               {
                 translateY: slideAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [screenHeight, 0], 
+                  outputRange: [screenHeight, 0], // Keep using screenHeight
                 }),
               },
             ],
-         
           },
         ]}
       >
-        
         <View style={styles.bottomSheetContent}>
           <TouchableOpacity
             onPress={toggleBottomSheet}
-            style={styles.closeButton} 
+            style={styles.closeButton}
           >
             <Feather name="x" size={28} color="white" />
           </TouchableOpacity>
@@ -398,200 +391,199 @@ export default function Statistic({navigation }) {
           </View>
           <View style={styles.divider} />
 
- 
           {viewType === "week" ? renderWeekPicker() : renderMonthPicker()}
 
-          <TouchableOpacity style={styles.applyButton} onPress={toggleBottomSheet}>
-            <Text style={styles.applyButtonText}>
-              Áp dụng
-            </Text>
+          <TouchableOpacity
+            style={styles.applyButton}
+            onPress={toggleBottomSheet}
+          >
+            <Text style={styles.applyButtonText}>Áp dụng</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
-    </View> 
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  
   mainContainer: {
     flex: 1,
-    backgroundColor: Color.DEFAULT_WHITE, 
+    backgroundColor: Color.DEFAULT_WHITE,
   },
-  
   scrollContainer: {
-     width: "100%",
-
+    flex: 1,
+    width: "100%",
   },
-  
   scrollContentContainer: {
-    paddingHorizontal: 15, 
-    paddingTop: 40,
-    paddingBottom: 30, 
+    paddingHorizontal: Display.setWidth(4),
+
+    paddingTop: Display.setHeight(5),
+
+    paddingBottom: NAV_HEIGHT + Display.setHeight(2),
   },
   header: {
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: Display.setHeight(2.5),
+
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    fontSize: 28, 
+    fontSize: 28,
   },
   dateDisplayContainer: {
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: Display.setHeight(2.5),
 
-    marginBottom: 20,
-    paddingVertical: 10,
+    paddingVertical: Display.setHeight(1.2),
+
     backgroundColor: Color.LIGHT_GREY,
     borderRadius: 8,
-    paddingHorizontal: 10, 
+
+    paddingHorizontal: Display.setWidth(2.5),
   },
   dateDisplayText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#333'
+
+    fontWeight: "500",
+    color: "#333",
   },
-  
   statsRow: {
-    marginBottom: 25,
-    gap: 15, 
+    marginBottom: Display.setHeight(3),
+
+    flexDirection: "row",
+
+    gap: Display.setWidth(4),
   },
   statisticBox: {
-    flex: 1, 
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    backgroundColor: Color.LIGHT_GREY, 
-    borderRadius: 8,
-    alignItems: 'center',
-    gap: 8, 
+    flex: 1,
+    paddingVertical: Display.setHeight(1.8),
+    paddingHorizontal: Display.setWidth(2.5), 
+    backgroundColor: Color.LIGHT_GREY,
+    borderRadius: 8, 
+    alignItems: "center",
+    gap: Display.setHeight(1), 
   },
   statisticLabel: {
-    fontSize: 15,
-    color: '#555',
-    textAlign: 'center',
+    fontSize: 15, 
+    color: "#555",
+    textAlign: "center",
   },
   statisticValue: {
     fontSize: 18,
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    textAlign: 'center',
+    textAlign: "center",
   },
-  
   chartOuterContainer: {
-    backgroundColor: "#fff", 
-    paddingVertical: 15,
-   
-    borderRadius: 10,
-    marginBottom: 25, 
-    
+    backgroundColor: "#fff",
+    paddingVertical: Display.setHeight(1.8), 
+    borderRadius: 10, 
+    marginBottom: Display.setHeight(3), 
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 }, 
+    shadowOpacity: 0.1, 
     shadowRadius: 3,
-    elevation: 3,
-
+    elevation: 3, 
   },
   chartTitle: {
-    fontSize: 18,
+    fontSize: 18, 
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginBottom: Display.setHeight(1.8), 
     textAlign: "center",
   },
   chart: {
-    marginVertical: 8,
-    borderRadius: 16,
-   
+    marginVertical: Display.setHeight(1), 
+    borderRadius: 16, 
   },
   chartUnitText: {
     textAlign: "center",
-    marginTop: 10,
-    fontSize: 12,
-    color: '#666',
+    marginTop: Display.setHeight(1.2), 
+    fontSize: 12, 
+    color: "#666",
   },
-
-  
   topDishesContainer: {
-    marginBottom: 20, 
-    
-    borderRadius: 8,
-    paddingBottom: 5, 
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+   
+    marginBottom: Display.setHeight(2.5), 
+    borderRadius: 8, 
+    borderWidth: 1, 
+    borderColor: Color.LIGHT_GREY2,
+    overflow: "hidden", 
   },
-   topDishesTitle: {
-    fontSize: 18,
+  topDishesTitle: {
+    fontSize: 18, 
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+    paddingVertical: Display.setHeight(1.8), 
+    paddingHorizontal: Display.setWidth(4), 
     textAlign: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: Color.LIGHT_GREY,
-   },
+    backgroundColor: Color.LIGHT_GREY, 
+  },
   topDishItem: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: Color.LIGHT_GREY, 
+    alignItems: "center",
+    paddingVertical: Display.setHeight(1.5),
+    paddingHorizontal: Display.setWidth(4),
+    borderTopWidth: 1,
+    borderTopColor: Color.LIGHT_GREY2,
   },
   topDishText: {
     fontSize: 16,
-    color: '#333',
-    flex: 1, 
-    marginRight: 10, 
+    color: "#333",
+    flex: 1,
+    marginRight: Display.setWidth(2.5),
   },
   topDishQuantity: {
     fontSize: 16,
-    color: '#555',
-    fontWeight: '500',
+    color: "#555",
+    fontWeight: "500",
   },
-
-
+  navArea: {
+    height: NAV_HEIGHT,
+    width: "100%",
+    borderTopWidth: 1,
+    borderTopColor: Color.LIGHT_GREY2,
+    backgroundColor: Color.DEFAULT_WHITE,
+  },
   bottomSheet: {
     position: "absolute",
     left: 0,
     right: 0,
-    height: "80%", 
-    bottom: 0, 
+    height: "80%",
+    bottom: 0,
     backgroundColor: Color.DEFAULT_GREEN,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-   
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 }, 
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.15,
     shadowRadius: 5,
-    elevation: 10, 
+    elevation: 10,
   },
   bottomSheetContent: {
-    flex: 1, 
-    padding: 20,
-    paddingTop: 40, 
+    flex: 1,
+    padding: Display.setWidth(5),
+    paddingTop: Display.setHeight(5),
   },
   closeButton: {
     position: "absolute",
-    top: 15, 
-    right: 15,
-    zIndex: 1, 
+    top: Display.setHeight(1.8),
+    right: Display.setWidth(4),
+    zIndex: 1,
+    padding: Display.setWidth(1.5),
   },
   typeSelector: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: 20,
+    marginBottom: Display.setHeight(2.5),
   },
   typeButton: {
-    paddingVertical: 10, 
-    paddingHorizontal: 25, 
-    borderRadius: 20, 
+    paddingVertical: Display.setHeight(1.2),
+    paddingHorizontal: Display.setWidth(6),
+    borderRadius: 20,
   },
   selectedType: {
     backgroundColor: Color.DEFAULT_WHITE,
@@ -599,7 +591,7 @@ const styles = StyleSheet.create({
   typeText: {
     color: Color.DEFAULT_WHITE,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   selectedTypeText: {
     color: Color.DEFAULT_GREEN,
@@ -607,90 +599,87 @@ const styles = StyleSheet.create({
   divider: {
     width: "100%",
     height: 1,
-    backgroundColor: Color.DEFAULT_WHITE, 
-    opacity: 0.5, 
-    marginVertical: 20, 
+    backgroundColor: Color.DEFAULT_WHITE,
+    opacity: 0.5,
+    marginVertical: Display.setHeight(2.5),
   },
   pickerContainer: {
     flex: 1,
     width: "100%",
   },
   selectedDateInfo: {
-    marginBottom: 15, 
-    padding: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.2)", 
+    marginBottom: Display.setHeight(1.8),
+    padding: Display.setWidth(2.5),
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 10,
     alignItems: "center",
   },
   dateInfoText: {
-    color: Color.DEFAULT_WHITE, 
+    color: Color.DEFAULT_WHITE,
     fontSize: 14,
     fontWeight: "500",
   },
   monthPickerContainer: {
-    flex: 1, 
+    flex: 1,
     width: "100%",
-    gap: 20,
+    gap: Display.setHeight(2.5),
   },
   yearSelector: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
+    alignItems: "center",
+    paddingHorizontal: Display.setWidth(5),
   },
   yearArrowButton: {
-      padding: 5, 
+    padding: Display.setWidth(1.2),
   },
   yearText: {
     color: "white",
-    fontSize: 18, 
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: "bold",
   },
   monthsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 15, 
+    gap: Display.setWidth(4),
   },
   monthButton: {
-    width: "30%", 
-    paddingVertical: 15,
+    width: "30%",
+    paddingVertical: Display.setHeight(1.8),
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)', 
+    borderColor: "rgba(255, 255, 255, 0.5)",
     alignItems: "center",
   },
   selectedMonth: {
     backgroundColor: Color.DEFAULT_WHITE,
-    borderColor: Color.DEFAULT_WHITE, 
+    borderColor: Color.DEFAULT_WHITE,
   },
   monthText: {
     color: "white",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   selectedMonthText: {
     color: Color.DEFAULT_GREEN,
   },
-  applyButton: { 
-    paddingVertical: 12, 
-    paddingHorizontal: 25,
-    borderRadius: 25, 
-    marginTop: 20, 
-    alignSelf: "center", 
+  applyButton: {
+    paddingVertical: Display.setHeight(1.5),
+    paddingHorizontal: Display.setWidth(6),
+    borderRadius: 25,
+    marginTop: Display.setHeight(2.5),
+    alignSelf: "center",
     backgroundColor: Color.DEFAULT_WHITE,
-    
-     shadowColor: "#000",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 5,
   },
-  applyButtonText:{ 
+  applyButtonText: {
     color: Color.DEFAULT_GREEN,
     fontSize: 18,
-    fontWeight: 'bold',
-  }
-
-  
+    fontWeight: "bold",
+  },
 });

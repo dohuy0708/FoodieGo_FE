@@ -39,11 +39,11 @@ export default function Navigation() {
         <Stack.Screen name="VerifyScreen" component={VerifyScreen} />
         <Stack.Screen name="ForgotPassScreen" component={ForgotPassScreen} />
         <Stack.Screen name="ChangePassScreen" component={ChangePassScreen} /> */}
-      <Stack.Screen name="HomeVendor" component={HomeVendor} />
-      <Stack.Screen name="Register" component={Register} />
-        <Stack.Screen name="Category" component={Category} />
-       
         
+        <Stack.Screen name="HomeVendor" component={HomeVendor} />
+        <Stack.Screen name="Register" component={Register} />
+        <Stack.Screen name="Category" component={Category} />
+
         <Stack.Screen name="Account" component={Account} />
         <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
         <Stack.Screen name="Comment" component={Comment} />

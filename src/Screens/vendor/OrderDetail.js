@@ -8,7 +8,9 @@ import {
 } from "react-native";
 import { Color } from "../../constants";
 import { useState } from "react";
-export default function OrderDetail() {
+import Display from "../../utils/Display"; 
+
+export default function OrderDetail({ navigation }) { 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, "0");
@@ -16,7 +18,7 @@ export default function OrderDetail() {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
-  const [order, setOrder] = useState({
+  const order = {
     id: "DH1",
     customer: "Hoàng Huy",
     status: "Đang giao",
@@ -25,180 +27,230 @@ export default function OrderDetail() {
     hour: 10,
     minute: 30,
     dishList: [
-      {
-        id: 1,
-        name: "Cháo ếch Singapore",
-        num: 3,
-        price: "50.000đ",
-      },
-      {
-        id: 2,
-        name: "Cháo ếch om",
-        num: 2,
-        price: "45.000đ",
-      },
-      {
-        id: 3,
-        name: "Phở bò",
-        num: 2,
-        price: "60.000đ",
-      },
-      {
-        id: 4,
-        name: "Cháo ếch xào",
-        num: 2,
-        price: "40.000đ",
-      },
-      {
-        id: 5,
-        name: "Cháo ếch chiên",
-        num: 2,
-        price: "40.000đ",
-      },
-      {
-        id: 6,
-        name: "Phở bò",
-        num: 2,
-        price: "60.000đ",
-      },
-      {
-        id: 7,
-        name: "Cháo ếch xào",
-        num: 2,
-        price: "40.000đ",
-      },
-      {
-        id: 8,
-        name: "Cháo ếch chiên",
-        num: 2,
-        price: "40.000đ",
-      },
+      { id: 1, name: "Cháo ếch Singapore", num: 3, price: "50.000đ" },
+      { id: 2, name: "Cháo ếch om", num: 2, price: "45.000đ" },
+      { id: 3, name: "Phở bò", num: 2, price: "60.000đ" },
+      { id: 4, name: "Cháo ếch xào", num: 2, price: "40.000đ" },
+      { id: 5, name: "Cháo ếch chiên", num: 2, price: "40.000đ" },
+      { id: 6, name: "Phở bò", num: 2, price: "60.000đ" },
+      { id: 7, name: "Cháo ếch xào", num: 2, price: "40.000đ" },
+      { id: 8, name: "Cháo ếch chiên", num: 2, price: "40.000đ" },
     ],
-  });
+  };
+
+  const renderDishItem = ({ item }) => ( 
+    <View style={styles.dishItem}>
+      <View style={styles.viewText}>
+        <Text style={styles.dishNameText}>{item.name}</Text>
+        <Text style={styles.dishQuantityText}>x {item.num}</Text>
+      </View>
+      <Text style={styles.dishPriceText}>{item.price}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Chi tiết đơn hàng</Text>
-      <View style={styles.itemorder}>
+
+     
+      <View style={styles.orderInfoContainer}>
         <View style={styles.viewText}>
-          <Text>Mã đơn hàng</Text>
-          <Text style={{ fontWeight: "bold" }}>{order.id}</Text>
+          <Text style={styles.infoLabel}>Mã đơn hàng</Text>
+          <Text style={[styles.infoValue, { fontWeight: "bold" }]}>{order.id}</Text>
         </View>
         <View style={styles.viewText}>
-          <Text>Người đặt</Text>
-          <Text>{order.customer}</Text>
+          <Text style={styles.infoLabel}>Người đặt</Text>
+          <Text style={styles.infoValue}>{order.customer}</Text>
         </View>
         <View style={styles.viewText}>
-          <Text>Tổng tiền</Text>
-          <Text>{order.price}</Text>
+          <Text style={styles.infoLabel}>Tổng tiền</Text>
+          <Text style={styles.infoValue}>{order.price}</Text>
         </View>
         <View style={styles.viewText}>
-          <Text>Thời gian</Text>
-          <Text>
+          <Text style={styles.infoLabel}>Thời gian</Text>
+          <Text style={styles.infoValue}>
             {order.hour}h{order.minute}p
           </Text>
         </View>
         <View style={styles.viewText}>
-          <Text>Ngày</Text>
-          <Text>{formatDate(order.date)}</Text>
+          <Text style={styles.infoLabel}>Ngày</Text>
+          <Text style={styles.infoValue}>{formatDate(order.date)}</Text>
         </View>
         <View style={styles.viewText}>
-          <Text>Tình trạng</Text>
-          <Text style={{ color: Color.DEFAULT_GREEN, fontWeight: "bold" }}>
+          <Text style={styles.infoLabel}>Tình trạng</Text>
+          <Text style={[styles.infoValue, { color: Color.DEFAULT_GREEN, fontWeight: "bold" }]}>
             {order.status}
           </Text>
         </View>
       </View>
-      <Text style={{ fontWeight: "bold", textAlign: "center", fontSize: 20 }}>
+
+      <Text style={styles.listHeader}>
         Danh sách món ăn
       </Text>
+
+     
       <View style={styles.listContainer}>
         <FlatList
           data={order.dishList}
-          renderItem={({ item }) => (
-            <View style={styles.itemorder}>
-              <View style={styles.viewText}>
-                <Text>{item.name}</Text>
-                <Text style={{ color: Color.DEFAULT_GREEN }}>x {item.num} </Text>
-              </View>
-              <Text style={{ color: Color.DEFAULT_YELLOW }}>{item.price}</Text>
-            </View>
-          )}
+          renderItem={renderDishItem}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContentContainer}
+          contentContainerStyle={styles.listContentContainer} 
         />
       </View>
-      <View style={styles.buttonContainer}>
+
+      
+      {order.status==="Chờ xác nhận"&&(<View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[
             styles.button,
-            { backgroundColor: Color.DEFAULT_YELLOW, paddingHorizontal: 30 },
+            styles.cancelButton, 
+            
           ]}
-          onPress={() => navigation.navigate("HomeVendor")}
+          onPress={() => {
+            console.log("Cancel order:", order.id);
+          
+            navigation.goBack(); 
+          }}
         >
-          <Text style={{ color: "white" }}>Hủy đơn</Text>
+          <Text style={styles.buttonText}>Hủy đơn</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: Color.DEFAULT_GREEN }]}
+          style={[styles.button, styles.confirmButton]} 
+          onPress={() => {
+            console.log("Confirm order:", order.id);
+          
+            navigation.goBack(); 
+          }}
         >
-          <Text style={{ color: "white" }}>Xác nhận</Text>
+          <Text style={styles.buttonText}>Xác nhận</Text>
         </TouchableOpacity>
-      </View>
+      </View>)}
     </View>
   );
 }
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 10,
-    paddingVertical: 40,
+    paddingHorizontal: Display.setWidth(2.5), 
+    paddingTop: Display.setHeight(5), 
+   
     flex: 1,
     width: "100%",
     backgroundColor: "#fff",
-    alignorders: "center",
-    gap: 20,
+   
+    gap: Display.setHeight(2.5), 
   },
   header: {
     textAlign: "center",
-
-    alignorders: "center",
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    fontSize: 30,
+    fontSize: 28,
+    width: '100%', 
+  },
+  orderInfoContainer: {
+    width: "100%",
+    paddingVertical: Display.setHeight(1.2), 
+    paddingHorizontal: Display.setWidth(5), 
+    
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Color.LIGHT_GREY2,
+    gap: Display.setHeight(1.2), 
   },
   viewText: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
+    alignItems: 'center', 
   },
-  itemorder: {
+  infoLabel: {
+    fontSize: 16, 
+    color: Color.DEFAULT_BLACK,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: Color.SECONDARY_BLACK,
+    textAlign: 'right',
+  },
+  listHeader: {
+    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 20, 
+    color: Color.DEFAULT_BLACK, 
+    width: '100%', 
+   
+  },
+  listContainer: {
+    flex: 1, 
+    width: '100%',
+    borderWidth: 1,
+    borderColor: Color.LIGHT_GREY2,
+    borderRadius: 8,
+    marginBottom: Display.setHeight(2.5),
+  },
+  listContentContainer: {
+    paddingHorizontal: Display.setWidth(3), 
+    paddingVertical: Display.setHeight(1.5),
+    gap: Display.setHeight(1.5), 
+  },
+  dishItem: { 
     width: "100%",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: Display.setHeight(1), 
+    paddingHorizontal: Display.setWidth(2), 
     backgroundColor: "#fff",
-    gap: 10,
+    borderRadius: 6,
+   
+  },
+  dishNameText: {
+    fontSize: 15,
+    color: Color.DEFAULT_BLACK,
+    flex: 1, 
+  },
+  dishQuantityText: {
+    fontSize: 15,
+    color: Color.DEFAULT_GREEN,
+    fontWeight: 'bold',
+    marginLeft: Display.setWidth(2), 
+  },
+  dishPriceText: {
+    fontSize: 15,
+    color: Color.DEFAULT_ORANGE, 
+    marginTop: Display.setHeight(0.5), 
+    alignSelf: 'flex-end', 
   },
   buttonContainer: {
-   
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: "white",
-
+    gap: Display.setWidth(2.5), 
+    paddingHorizontal: Display.setWidth(5), 
+    paddingVertical: Display.setHeight(2), 
+    backgroundColor: "white", 
     justifyContent: "flex-end",
+    borderTopWidth: 1, 
+    borderTopColor: Color.LIGHT_GREY2,
+    width: '100%', 
+    alignSelf: 'center', 
   },
-
   button: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: Color.DEFAULT_YELLOW,
-    height: 50,
+    paddingHorizontal: Display.setWidth(5),
+    paddingVertical: Display.setHeight(1.2), 
+   
+    height: Display.setHeight(6), 
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    minWidth: Display.setWidth(25), 
   },
-  listContainer: {
-    flex: 1,
-    width: '100%',
+  buttonText: {
+    color: "white",
+    fontSize: 16, 
+    fontWeight: '500',
+  },
+  cancelButton: {
+      backgroundColor: Color.DEFAULT_YELLOW,
+      paddingHorizontal: Display.setWidth(7.5), 
+  },
+  confirmButton: {
+      backgroundColor: Color.DEFAULT_GREEN,
+      paddingHorizontal: Display.setWidth(7.5), 
   },
 });

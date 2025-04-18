@@ -46,7 +46,15 @@ export default function OrderList({ navigation }) {
       hour: 10,
       minute: 30,
     },
-    
+    {
+      id: "DH5",
+      customer: "Hoàng Huy",
+      status: "Chờ xác nhận",
+      date: "2025-04-17",
+      price: "200.000đ",
+      hour: 10,
+      minute: 30,
+    },
   ]);
 
  
