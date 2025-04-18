@@ -1,4 +1,4 @@
-import { React, useState, useEffect } from "react"; 
+import { React, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,266 +6,273 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  Platform,
 } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
-import { Color } from "../../constants"; 
-import { Picker } from "@react-native-picker/picker";
+import { Picker } from "@react-native-picker/picker"; // Import Picker
+import { Color } from "../../constants";
+import Display from "../../utils/Display";
+import NavAdmin from "../../components/NavAdmin";
 
-const category = [
-  { id: 1, name: "Cháo ếch" },
-  { id: 2, name: "Bánh mì" },
-  { id: 3, name: "Phở" },
-];
-
+const NAV_HEIGHT = Display.setHeight(8);
 const restaurant = [
-  {
-    id: 1,
-    name: "Cháo ếch Singapore",
-    status: "Đã xác nhận ",
-  },
-  {
-    id: 2,
-    name: "Cháo gà Singapore",
-    status: "Chờ xác nhận ",
-  },
-  {
-    id: 3,
-    name: "Phở gà",
-    status: "Đình chỉ ",
-  },
-  {
-    id: 4,
-    name: "Cơm tấm",
-    status: "Chờ xác nhận ",
-  },
-  {
-    id: 5,
-    name: "Bánh mì",
-    status: "Đã xác nhận ",
-  },
-  {
-    id: 6,
-    name: "Cháo ếch Singapore",
-    status: "Đã xác nhận ",
-  },
+  { id: 1, name: "Cháo ếch Singapore", status: "Đã xác nhận " },
+  { id: 2, name: "Cháo gà Singapore", status: "Chờ xác nhận " },
+  { id: 3, name: "Phở gà", status: "Đình chỉ " },
+  { id: 4, name: "Cơm tấm", status: "Chờ xác nhận " },
+  { id: 5, name: "Bánh mì", status: "Đã xác nhận " },
+  { id: 6, name: "Cháo ếch Singapore", status: "Đã xác nhận " },
+];
+const status = [
+  { id: 4, name: "Tất cả trạng thái" },
+  { id: 1, name: "Đã xác nhận" },
+  { id: 2, name: "Chờ xác nhận" },
+  { id: 3, name: "Đình chỉ" },
 ];
 
-export default function ListVendor() {
+export default function ListVendor({ navigation }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState(restaurant);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(4); 
 
+ 
   useEffect(() => {
-    if (searchTerm === "") {
-      setSearchResults(restaurant);
-    } else {
-      const filtered = restaurant.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setSearchResults(filtered);
-    }
-  }, [searchTerm]);
+    let filteredData = restaurant; 
 
-  useEffect(() => {
-    let filteredData = restaurant;
-
-    if (selectedCategory) {
-      filteredData = filteredData.filter(
-        (item) => item.categoryId === selectedCategory
-      );
-
-      const categoryName = category.find(
-        (c) => c.id === selectedCategory
-      )?.name;
-      if (categoryName) {
-        filteredData = filteredData.filter((item) =>
-          item.name.toLowerCase().includes(categoryName.toLowerCase())
+   
+    if (selectedStatus !== 4) {
+      const selectedStatusName = status.find(s => s.id === selectedStatus)?.name.trim(); 
+      if (selectedStatusName) {
+        filteredData = filteredData.filter(item =>
+          item.status.trim().toLowerCase() === selectedStatusName.toLowerCase() 
         );
       }
     }
 
-    if (searchTerm !== "") {
-      filteredData = filteredData.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const lowerCaseSearchTerm = searchTerm.toLowerCase().trim();
+    if (lowerCaseSearchTerm !== "") {
+      filteredData = filteredData.filter(item =>
+        item.name.toLowerCase().includes(lowerCaseSearchTerm)
       );
     }
-    setSearchResults(filteredData);
-  }, [searchTerm, selectedCategory]);
+
+    setSearchResults(filteredData); 
+
+  }, [searchTerm, selectedStatus]);
+
+
+  const renderItem = ({ item }) => {
+    const statusTrimmed = item.status.trim();
+
+    let statusColor = Color.DEFAULT_BLACK;
+    if (statusTrimmed === "Đã xác nhận") statusColor = Color.DEFAULT_GREEN;
+    else if (statusTrimmed === "Chờ xác nhận") statusColor = Color.DEFAULT_ORANGE;
+    else if (statusTrimmed === "Đình chỉ") statusColor = Color.DEFAULT_RED;
+
+    return (
+      <View style={styles.listItemContainer}>
+        <View style={styles.divider} />
+        <Text style={styles.itemNameText}>{item.name}</Text>
+        <View style={styles.itemStatusRow}>
+          <Text style={[styles.itemStatusText, { color: statusColor }]}>
+            {item.status}
+          </Text>
+          <TouchableOpacity onPress={() => console.log("View Details:", item.id)}>
+            <Text style={styles.detailsLinkText}>Xem chi tiết</Text>
+          </TouchableOpacity>
+        </View>
+
+        {statusTrimmed === "Chờ xác nhận" && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.button, styles.deleteButton]}>
+              <Text style={styles.buttonText}>Xóa</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.confirmButton]}>
+              <Text style={styles.buttonText}>Xác nhận</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {statusTrimmed === "Đã xác nhận" && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.button, styles.suspendButton]}>
+              <Text style={styles.buttonText}>Đình chỉ</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {statusTrimmed === "Đình chỉ" && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.button, styles.reactivateButton]}>
+              <Text style={styles.buttonText}>Kích hoạt lại</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+   };
+
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Danh sách nhà hàng</Text>
+
+      
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Tìm kiếm cửa hàng..."
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          placeholderTextColor={Color.LIGHT_GREY2}
+        />
+        <TouchableOpacity>
+          <EvilIcons name="search" size={28} color={Color.SECONDARY_BLACK} />
+        </TouchableOpacity>
+      </View>
+
+      
       <View style={styles.picker_container}>
         <Picker
-          selectedValue={selectedCategory}
-          onValueChange={(itemValue) => setSelectedCategory(itemValue)}
+          selectedValue={selectedStatus}
+          onValueChange={(itemValue, itemIndex) => setSelectedStatus(itemValue)}
           style={styles.picker}
           mode="dropdown"
         >
-          <Picker.Item
-            label="-- Loại cửa hàng --"
-            style={{ fontSize: 14, color: Color.GRAY_BORDER }}
-            value={null}
-          />
-          {category.map((item) => (
-            <Picker.Item
-              key={item.id}
-              label={item.name}
-              value={item.id}
-              style={{ fontSize: 14 }}
-            />
+          {status.map((stat) => (
+            <Picker.Item key={stat.id} label={stat.name} value={stat.id} style={styles.pickerItem}/>
           ))}
         </Picker>
       </View>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Tìm kiếm cửa hàng"
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-        />
-
-        <TouchableOpacity>
-          <EvilIcons name="search" size={28} color="black" />
-        </TouchableOpacity>
-      </View>
-
       <FlatList
         data={searchResults}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              padding: 10,
-              marginVertical: 5,
-            }}
-          >
-            <View style={styles.divider} />
-            <Text style={{ fontSize: 18, color: Color.DEFAULT_GREEN }}>
-              {item.name}
-            </Text>
-            <View
-              style={{ flexDirection: "row", justifyContent: "space-between" }}
-            >
-              <Text style={{ fontSize: 16 }}>{item.status}</Text>
-              <TouchableOpacity>
-                <Text
-                  style={{
-                    color: Color.DEFAULT_GREEN,
-                    textDecorationLine: "underline",
-                  }}
-                >
-                  Xem chi tiết
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {item.status.trim() === "Chờ xác nhận" && (
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    {
-                      backgroundColor: Color.DEFAULT_YELLOW,
-                      paddingHorizontal: 40,
-                    },
-                  ]}
-                >
-                  <Text style={styles.buttonText}>Xóa</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    { backgroundColor: Color.DEFAULT_GREEN },
-                  ]}
-                >
-                  <Text style={styles.buttonText}>Xác nhận</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            {item.status.trim() === "Đã xác nhận" && (
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    {
-                      backgroundColor: Color.DEFAULT_YELLOW,
-                    },
-                  ]}
-                >
-                  <Text style={styles.buttonText}>Đình chỉ</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            {item.status.trim() === "Đình chỉ" && (
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    { backgroundColor: Color.DEFAULT_GREEN },
-                  ]}
-                >
-                  <Text style={styles.buttonText}>Xác nhận</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContentContainer}
+        style={styles.flatListStyle}
+        ListEmptyComponent={ 
+          <Text style={styles.emptyListText}>Không tìm thấy nhà hàng phù hợp.</Text>
+        }
       />
+      <View style={styles.navContainer}>
+        <NavAdmin nav={navigation} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  navContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: NAV_HEIGHT,
+    backgroundColor: Color.DEFAULT_WHITE,
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: Display.setWidth(5),
+    paddingTop: Display.setHeight(1.2),
+    paddingBottom: NAV_HEIGHT,
   },
   header: {
-    marginTop: 40,
+    marginTop: Display.setHeight(5),
     textAlign: "center",
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 24,
-    marginBottom: 15,
+    marginBottom: Display.setHeight(1.8),
   },
-  picker_container: {
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Color.GRAY_BORDER,
+    borderRadius: 8,
+    paddingHorizontal: Display.setWidth(2.5),
+    backgroundColor: "#fafafa",
+    marginBottom: Display.setHeight(1.5), 
+  },
+  textInput: {
+    flex: 1,
+    height: Display.setHeight(5.5),
+    fontSize: 16,
+    paddingVertical: Display.setHeight(0.6),
+    color: Color.DEFAULT_BLACK,
+  },
+  picker_container: { 
     width: "100%",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER || "#ccc",
+    borderColor: Color.GRAY_BORDER,
     borderRadius: 8,
-
-    marginTop: 15,
     backgroundColor: "#fafafa",
-
-    justifyContent: "center",
+    marginBottom: Display.setHeight(2), 
+    justifyContent: 'center', 
+    height: Display.setHeight(6), 
   },
-  picker: {
-    height: 50,
+  picker: { 
     width: "100%",
-    color: Color.SECONDARY_BLACK || "#333",
-    backgroundColor: "transparent",
+    height: '100%', 
+    color: Color.SECONDARY_BLACK,
+    backgroundColor: 'transparent', 
+  },
+  pickerItem: { 
+    fontSize: 14,
+    color: Color.SECONDARY_BLACK,
+  },
+  flatListStyle: {
+      flex: 1,
+  },
+  listContentContainer: {
+      paddingBottom: Display.setHeight(2),
+      gap: Display.setHeight(0.5),
+  },
+  listItemContainer: {
+      paddingVertical: Display.setHeight(1.2),
+      paddingHorizontal: Display.setWidth(2),
+      backgroundColor: '#fff',
+     
+      gap: Display.setHeight(1),
   },
   divider: {
     height: 1,
     backgroundColor: Color.LIGHT_GREY2,
-    marginBottom: 10,
-    marginTop: 5,
+  },
+  itemNameText: {
+      fontSize: 18,
+      color: Color.DEFAULT_GREEN,
+      fontWeight: 'bold',
+  },
+  itemStatusRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: 'center',
+  },
+  itemStatusText: {
+      fontSize: 16,
+      flex: 1,
+      marginRight: Display.setWidth(2),
+  },
+  detailsLinkText: {
+      color: Color.DEFAULT_GREEN,
+      textDecorationLine: "underline",
+      fontSize: 15,
   },
   buttonContainer: {
     flexDirection: "row",
-    gap: 10,
+    gap: Display.setWidth(2.5),
     justifyContent: "flex-end",
-    marginTop: 10,
+    marginTop: Display.setHeight(1.2),
   },
   button: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-
-    minHeight: 40,
+    paddingHorizontal: Display.setWidth(5),
+    paddingVertical: Display.setHeight(1.2),
+    minHeight: Display.setHeight(5),
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
@@ -273,21 +280,24 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "500",
+    fontSize: 15,
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: Color.GRAY_BORDER || "#ccc",
-    borderRadius: 8,
-    marginTop: 20,
-    paddingHorizontal: 10,
-    backgroundColor: "#fafafa",
+  deleteButton: {
+      backgroundColor: Color.DEFAULT_YELLOW,
   },
-  textInput: {
-    flex: 1,
-    height: 45,
+  confirmButton: {
+      backgroundColor: Color.DEFAULT_GREEN,
+  },
+  suspendButton: {
+       backgroundColor: Color.DEFAULT_YELLOW,
+  },
+  reactivateButton: {
+      backgroundColor: Color.DEFAULT_GREEN,
+  },
+  emptyListText: {
+    textAlign: 'center',
+    marginTop: Display.setHeight(5),
     fontSize: 16,
-    paddingVertical: 5,
+    color: Color.DEFAULT_GREY,
   },
 });

@@ -12,48 +12,20 @@ import EvilIcons from "@expo/vector-icons/EvilIcons";
 import { Color } from "../../constants";
 import Feather from "@expo/vector-icons/Feather";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import NavAdmin from "../../components/NavAdmin";
+import Display from "../../utils/Display";
 
+const NAV_HEIGHT = Display.setHeight(8);
 const restaurant = [
-  {
-    id: 1,
-    name: "Cháo ếch Singapore",
-    content: "Ngon",
-    user: "Nguyễn Văn A",
-  },
-  {
-    id: 2,
-    name: "Cháo gà Singapore",
-    content: "Cháo gà ngon",
-    user: "Nguyễn Văn B",
-  },
-  {
-    id: 3,
-    name: "Phở gà",
-    content: "Phở gà ngon",
-    user: "Nguyễn Văn C",
-  },
-  {
-    id: 4,
-    name: "Cơm tấm",
-    content: "Cơm tấm ngon",
-    user: "Nguyễn Văn D",
-  },
-  {
-    id: 5,
-    name: "Bánh mì",
-    content: "Bánh mì ngon",
-    user: "Nguyễn Văn E",
-  },
-  {
-    id: 6,
-    name: "Cháo ếch Singapore",
-    content:
-      "Ngon quá Ngon quá Ngon quá Ngon quá Ngon quá Ngon quá Ngon quá Ngon quá ",
-    user: "Đỗ Nguyễn Hoàng Huy",
-  },
+  { id: 1, name: "Cháo ếch Singapore", content: "Ngon", user: "Nguyễn Văn A" },
+  { id: 2, name: "Cháo gà Singapore", content: "Cháo gà ngon", user: "Nguyễn Văn B" },
+  { id: 3, name: "Phở gà", content: "Phở gà ngon", user: "Nguyễn Văn C" },
+  { id: 4, name: "Cơm tấm", content: "Cơm tấm ngon", user: "Nguyễn Văn D" },
+  { id: 5, name: "Bánh mì", content: "Bánh mì ngon", user: "Nguyễn Văn E" },
+  { id: 6, name: "Cháo ếch Singapore", content: "Ngon quá Ngon quá Ngon quá Ngon quá Ngon quá Ngon quá Ngon quá Ngon quá ", user: "Đỗ Nguyễn Hoàng Huy" },
 ];
 
-export default function Comment() {
+export default function Comment({ navigation }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,15 +33,12 @@ export default function Comment() {
 
   useEffect(() => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-
     if (searchTerm === "") {
       setSearchResults(restaurant);
     } else {
       const filtered = restaurant.filter((item) => {
         const lowerCaseName = item.name.toLowerCase();
-
         const lowerCaseContent = item.content ? item.content.toLowerCase() : "";
-
         return (
           lowerCaseName.includes(lowerCaseSearchTerm) ||
           lowerCaseContent.includes(lowerCaseSearchTerm)
@@ -88,9 +57,10 @@ export default function Comment() {
   };
 
   const onDateChange = (event, selected) => {
-    setShowDatePicker(false);
-    if (event.type === "set" && selected) {
-      setSelectedDate(selected);
+    const currentDate = selected || selectedDate;
+    setShowDatePicker(Platform.OS === 'ios');
+    if (event.type === "set") {
+         setSelectedDate(currentDate);
     }
   };
 
@@ -147,44 +117,58 @@ export default function Comment() {
             </Text>
             <View style={styles.itemFooter}>
               <Text style={styles.itemUser}>Bình luận bởi: {item.user}</Text>
+              <TouchableOpacity style={styles.detailsLink}>
+                <Text style={styles.detailsLinkText}>Xem chi tiết</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.detailsLink}>
-              <Text style={styles.detailsLinkText}>Xem chi tiết</Text>
-            </TouchableOpacity>
           </View>
         )}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: Display.setHeight(2) }}
         ListEmptyComponent={
           <Text style={styles.emptyListText}>Không tìm thấy kết quả nào.</Text>
         }
+        style={styles.flatListStyle}
       />
+      <View style={styles.navContainer}><NavAdmin nav={navigation} /></View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  navContainer: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: NAV_HEIGHT,
+      backgroundColor: Color.DEFAULT_WHITE,
+      borderTopWidth: 1,
+      borderTopColor: "#e0e0e0",
+    },
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: Display.setWidth(5),
+    paddingTop: Display.setHeight(1.2),
+    paddingBottom: NAV_HEIGHT,
   },
   header: {
-    marginTop: 40, // Hoặc sử dụng SafeAreaView
+    marginTop: Display.setHeight(5),
     textAlign: "center",
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 24,
-    marginBottom: 15,
+    marginBottom: Display.setHeight(1.8),
   },
   dateSelector: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15, 
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    marginBottom: Display.setHeight(1.8),
+    paddingVertical: Display.setHeight(1),
+    paddingHorizontal: Display.setWidth(3),
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 8,
@@ -200,54 +184,55 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 8,
-   
-    paddingHorizontal: 10,
+    paddingHorizontal: Display.setWidth(2.5),
     backgroundColor: "#fafafa",
-    marginBottom: 15, 
+    marginBottom: Display.setHeight(1.8),
   },
   textInput: {
     flex: 1,
-    height: 45,
+    height: Display.setHeight(5.5),
     fontSize: 16,
-    paddingVertical: 5,
-    color: Color.SECONDARY_BLACK, 
+    paddingVertical: Display.setHeight(0.6),
+    color: Color.SECONDARY_BLACK,
+  },
+  flatListStyle: {
+      flex: 1,
   },
   divider: {
     height: 1,
     backgroundColor: Color.LIGHT_GREY2,
-    marginBottom: 15,
+    marginBottom: Display.setHeight(1.8),
   },
-  
   listItem: {
-
-    paddingVertical: 10, 
+    paddingVertical: Display.setHeight(1.2),
   },
   itemName: {
     fontSize: 18,
     fontWeight: "bold",
     color: Color.DEFAULT_GREEN,
-    marginBottom: 5,
+    marginBottom: Display.setHeight(0.6),
   },
   itemContent: {
     fontSize: 15,
     color: "#555",
-    marginBottom: 8,
-    lineHeight: 20, 
+    marginBottom: Display.setHeight(1),
+    lineHeight: Display.setHeight(2.5),
   },
   itemFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 5,
+    marginTop: Display.setHeight(0.6),
   },
   itemUser: {
     fontSize: 14,
     color: "#888",
     fontStyle: "italic",
+    flex: 1,
+    marginRight: Display.setWidth(2),
   },
   detailsLink: {
-    alignSelf: "flex-end",
-    paddingVertical: 4,
+    paddingVertical: Display.setHeight(0.5),
   },
   detailsLinkText: {
     color: Color.DEFAULT_GREEN,
@@ -256,9 +241,8 @@ const styles = StyleSheet.create({
   },
   emptyListText: {
     textAlign: "center",
-    marginTop: 30,
+    marginTop: Display.setHeight(3.7),
     fontSize: 16,
     color: "#999",
   },
-
 });

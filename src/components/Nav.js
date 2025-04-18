@@ -5,6 +5,7 @@ import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Color } from "../constants";
+import Display from "../utils/Display";
 export default function Nav({ nav }) {
   const route = useRoute();
   const currentRoute = route.name;
@@ -14,7 +15,7 @@ export default function Nav({ nav }) {
       style={{
         flexDirection: "row",
         justifyContent: "space-between",
-        padding: 10,
+        padding: Display.setWidth(3),
       }}
     >
       <TouchableOpacity onPress={() => nav.navigate("HomeVendor")}>

@@ -2,9 +2,9 @@ import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { Color } from "../constants";
+import Display from "../utils/Display";
 export default function NavAdmin({ nav }) {
   const route = useRoute();
   const currentRoute = route.name;
@@ -14,27 +14,21 @@ export default function NavAdmin({ nav }) {
       style={{
         flexDirection: "row",
         justifyContent: "space-between",
-        padding: 10,
+        padding: Display.setWidth(3),
       }}
     >
-      <TouchableOpacity onPress={() => nav.navigate("Category")}>
-        <MaterialIcons 
-          name="category" 
-          size={24} 
-          color={currentRoute === "Category" ? Color.DEFAULT_YELLOW : "black"} 
-        />
-      </TouchableOpacity>
+     
 
-      <TouchableOpacity onPress={() => nav.navigate("OrderList")}>
+      <TouchableOpacity onPress={() => nav.navigate("ListVendor")}>
         <FontAwesome5 
           name="list-alt" 
           size={24} 
-          color={currentRoute === "OrderList" ? Color.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "ListVendor" ? Color.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => nav.navigate("Comment")}>
-        <FontAwesome
+        <FontAwesome6
           name="comments" 
           size={24} 
           color={currentRoute === "Comment" ? Color.DEFAULT_YELLOW : "black"} 

@@ -4,10 +4,10 @@ import { useState } from "react";
 import {
   View,
   Text,
-  SafeAreaView,
   Image,
   TouchableOpacity,
 } from "react-native";
+import Display from "../utils/Display"; 
 export default function Dish({ data, navigation }) {
   return (
     <TouchableOpacity
@@ -18,9 +18,9 @@ export default function Dish({ data, navigation }) {
         source={require("../assets/images/dish.png")}
         style={styles.image}
       />
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: Display.setWidth(2.5) }}>
         <Text>{data.name}</Text>
-        <View style={{ flexDirection: "row", gap: 30 }}>
+        <View style={{ flexDirection: "row", gap: Display.setWidth(8) }}>
           <Text>{data.numSell}</Text>
           <Text style={{ color: Color.DEFAULT_YELLOW }}>{data.price}</Text>
         </View>
@@ -33,7 +33,7 @@ const styles = {
   container: {
     flexDirection: "row",
     width: "100%",
-    gap: 20,
+    gap: Display.setWidth(8),
     backgroundColor: "#fff",
   },
   image: {

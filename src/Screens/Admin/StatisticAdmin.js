@@ -7,17 +7,22 @@ import {
   Animated,
   Dimensions,
   ScrollView,
+  Platform,
 } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 import { Calendar } from "react-native-calendars";
 import Feather from "@expo/vector-icons/Feather";
 import { Color } from "../../constants";
-import Nav from "../../components/Nav";
+import NavAdmin from "../../components/NavAdmin";
+import Display from "../../utils/Display";
+
+const screenWidth = Dimensions.get("window").width;
+const screenHeight = Dimensions.get("window").height;
+const NAV_HEIGHT = Display.setHeight(8);
 
 export default function StatisticAdmin({ navigation }) {
   const [isOpen, setIsOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const screenHeight = Dimensions.get("window").height;
   const [viewType, setViewType] = useState("week");
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
@@ -30,16 +35,15 @@ export default function StatisticAdmin({ navigation }) {
 
   const toggleBottomSheet = () => {
     const toValue = isOpen ? 0 : 1;
-
     Animated.spring(slideAnim, {
       toValue,
       friction: 9,
       tension: 70,
       useNativeDriver: true,
     }).start();
-
     setIsOpen(!isOpen);
   };
+
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -48,23 +52,19 @@ export default function StatisticAdmin({ navigation }) {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
-
   const getWeekDates = (selectedDate) => {
     const date = new Date(selectedDate);
     const day = date.getDay();
-
     const startDate = new Date(date);
-
     startDate.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
-
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + 6);
-
     return {
       start: startDate.toISOString().split("T")[0],
       end: endDate.toISOString().split("T")[0],
     };
   };
+
   const onMonthPress = (month) => {
     setCurrentMonth(month);
   };
@@ -74,24 +74,20 @@ export default function StatisticAdmin({ navigation }) {
     setSelectedEndDate(weekDates.end);
   };
 
+
   const renderWeekPicker = () => {
     const markedDates = {};
-
     if (selectedStartDate && selectedEndDate) {
       let currentDate = new Date(selectedStartDate);
       const endDate = new Date(selectedEndDate);
-
       endDate.setHours(12, 0, 0, 0);
-
       while (currentDate <= endDate) {
         const dateString = currentDate.toISOString().split("T")[0];
         markedDates[dateString] = {
           selected: true,
-
           color: Color.DEFAULT_WHITE,
           textColor: Color.DEFAULT_GREEN,
         };
-
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
@@ -122,7 +118,7 @@ export default function StatisticAdmin({ navigation }) {
             textDisabledColor: Color.DEFAULT_GREY,
             "stylesheet.calendar.header": {
               week: {
-                marginTop: 5,
+                marginTop: Display.setHeight(0.6),
                 flexDirection: "row",
                 justifyContent: "space-between",
               },
@@ -137,7 +133,6 @@ export default function StatisticAdmin({ navigation }) {
   };
   const renderMonthPicker = () => {
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
     return (
       <View style={styles.monthPickerContainer}>
         <View style={styles.yearSelector}>
@@ -147,9 +142,7 @@ export default function StatisticAdmin({ navigation }) {
           >
             <Feather name="chevron-left" size={24} color="white" />
           </TouchableOpacity>
-
           <Text style={styles.yearText}>{currentYear}</Text>
-
           <TouchableOpacity
             style={styles.yearArrowButton}
             onPress={() => setCurrentYear((year) => year + 1)}
@@ -157,7 +150,6 @@ export default function StatisticAdmin({ navigation }) {
             <Feather name="chevron-right" size={24} color="white" />
           </TouchableOpacity>
         </View>
-
         <View style={styles.monthsGrid}>
           {months.map((month) => (
             <TouchableOpacity
@@ -182,16 +174,14 @@ export default function StatisticAdmin({ navigation }) {
       </View>
     );
   };
-  /////////////////Set Up Chart//////////////////////
+
   const [weeklyData, setWeeklyData] = useState({
     labels: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
-
     data: [300, 500, 400, 700, 600, 800, 900],
   });
   const chartConfig = {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",
-
     color: (opacity = 1) => {
       const rgb = Color.DEFAULT_GREEN.replace("#", "");
       const r = parseInt(rgb.substring(0, 2), 16);
@@ -216,6 +206,7 @@ export default function StatisticAdmin({ navigation }) {
   };
 
   const renderChart = () => {
+     const chartWidth = Math.max(screenWidth - Display.setWidth(10), weeklyData.labels.length * Display.setWidth(15));
     return (
       <View style={styles.chartOuterContainer}>
         <Text style={styles.chartTitle}>Doanh thu theo ngày</Text>
@@ -223,17 +214,10 @@ export default function StatisticAdmin({ navigation }) {
           <BarChart
             data={{
               labels: weeklyData.labels,
-              datasets: [
-                {
-                  data: weeklyData.data,
-                },
-              ],
+              datasets: [{ data: weeklyData.data }],
             }}
-            width={Math.max(
-              Dimensions.get("window").width - 40,
-              weeklyData.labels.length * 60
-            )}
-            height={300}
+            width={chartWidth}
+            height={Display.setHeight(37)}
             chartConfig={chartConfig}
             style={styles.chart}
             showValuesOnTopOfBars={true}
@@ -247,12 +231,13 @@ export default function StatisticAdmin({ navigation }) {
       </View>
     );
   };
-  //////////////////////////////////////
+
   return (
     <View style={styles.mainContainer}>
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContentContainer}
+        showsVerticalScrollIndicator={false}
       >
         <Text style={styles.header}>Thống kê</Text>
 
@@ -296,7 +281,10 @@ export default function StatisticAdmin({ navigation }) {
 
         {viewType == "week" && renderChart()}
       </ScrollView>
-      <Nav nav={navigation} />
+
+      <View style={styles.navContainer}>
+          <NavAdmin nav={navigation} />
+      </View>
 
       <Animated.View
         style={[
@@ -375,19 +363,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Color.DEFAULT_WHITE,
   },
-
   scrollContainer: {
+    flex: 1,
     width: "100%",
   },
-
+  navContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: NAV_HEIGHT,
+    backgroundColor: Color.DEFAULT_WHITE,
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+  },
   scrollContentContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 40,
-    paddingBottom: 30,
+    paddingHorizontal: Display.setWidth(4),
+    paddingTop: Display.setHeight(5),
+    paddingBottom: NAV_HEIGHT + Display.setHeight(2),
   },
   header: {
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: Display.setHeight(2.5),
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28,
@@ -397,53 +394,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-
-    marginBottom: 20,
-    paddingVertical: 10,
+    marginBottom: Display.setHeight(2.5),
+    paddingVertical: Display.setHeight(1.2),
     backgroundColor: Color.LIGHT_GREY,
     borderRadius: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: Display.setWidth(2.5),
   },
   dateDisplayText: {
     fontSize: 16,
     fontWeight: "500",
     color: "#333",
   },
-
   statsRow: {
-    marginBottom: 25,
-    gap: 15,
+    marginBottom: Display.setHeight(3),
+    gap: Display.setHeight(1.8),
   },
   statisticBox: {
     flex: 1,
-    paddingVertical: 15,
-    paddingHorizontal: 10,
+    paddingVertical: Display.setHeight(1.8),
+    paddingHorizontal: Display.setWidth(2.5),
     backgroundColor: Color.LIGHT_GREY,
     borderRadius: 8,
     alignItems: "center",
-    gap: 8,
-    flexDirection:"row",
-    justifyContent:"space-between",
+    gap: Display.setHeight(1),
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   statisticLabel: {
     fontSize: 15,
     color: "#555",
-    textAlign: "center",
+    textAlign: "left",
   },
   statisticValue: {
     fontSize: 18,
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    textAlign: "center",
+    textAlign: "right",
   },
-
   chartOuterContainer: {
     backgroundColor: "#fff",
-    paddingVertical: 15,
-
+    paddingVertical: Display.setHeight(1.8),
     borderRadius: 10,
-    marginBottom: 25,
-
+    marginBottom: Display.setHeight(3),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -454,20 +446,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginBottom: Display.setHeight(1.8),
     textAlign: "center",
   },
   chart: {
-    marginVertical: 8,
+    marginVertical: Display.setHeight(1),
     borderRadius: 16,
   },
   chartUnitText: {
     textAlign: "center",
-    marginTop: 10,
+    marginTop: Display.setHeight(1.2),
     fontSize: 12,
     color: "#666",
   },
-
   bottomSheet: {
     position: "absolute",
     left: 0,
@@ -477,7 +468,6 @@ const styles = StyleSheet.create({
     backgroundColor: Color.DEFAULT_GREEN,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.15,
@@ -486,23 +476,24 @@ const styles = StyleSheet.create({
   },
   bottomSheetContent: {
     flex: 1,
-    padding: 20,
-    paddingTop: 40,
+    padding: Display.setWidth(5),
+    paddingTop: Display.setHeight(5),
   },
   closeButton: {
     position: "absolute",
-    top: 15,
-    right: 15,
+    top: Display.setHeight(1.8),
+    right: Display.setWidth(4),
     zIndex: 1,
+    padding: Display.setWidth(1.5),
   },
   typeSelector: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: 20,
+    marginBottom: Display.setHeight(2.5),
   },
   typeButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 25,
+    paddingVertical: Display.setHeight(1.2),
+    paddingHorizontal: Display.setWidth(6),
     borderRadius: 20,
   },
   selectedType: {
@@ -521,15 +512,15 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Color.DEFAULT_WHITE,
     opacity: 0.5,
-    marginVertical: 20,
+    marginVertical: Display.setHeight(2.5),
   },
   pickerContainer: {
     flex: 1,
     width: "100%",
   },
   selectedDateInfo: {
-    marginBottom: 15,
-    padding: 10,
+    marginBottom: Display.setHeight(1.8),
+    padding: Display.setWidth(2.5),
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 10,
     alignItems: "center",
@@ -542,16 +533,16 @@ const styles = StyleSheet.create({
   monthPickerContainer: {
     flex: 1,
     width: "100%",
-    gap: 20,
+    gap: Display.setHeight(2.5),
   },
   yearSelector: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: Display.setWidth(5),
   },
   yearArrowButton: {
-    padding: 5,
+    padding: Display.setWidth(1.2),
   },
   yearText: {
     color: "white",
@@ -562,11 +553,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 15,
+    gap: Display.setWidth(4),
   },
   monthButton: {
     width: "30%",
-    paddingVertical: 15,
+    paddingVertical: Display.setHeight(1.8),
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.5)",
@@ -585,13 +576,12 @@ const styles = StyleSheet.create({
     color: Color.DEFAULT_GREEN,
   },
   applyButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 25,
+    paddingVertical: Display.setHeight(1.5),
+    paddingHorizontal: Display.setWidth(6),
     borderRadius: 25,
-    marginTop: 20,
+    marginTop: Display.setHeight(2.5),
     alignSelf: "center",
     backgroundColor: Color.DEFAULT_WHITE,
-
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
