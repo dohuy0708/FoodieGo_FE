@@ -108,6 +108,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+    paddingTop: 60, // Dành không gian cho Header (cao 50px)
+    paddingHorizontal: 20,
+    alignItems: "center",
+    flex: 1,
+    backgroundColor: "white",
     padding: 20,
     alignItems: "center",
   },
