@@ -7,22 +7,25 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Platform, // Import Platform
+  Alert,
+  Platform,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
 import { Color } from "../../constants";
 import React, { useState, useEffect } from "react";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import {
   getProvinces,
-  getDistrictsByProvinceCode,
-  getWardsByDistrictCode,
+  getDistricts,
+  getWards,
 } from "../../services/locationService";
-import Display from "../../utils/Display"; // Import Display
-
+import Display from "../../utils/Display";
+import {
+  uploadImageToServer,
+  getCoordinatesOfLocation,
+  createNewAddress
+} from "../../services/vendorService";
 export default function Register({ navigation }) {
-  // Added navigation prop for potential future use
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [openTime, setOpenTime] = useState("");
@@ -33,26 +36,13 @@ export default function Register({ navigation }) {
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
+  const [detailAddress, setDetailAddress] = useState("");
   const [selectedProvince, setSelectedProvince] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedWard, setSelectedWard] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [location, setLocation] = useState({
-    latitude: 10.8231, // Default to HCMC or user's current location
-    longitude: 106.6297,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
-
-  const [selectedLocation, setSelectedLocation] = useState(null);
-
-  const onMapPress = (e) => {
-    const { latitude, longitude } = e.nativeEvent.coordinate;
-    setSelectedLocation({ latitude, longitude });
-    // Optionally update the map region to center on the selected marker
-    // setLocation({ ...location, latitude, longitude });
-  };
-
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  let location=null;
   const selectImage = async () => {
     try {
       const { status } =
@@ -74,11 +64,79 @@ export default function Register({ navigation }) {
       }
     } catch (error) {
       console.log("ImagePicker Error: ", error);
-      alert("Đã xảy ra lỗi khi chọn ảnh."); // User-friendly error
+      alert("Đã xảy ra lỗi khi chọn ảnh.");
     }
   };
+  const handleUpload = async () => {
+    if (!selectedImage) {
+      Alert.alert("Thông báo", "Vui lòng chọn ảnh trước khi upload.");
+      return;
+    }
+    console.log("Selected Image:", selectedImage);
+    setUploadedImageUrl(null);
+    try {
+      const resultUrl = await uploadImageToServer(selectedImage);
+      if (resultUrl) {
+        console.log("Image uploaded successfully:", resultUrl);
+        setUploadedImageUrl(resultUrl);
+        console.log("Returned URL from server:", resultUrl);
 
-  // --- useEffect hooks remain the same ---
+        const parts = resultUrl.split(" ");
+        const secureUrl = parts[0];
+        const publicId = parts[1];
+        console.log("Secure URL:", secureUrl);
+        console.log("Public ID:", publicId);
+      }
+    } finally {
+    }
+  };
+  const getCoordinates = async () => {
+    const address = `${detailAddress}, ${selectedWard?.WardName}, ${selectedDistrict?.DistrictName}, ${selectedProvince?.ProvinceName}`;
+    console.log("Full Address:", address);
+    try {
+      const response = await getCoordinatesOfLocation(address);
+      if (response ) {
+         location = response;
+        console.log("Coordinates:", location);
+      } else {
+        console.error("No results found for the address:", address);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching coordinates:", error);
+      return null;
+    }
+  };
+  const createAddress = async () => {
+    console.log("Creating new address...");
+    await getCoordinates();
+    console.log("Location:", location);
+    const address=
+    {
+      label:"restaurant",
+      province: selectedProvince?.ProvinceName,
+      district: selectedDistrict?.DistrictName,
+      ward: selectedWard?.WardName,
+      street:detailAddress,
+      latitude: parseFloat(location.latitude),
+      longitude: parseFloat(location.longitude),
+      placeId: location.placeId,
+  }
+    console.log("Address to create:", address);
+    try {
+      const response = await createNewAddress(address);
+      if (response) {
+        console.log("Address created successfully:", response);
+        return response;
+      } else {
+        console.error("Failed to create address:", response);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error creating address:", error);
+      return null;
+    }
+  };
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
@@ -94,10 +152,10 @@ export default function Register({ navigation }) {
 
   useEffect(() => {
     const fetchDistricts = async () => {
-      if (selectedProvince?.code) {
-        // Check for code existence
+      if (selectedProvince?.ProvinceID) {
         try {
-          const data = await getDistrictsByProvinceCode(selectedProvince.code);
+          console.log("Selected Province Code:", selectedProvince.ProvinceID);
+          const data = await getDistricts(selectedProvince.ProvinceID);
           setDistricts(data || []);
           setSelectedDistrict(null);
           setWards([]);
@@ -116,10 +174,9 @@ export default function Register({ navigation }) {
 
   useEffect(() => {
     const fetchWards = async () => {
-      if (selectedDistrict?.code) {
-        // Check for code existence
+      if (selectedDistrict?.DistrictID) {
         try {
-          const data = await getWardsByDistrictCode(selectedDistrict.code);
+          const data = await getWards(selectedDistrict.DistrictID);
           setWards(data || []);
           setSelectedWard(null);
         } catch (error) {
@@ -135,7 +192,6 @@ export default function Register({ navigation }) {
   // ---------------------------------------
 
   const handleRegister = () => {
-    // Basic validation example
     if (
       !name ||
       !description ||
@@ -163,25 +219,20 @@ export default function Register({ navigation }) {
       imageUrl: selectedImage.uri,
       location: selectedLocation,
     });
-    // Add actual registration API call here
-    // navigation.navigate('SuccessScreen'); // Navigate on success
   };
 
   return (
-    // Use KeyboardAvoidingView for better input handling
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContentContainer}
-        keyboardShouldPersistTaps="handled" // Dismiss keyboard on tap outside inputs
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Container View removed, padding applied in scrollContentContainer */}
         <Text style={styles.header}>Đăng ký nhà hàng</Text>
         <Text style={styles.subHeaderText}>
           (*) Vui lòng nhập thông tin chính xác
         </Text>
 
-        {/* Input Fields */}
         <View style={styles.input_container}>
           <TextInput
             style={styles.input_text}
@@ -208,13 +259,12 @@ export default function Register({ navigation }) {
             value={description}
             onChangeText={setDescription}
             multiline={true}
-            numberOfLines={4} 
+            numberOfLines={4}
             textAlignVertical="top"
             placeholderTextColor={Color.LIGHT_GREY2}
           />
         </View>
 
-     
         <View style={styles.picker_container}>
           <Picker
             selectedValue={selectedProvince}
@@ -232,8 +282,8 @@ export default function Register({ navigation }) {
             />
             {provinces.map((province) => (
               <Picker.Item
-                key={province.code}
-                label={province.name}
+                key={province.ProvinceID}
+                label={province.ProvinceName}
                 value={province}
                 style={styles.pickerItem}
               />
@@ -258,8 +308,8 @@ export default function Register({ navigation }) {
             />
             {districts.map((district) => (
               <Picker.Item
-                key={district.code}
-                label={district.name}
+                key={district.DistrictID}
+                label={district.DistrictName}
                 value={district}
                 style={styles.pickerItem}
               />
@@ -284,16 +334,27 @@ export default function Register({ navigation }) {
             />
             {wards.map((ward) => (
               <Picker.Item
-                key={ward.code}
-                label={ward.name}
+                key={ward.WardCode}
+                label={ward.WardName}
                 value={ward}
                 style={styles.pickerItem}
               />
             ))}
           </Picker>
         </View>
+        <View style={[styles.input_container, styles.textAreaContainer]}>
+          <TextInput
+            style={[styles.input_text, styles.textArea]}
+            placeholder="Địa chỉ chi tiết(Số nhà,Tổ dân phố/Xóm) (*)"
+            value={detailAddress}
+            onChangeText={setDetailAddress}
+            multiline={true}
+            numberOfLines={4}
+            textAlignVertical="top"
+            placeholderTextColor={Color.LIGHT_GREY2}
+          />
+        </View>
 
-        
         <View style={styles.input_container}>
           <View style={styles.input_time_container}>
             <Text style={styles.timeLabel}>Giờ mở cửa (*):</Text>
@@ -347,12 +408,9 @@ export default function Register({ navigation }) {
           </View>
         </View>
 
-        
         <View style={styles.view_image}>
           <Image
-            source={
-              selectedImage ? { uri: selectedImage.uri } : {} 
-            }
+            source={selectedImage ? { uri: selectedImage.uri } : {}}
             style={styles.previewImage}
             resizeMode={selectedImage ? "cover" : "center"}
           />
@@ -366,36 +424,9 @@ export default function Register({ navigation }) {
           </TouchableOpacity>
         </View>
 
-       
-        <View style={styles.mapContainer}>
-          <Text style={styles.mapLabel}>Chọn vị trí trên bản đồ (*)</Text>
-          <MapView
-            style={styles.map}
-            region={location} 
-            onRegionChangeComplete={setLocation} 
-            onPress={onMapPress}
-            showsUserLocation={true} 
-          >
-            {selectedLocation && (
-              <Marker
-                coordinate={selectedLocation}
-                title="Vị trí nhà hàng"
-                pinColor={Color.DEFAULT_GREEN} 
-              />
-            )}
-          </MapView>
-          {selectedLocation && (
-            <Text style={styles.locationText}>
-              Đã chọn: {selectedLocation.latitude.toFixed(6)},{" "}
-              {selectedLocation.longitude.toFixed(6)}
-            </Text>
-          )}
-        </View>
-
-      
         <TouchableOpacity
-          style={[styles.button, styles.submitButton]} 
-          onPress={handleRegister}
+          style={[styles.button, styles.submitButton]}
+          onPress={createAddress}
         >
           <Text style={styles.buttonText}>Đăng ký</Text>
         </TouchableOpacity>
@@ -414,48 +445,48 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   scrollContentContainer: {
-    paddingHorizontal: Display.setWidth(4), 
+    paddingHorizontal: Display.setWidth(4),
     paddingVertical: Display.setHeight(3),
-    alignItems: "center", 
-    gap: Display.setHeight(2), 
+    alignItems: "center",
+    gap: Display.setHeight(2),
   },
   header: {
     textAlign: "center",
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    fontSize: 28, 
+    fontSize: 28,
     width: "100%",
-    marginBottom: Display.setHeight(1), 
+    marginBottom: Display.setHeight(1),
   },
   subHeaderText: {
-    fontSize: 14, 
-    color: Color.DEFAULT_RED, 
+    fontSize: 14,
+    color: Color.DEFAULT_RED,
     width: "100%",
     textAlign: "center",
-    marginBottom: Display.setHeight(1.5), 
+    marginBottom: Display.setHeight(1.5),
   },
   input_container: {
     width: "100%",
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 8,
-    paddingHorizontal: Display.setWidth(3.5), 
+    paddingHorizontal: Display.setWidth(3.5),
     paddingVertical:
-      Platform.OS === "ios" ? Display.setHeight(1.2) : Display.setHeight(0.6), 
+      Platform.OS === "ios" ? Display.setHeight(1.2) : Display.setHeight(0.6),
     backgroundColor: Color.DEFAULT_WHITE,
   },
   textAreaContainer: {
-    paddingVertical: Display.setHeight(1.2), 
+    paddingVertical: Display.setHeight(1.2),
   },
   input_text: {
     color: Color.SECONDARY_BLACK,
-    fontSize: 16, 
-    paddingVertical: Platform.OS === "ios" ? 0 : Display.setHeight(0.6), 
+    fontSize: 16,
+    paddingVertical: Platform.OS === "ios" ? 0 : Display.setHeight(0.6),
   },
   textArea: {
-    minHeight: Display.setHeight(10), 
+    minHeight: Display.setHeight(10),
     textAlignVertical: "top",
-    paddingVertical: 0, 
+    paddingVertical: 0,
   },
   picker_container: {
     width: "100%",
@@ -468,38 +499,38 @@ const styles = StyleSheet.create({
   },
   picker: {
     width: "100%",
-    height: Display.setHeight(6), 
+    height: Display.setHeight(7),
     color: Color.SECONDARY_BLACK,
     backgroundColor: "transparent",
   },
   pickerPlaceholder: {
     color: Color.LIGHT_GREY2,
-    fontSize: 16,
+    fontSize: 12,
   },
   pickerItem: {
-    fontSize: 16,
+    fontSize: 12,
     color: Color.SECONDARY_BLACK,
   },
   input_time_container: {
     flexDirection: "row",
     alignItems: "center",
-    
-    gap: Display.setWidth(1.5), 
+
+    gap: Display.setWidth(1.5),
   },
   timeLabel: {
     fontSize: 16,
     color: Color.SECONDARY_BLACK,
-    marginRight: Display.setWidth(2), 
+    marginRight: Display.setWidth(2),
   },
   input_time: {
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 5,
-    paddingHorizontal: Display.setWidth(2.5), 
-    paddingVertical: Display.setHeight(1), 
-    width: Display.setWidth(18), 
+    paddingHorizontal: Display.setWidth(2.5),
+    paddingVertical: Display.setHeight(1),
+    width: Display.setWidth(18),
     textAlign: "center",
-    fontSize: 16, 
+    fontSize: 16,
     backgroundColor: Color.DEFAULT_WHITE,
   },
   timeSeparator: {
@@ -510,23 +541,22 @@ const styles = StyleSheet.create({
   view_image: {
     position: "relative",
     width: "100%",
-    aspectRatio: 16 / 9, 
+    aspectRatio: 16 / 9,
     borderWidth: 1,
     borderColor: Color.GRAY_BORDER,
     borderRadius: 10,
     backgroundColor: Color.LIGHT_GREY,
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden", 
+    overflow: "hidden",
   },
   previewImage: {
     width: "100%",
     height: "100%",
-    
   },
   button: {
-    paddingHorizontal: Display.setWidth(5), 
-    paddingVertical: Display.setHeight(1.2), 
+    paddingHorizontal: Display.setWidth(5),
+    paddingVertical: Display.setHeight(1.2),
     height: Display.setHeight(6),
     borderRadius: 10,
     alignItems: "center",
@@ -534,47 +564,20 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontSize: 16, 
+    fontSize: 16,
     fontWeight: "500",
   },
   addImageButton: {
     position: "absolute",
-    bottom: Display.setHeight(1.2), 
-    right: Display.setWidth(2.5), 
+    bottom: Display.setHeight(1.2),
+    right: Display.setWidth(2.5),
     backgroundColor: "rgba(0, 0, 0, 0.6)",
-    height: "auto", 
+    height: "auto",
     minHeight: Display.setHeight(4.5),
     paddingHorizontal: Display.setWidth(3),
     paddingVertical: Display.setHeight(0.8),
   },
-  mapContainer: {
-    width: "100%",
-    height: Display.setHeight(55), 
-    marginBottom: Display.setHeight(5),
-    alignItems: "center", 
-    gap: Display.setHeight(1), 
-  },
-  mapLabel: {
-    fontSize: 16,
-    color: Color.SECONDARY_BLACK,
-    fontWeight: "500",
-    width: "100%", 
-    textAlign: "left", 
-  },
-  map: {
-  
-    width: "100%",
-    height: "100%", 
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
-  },
-  locationText: {
-    fontSize: 14,
-    color: Color.SECONDARY_BLACK,
-    textAlign: "center",
-    width: "100%",
-  },
+
   submitButton: {
     backgroundColor: Color.DEFAULT_GREEN,
 
