@@ -44,7 +44,7 @@ const Profile = ({ navigation }) => {
         <TouchableOpacity
           style={styles.loginButton}
           onPress={() => {
-            if (isLoggedIn) {
+            if (!isLoggedIn) {
               navigation.navigate("LoginScreen");
               // Xử lý đăng xuất
               //  setIsLoggedIn(false);
@@ -55,7 +55,7 @@ const Profile = ({ navigation }) => {
           }}
         >
           <Text style={styles.loginText}>
-            {isLoggedIn ? "Đăng nhập" : "Đăng xuất"}
+            {!isLoggedIn ? "Đăng nhập" : "Đăng xuất"}
           </Text>
         </TouchableOpacity>
       </View>
