@@ -12,15 +12,58 @@ import { Header } from "../../components";
 import Logo from "../../assets/images/Logo.png";
 import { Color, Fonts } from "../../constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import GRAPHQL_ENDPOINT from "../../../config";
 const ForgotPassScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const handleSendMail = () => {
+
+  // // init Function
+  const handleSendMail = async () => {
     if (email.trim() === "") {
       setErrorMessage("Vui lòng nhập email");
     } else {
-      setErrorMessage("");
-      // Xử lý tiếp đăng nhập
+      setErrorMessage(""); // Reset error message
+
+      try {
+        // Construct the mutation query
+        const query = `
+          mutation {
+            requestResetPassword(email: "${email}") {
+              token
+            }
+          }
+        `;
+
+        // Send the request to the GraphQL API
+        const response = await fetch(GRAPHQL_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query,
+          }),
+        });
+
+        const data = await response.json();
+        console.log("API response:", data);
+
+        if (
+          data.data &&
+          data.data.requestResetPassword &&
+          data.data.requestResetPassword.token
+        ) {
+          // Successfully sent the reset email, handle success logic
+          setErrorMessage(""); // Clear error message
+          // Navigate to another screen or show success message
+          navigation.navigate("ChangePassScreen");
+        } else {
+          setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại.");
+        }
+      } catch (error) {
+        console.error("Error sending reset email:", error);
+        setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại.");
+      }
     }
   };
   return (
