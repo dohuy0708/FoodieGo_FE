@@ -37,36 +37,11 @@ const LoginScreen = ({ navigation }) => {
     } else {
       setErrorMessage(""); // Reset thông báo lỗi
       try {
-        // Define the mutation query without using variables
-        const query = `
-          mutation {
-            login(loginDto: {
-              username: "${username}",
-              password: "${password}"
-            }) {
-              token
-            }
-          }
-        `;
+        const data = await loginUser(username, password); // Call the service
 
-        // Send the request directly to the GraphQL API
-        const response = await fetch(GRAPHQL_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query,
-          }),
-        });
-
-        const data = await response.json();
-        console.log("API response:", data);
-
-        if (data.data && data.data.login && data.data.login.token) {
-          // Successfully logged in
+        if (data?.data?.login?.token) {
           const token = data.data.login.token;
-          // Store token if necessary
+          // Store token if necessary (e.g., AsyncStorage, Redux)
           navigation.navigate("MainApp", { token });
         } else {
           setErrorMessage("Thông tin đăng nhập không chính xác!");

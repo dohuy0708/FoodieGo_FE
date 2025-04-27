@@ -67,4 +67,34 @@ const verifySignup = async (otp) => {
   }
 };
 
-export { registerUser, verifySignup };
+const loginUser = async (username, password) => {
+  const query = `
+      mutation {
+        login(loginDto: {
+          username: "${username}",
+          password: "${password}"
+        }) {
+          token
+        }
+      }
+    `;
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query,
+      }),
+    });
+
+    const data = await response.json();
+    return data; // Return the data to be used in the component
+  } catch (error) {
+    throw new Error("Login error: " + error.message); // Handle the error
+  }
+};
+
+export { registerUser, verifySignup, loginUser };
