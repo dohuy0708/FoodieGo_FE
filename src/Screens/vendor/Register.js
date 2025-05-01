@@ -23,7 +23,8 @@ import Display from "../../utils/Display";
 import {
   uploadImageToServer,
   getCoordinatesOfLocation,
-  createNewAddress
+  createNewAddress,
+  createNewRestaurant,
 } from "../../services/vendorService";
 export default function Register({ navigation }) {
   const [name, setName] = useState("");
@@ -42,7 +43,9 @@ export default function Register({ navigation }) {
   const [selectedWard, setSelectedWard] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const ownerId = 193; 
   let location=null;
+  let addressId=null;
   const selectImage = async () => {
     try {
       const { status } =
@@ -127,6 +130,7 @@ export default function Register({ navigation }) {
       const response = await createNewAddress(address);
       if (response) {
         console.log("Address created successfully:", response);
+        addressId = response.id;
         return response;
       } else {
         console.error("Failed to create address:", response);
@@ -137,6 +141,42 @@ export default function Register({ navigation }) {
       return null;
     }
   };
+  const createRestaurant = async () => {
+    await handleUpload();
+    await createAddress();
+    console.log("Creating new restaurant...");
+    const restaurant = {
+      name,
+      description,
+      phone,
+      openTime: `${openTime}:${minuteOpenTime}`,
+      closeTime: `${closeTime}:${minuteCloseTime}`,
+      avatar: uploadedImageUrl,
+      status:"open",
+      addressId:addressId,
+      ownerId: ownerId,
+    };
+    console.log("Restaurant to create:", restaurant);
+    try {
+      const response = await createNewRestaurant(restaurant);
+      if (response) {
+        console.log("Restaurant created successfully:", response);
+        navigation.navigate("HomeVendor", {
+          ownerId: ownerId,
+        });
+
+        return response;
+      } else {
+        console.error("Failed to create restaurant:", response);
+        return null;
+      }
+    }
+    catch (error) {
+      console.error("Error creating restaurant:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
@@ -426,7 +466,7 @@ export default function Register({ navigation }) {
 
         <TouchableOpacity
           style={[styles.button, styles.submitButton]}
-          onPress={createAddress}
+          onPress={createRestaurant}
         >
           <Text style={styles.buttonText}>Đăng ký</Text>
         </TouchableOpacity>
