@@ -10,6 +10,7 @@ import {
   ProfileScreen,
 } from "../screens/customer";
 import Display from "../utils/Display";
+import AccountScreen from "../screens/customer/AccountScreen";
 
 const CustomerBottomTabs = createBottomTabNavigator();
 export default () => (
@@ -83,7 +84,7 @@ export default () => (
     />
     <CustomerBottomTabs.Screen
       name="Tôi"
-      component={ProfileScreen}
+      component={AccountScreen}
       options={{
         tabBarIcon: ({ focused, color }) => (
           <Ionicons

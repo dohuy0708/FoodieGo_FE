@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
@@ -15,14 +16,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Fonts";
 import CheckBox from "@react-native-community/checkbox";
 import GRAPHQL_ENDPOINT from "../../../config";
-import { loginUser } from "../../services/authService";
+import { GetUserById, loginUser } from "../../services/authService";
+import { useContext } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserContext } from "../../context/UserContext";
 const LoginScreen = ({ navigation }) => {
   // init state
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isRemember, setIsRemember] = useState(false); // State kiểm tra checkbox
   const [errorMessage, setErrorMessage] = useState("");
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(true);
+  const [loading, setLoading] = useState(false); // Thêm state loading
+  const { setUserInfo } = useContext(UserContext); // Lấy hàm setUserInfo từ context
 
   // init Function
   const togglePasswordVisibility = () => {
@@ -35,20 +40,41 @@ const LoginScreen = ({ navigation }) => {
     } else if (password.trim().length <= 0) {
       setErrorMessage("Vui lòng nhập mật khẩu");
     } else {
+      setLoading(true); // Bắt đầu loading
       setErrorMessage(""); // Reset thông báo lỗi
       try {
         const data = await loginUser(username, password); // Call the service
 
         if (data?.data?.login?.token) {
           const token = data.data.login.token;
-          // Store token if necessary (e.g., AsyncStorage, Redux)
-          navigation.navigate("MainApp", { token });
+          const userId = data.data.login.id;
+          console.log("usertkrn", token);
+          console.log("usertkrnId", userId);
+          // Lấy thông tin user
+          const userInfo = await GetUserById(userId, token);
+          const userData = userInfo.data.findUserById;
+          console.log("userData", userData);
+
+          // Lưu AsyncStorage
+          await AsyncStorage.setItem("userInfo", JSON.stringify(userData));
+          await AsyncStorage.setItem("token", token);
+
+          // Update Context
+          setUserInfo({ ...userData, token }); // <<< Cập nhật vào context ở đây nè!!
+
+          //  Reset stack và điều hướng về màn hình SplashScreen
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "SplashScreen" }], // hoặc 'Login' tùy vào yêu cầu của bạn
+          });
         } else {
           setErrorMessage("Thông tin đăng nhập không chính xác!");
         }
       } catch (error) {
         console.error("Login error:", error);
         setErrorMessage("Có lỗi xảy ra. Vui lòng thử lại.");
+      } finally {
+        setLoading(false); // Dù thành công hay thất bại đều dừng loading
       }
     }
   };
@@ -108,18 +134,6 @@ const LoginScreen = ({ navigation }) => {
         {/* Quên mật khẩu và nhớ mật khẩu */}
 
         <View style={styles.rememberForgotContainer}>
-          {/* Checkbox nhớ mật khẩu */}
-          <View style={styles.rememberContainer}>
-            <TouchableOpacity onPress={() => setIsRemember(!isRemember)}>
-              <Ionicons
-                name={isRemember ? "checkbox" : "square-outline"}
-                size={20}
-                color="gray"
-              />
-            </TouchableOpacity>
-            <Text style={styles.rememberText}>Nhớ mật khẩu</Text>
-          </View>
-
           {/* Quên mật khẩu */}
           <TouchableOpacity
             onPress={() => navigation.navigate("ForgotPassScreen")}
@@ -135,8 +149,16 @@ const LoginScreen = ({ navigation }) => {
           )}
         </View>
         {/* Nút đăng nhập */}
-        <TouchableOpacity style={styles.loginButton} onPress={HandleLogin}>
-          <Text style={styles.loginText}>Đăng nhập</Text>
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={HandleLogin}
+          disabled={loading} // Khi loading thì disable nút
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.loginText}>Đăng nhập</Text>
+          )}
         </TouchableOpacity>
 
         {/* Chuyển đến trang đăng ký */}
@@ -230,15 +252,15 @@ const styles = StyleSheet.create({
   },
   rememberForgotContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     alignItems: "center",
+    marginRight: 15,
     width: "100%",
-    marginBottom: 15,
   },
   rememberContainer: {
     marginLeft: 10,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "right",
   },
   rememberText: {
     marginLeft: 5,

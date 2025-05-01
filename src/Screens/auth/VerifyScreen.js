@@ -51,7 +51,7 @@ const VerifyScreen = ({ navigation }) => {
         <Text
           style={[Fonts.bodyText, { alignSelf: "flex-start", marginLeft: 30 }]}
         >
-          Mã xác thực đã được gửi đến email của bạn! 5 phút để xác thực
+          Mã xác thực đã được gửi đến email của bạn! Thời hạn 5 phút.
         </Text>
         <View style={styles.inputContainer}>
           <Ionicons
@@ -96,7 +96,6 @@ const VerifyScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
     alignItems: "center",
     backgroundColor: "white",
   },

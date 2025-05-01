@@ -113,6 +113,14 @@ const ChangePassScreen = ({ navigation }) => {
               }}
             />
             <Image source={Logo} style={styles.logo} />
+            <Text
+              style={[
+                Fonts.bodyText,
+                { alignSelf: "flex-start", marginLeft: 10, marginBottom: 20 },
+              ]}
+            >
+              Mã xác thực đã được gửi đến email của bạn! Thời hạn 5 phút.
+            </Text>
             {/* Ô nhập Họ tên */}
             <View style={styles.inputContainer}>
               <Ionicons

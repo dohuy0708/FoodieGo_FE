@@ -74,6 +74,7 @@ const loginUser = async (username, password) => {
           username: "${username}",
           password: "${password}"
         }) {
+          id,
           token
         }
       }
@@ -97,4 +98,42 @@ const loginUser = async (username, password) => {
   }
 };
 
-export { registerUser, verifySignup, loginUser };
+const GetUserById = async (userId, token) => {
+  const query = `
+    query {
+      findUserById(id: ${userId}) {
+        id
+        name
+        email
+        username
+        gender
+        avatar
+        phone
+      
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST", // Use POST method for GraphQL
+      headers: {
+        Authorization: `Bearer ${token}`, // Add token to Authorization header
+        "Content-Type": "application/json", // Ensure content type is JSON
+      },
+      body: JSON.stringify({ query }), // Stringify the query
+    });
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const data = await response.json(); // Parse the JSON response
+    return data; // Return the user data if successful
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    throw new Error("Failed to fetch user data");
+  }
+};
+
+export { registerUser, verifySignup, loginUser, GetUserById };

@@ -35,6 +35,8 @@ const styles = StyleSheet.create({
     flexDirection: "row", // Để các phần tử hiển thị theo hàng ngang
     alignItems: "center", // Căn giữa các phần tử theo chiều dọc
     zIndex: 1, // Đảm bảo header hiển thị phía trên cùng
+    // Đổ bóng (Android)
+    elevation: 4,
   },
   side: {
     width: 40, // Cố định chiều rộng 2 bên

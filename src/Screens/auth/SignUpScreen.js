@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
 import { Header } from "../../components";
@@ -34,6 +35,8 @@ const SignUpScreen = ({ navigation }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isRecheckPasswordVisible, setIsRecheckPasswordVisible] =
     useState(false);
+  const [loading, setLoading] = useState(false); // Thêm state loading
+
   // handle
 
   const togglePasswordVisibility = () => {
@@ -63,7 +66,8 @@ const SignUpScreen = ({ navigation }) => {
     } else if (password !== checkPassword) {
       setErrorMessage("Mật khẩu nhập lại không khớp");
     } else {
-      setErrorMessage("dang cho "); // Clear the error message if all validations pass
+      setLoading(true); // Bắt đầu loading
+      setErrorMessage(" "); // Clear the error message if all validations pass
 
       try {
         const data = await registerUser({
@@ -84,6 +88,8 @@ const SignUpScreen = ({ navigation }) => {
         }
       } catch (error) {
         setErrorMessage("Có lỗi xảy ra khi đăng ký.");
+      } finally {
+        setLoading(false); // Dù thành công hay thất bại đều dừng loading
       }
     }
   };
@@ -253,7 +259,11 @@ const SignUpScreen = ({ navigation }) => {
             </View>
             {/* Nút đăng ký */}
             <TouchableOpacity style={styles.loginButton} onPress={handleSignUp}>
-              <Text style={Fonts.buttonText}>Đăng ký</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={Fonts.buttonText}>Đăng ký</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
