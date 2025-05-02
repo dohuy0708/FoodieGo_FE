@@ -13,6 +13,7 @@ import Logo from "../../assets/images/Logo.png";
 import { Color, Fonts } from "../../constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { verifySignup } from "../../services/authService";
+import Colors from "../../constants/Colors";
 
 const VerifyScreen = ({ navigation }) => {
   const [otp, setOTP] = useState("");
@@ -76,7 +77,7 @@ const VerifyScreen = ({ navigation }) => {
         <TouchableOpacity
           style={{
             marginTop: 10,
-            backgroundColor: Color.DEFAULT_GREEN,
+            backgroundColor: Colors.DEFAULT_GREEN,
             padding: 10,
             borderRadius: 5,
             width: "90%",

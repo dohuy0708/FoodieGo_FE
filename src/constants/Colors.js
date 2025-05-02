@@ -1,8 +1,8 @@
-export default {
+const Colors = {
   DEFAULT_BLACK: "#0E122B",
   DEFAULT_GREEN: "#0A8791",
   DEFAULT_YELLOW: "#FBA83C",
-  DEFAULT_GREY: "#C2C2CB",
+  DEFAULT_GREY: "#90909A",
   DEFAULT_WHITE: "#FFFFFF",
   DEFAULT_RED: "#F53920",
   SECONDARY_RED: "#FF6F59",
@@ -23,3 +23,5 @@ export default {
   DARK_FOUR: "#282828",
   DARK_FIVE: "#B3B3B3",
 };
+
+export default Colors;

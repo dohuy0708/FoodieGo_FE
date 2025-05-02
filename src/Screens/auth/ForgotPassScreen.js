@@ -10,9 +10,10 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../components";
 import Logo from "../../assets/images/Logo.png";
-import { Color, Fonts } from "../../constants";
+
 import Ionicons from "@expo/vector-icons/Ionicons";
 import GRAPHQL_ENDPOINT from "../../../config";
+import Colors from "../../constants/Colors";
 const ForgotPassScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -101,7 +102,7 @@ const ForgotPassScreen = ({ navigation }) => {
         <TouchableOpacity
           style={{
             marginTop: 10,
-            backgroundColor: Color.DEFAULT_GREEN,
+            backgroundColor: Colors.DEFAULT_GREEN,
             padding: 10,
             borderRadius: 5,
             width: "90%",

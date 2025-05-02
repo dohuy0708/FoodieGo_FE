@@ -13,7 +13,7 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../components";
 import Logo from "../../assets/images/Logo.png";
-import { Color, Fonts } from "../../constants";
+
 import Ionicons from "@expo/vector-icons/Ionicons";
 import GRAPHQL_ENDPOINT from "../../../config";
 const ChangePassScreen = ({ navigation }) => {

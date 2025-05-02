@@ -1,11 +1,12 @@
 import { View, Text, Image, StyleSheet } from "react-native";
 import React, { useEffect, useContext } from "react";
-import { Color } from "../../constants";
+
 import Logo from "../../assets/images/Logo.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
+import Colors from "../../constants/Colors";
 
 export default function SplashScreen() {
   const { setUserInfo } = useContext(UserContext); // Lấy setUserInfo từ context
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
   },
   image: {
     height: 180,

@@ -11,6 +11,7 @@ import VerifyScreen from "../screens/auth/VerifyScreen";
 import CustomerBottomTab from "./CustomerBottomTab";
 import { UserProvider } from "../context/UserContext";
 import AboutUsScreen from "../screens/customer/AboutUsScreen";
+import RestaurantScreen from "../screens/customer/RestaurantScreen";
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
@@ -27,6 +28,7 @@ export default function Navigation() {
           <Stack.Screen name="ChangePassScreen" component={ChangePassScreen} />
           <Stack.Screen name="AboutUsScreen" component={AboutUsScreen} />
           <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+          <Stack.Screen name="RestaurantScreen" component={RestaurantScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>
