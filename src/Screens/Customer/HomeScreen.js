@@ -54,6 +54,8 @@ export default function HomeScreen({ navigation }) {
 
   const [activeSortItem, setActiveSortItem] = useState("Gần đây");
 
+  /* List  restaurant info*/
+
   const sortStyle = (isActive) =>
     isActive
       ? {
@@ -169,7 +171,7 @@ export default function HomeScreen({ navigation }) {
                 <RestaurantCard
                   {...item}
                   navigate={(restaurantId) =>
-                    navigation.navigate("Restaurant", { restaurantId })
+                    navigation.navigate("RestaurantScreen", { restaurantId })
                   }
                 />
               )}
@@ -192,7 +194,7 @@ export default function HomeScreen({ navigation }) {
                 <RestaurantCard
                   {...item}
                   navigate={(restaurantId) =>
-                    navigation.navigate("Restaurant", { restaurantId })
+                    navigation.navigate("RestaurantScreen", { restaurantId })
                   }
                 />
               )}
@@ -219,7 +221,7 @@ export default function HomeScreen({ navigation }) {
               {...item}
               key={item?.id}
               navigate={(restaurantId) =>
-                navigation.navigate("Restaurant", { restaurantId })
+                navigation.navigate("RestaurantScreen", { restaurantId })
               }
             />
           ))}

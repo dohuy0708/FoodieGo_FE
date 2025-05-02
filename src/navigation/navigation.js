@@ -12,6 +12,7 @@ import CustomerBottomTab from "./CustomerBottomTab";
 import { UserProvider } from "../context/UserContext";
 import AboutUsScreen from "../screens/customer/AboutUsScreen";
 import RestaurantScreen from "../screens/customer/RestaurantScreen";
+import FoodScreen from "../screens/customer/FoodScreen";
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
@@ -29,6 +30,7 @@ export default function Navigation() {
           <Stack.Screen name="AboutUsScreen" component={AboutUsScreen} />
           <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
           <Stack.Screen name="RestaurantScreen" component={RestaurantScreen} />
+          <Stack.Screen name="FoodScreen" component={FoodScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>
