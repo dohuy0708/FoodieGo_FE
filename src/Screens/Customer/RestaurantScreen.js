@@ -179,7 +179,7 @@ const RestaurantScreen = ({
               <Ionicons
                 name={"heart-outline"}
                 color={Colors.DEFAULT_YELLOW}
-                size={24}
+                size={28}
                 onPress={() =>
                   isBookmarked ? removeBookmark() : addBookmark()
                 }
