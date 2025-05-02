@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useFocusEffect } from '@react-navigation/native';
 import { Color } from "../../constants";
 import {
   View,
@@ -20,6 +21,7 @@ import { Picker } from "@react-native-picker/picker";
 import Dish from "../../components/Dish";
 import Nav from "../../components/Nav";
 import Display from "../../utils/Display";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const NAV_HEIGHT = Display.setHeight(7);
 const IMAGE_ASPECT_RATIO = 16 / 9;
@@ -28,6 +30,7 @@ const IMAGE_HEIGHT = IMAGE_WIDTH / IMAGE_ASPECT_RATIO;
 const VIEW_INFO_OVERLAP = Display.setHeight(2.5);
 
 export default function HomeVendor({ navigation, route }) {
+  const insets = useSafeAreaInsets();
   const ownerId = 155;
 
   const [selectedImage, setSelectedImage] = useState(null);
@@ -44,8 +47,9 @@ export default function HomeVendor({ navigation, route }) {
   const [errorCategories, setErrorCategories] = useState(null);
   const [errorMenus, setErrorMenus] = useState(null);
 
-  useEffect(() => {
-    const fetchRestaurant = async () => {
+  const fetchRestaurantCallback = useCallback(() => {
+    async function fetchData() {
+      console.log("Focus: Fetching Restaurant");
       setIsLoadingRestaurant(true);
       setErrorRestaurant(null);
       try {
@@ -58,88 +62,96 @@ export default function HomeVendor({ navigation, route }) {
         } else {
           setErrorRestaurant("Không tìm thấy thông tin nhà hàng.");
           setRestaurant(null);
+          setCategory([]);
+          setMenus([]);
         }
       } catch (err) {
         console.error("Lỗi khi lấy dữ liệu nhà hàng:", err);
         setErrorRestaurant("Không thể tải dữ liệu nhà hàng.");
         setRestaurant(null);
+        setCategory([]);
+        setMenus([]);
       } finally {
         setIsLoadingRestaurant(false);
       }
-    };
+    }
+    fetchData(); 
+  }, [ownerId]);
 
-    fetchRestaurant();
-  }, []);
+  useFocusEffect(fetchRestaurantCallback);
 
-  useEffect(() => {
+  const fetchCategoriesCallback = useCallback(async () => {
     if (!restaurant || !restaurant.id) {
-        setCategory([]);
-        return;
-    };
-
-    const fetchCategories = async () => {
-      setIsLoadingCategories(true);
+      console.log("Skipping category fetch - no valid restaurant");
+      if (category.length > 0) setCategory([]);
+      setIsLoadingCategories(false);
       setErrorCategories(null);
-      setCategory([]);
-      try {
-        const response = await getCategoriesByRestaurantId(restaurant.id);
-        console.log("Categories response:", response);
-        if (Array.isArray(response)) {
-          setCategory(response);
-          if (response.length === 0) {
-            console.log("Nhà hàng này chưa có danh mục nào.");
-          }
-        } else {
-          setErrorCategories("Dữ liệu danh mục không hợp lệ.");
-          setCategory([]);
-        }
-      } catch (err) {
-        console.error("Lỗi khi lấy dữ liệu danh mục:", err);
-        setErrorCategories("Không thể tải dữ liệu danh mục.");
-        setCategory([]);
-      } finally {
-        setIsLoadingCategories(false);
-      }
-    };
-
-    fetchCategories();
-  }, [restaurant]);
-
-  useEffect(() => {
-    if (selectedCategory === null) {
-      setMenus([]);
-      setErrorMenus(null);
-      setIsLoadingMenus(false);
       return;
     }
 
-    const fetchMenus = async () => {
-      setIsLoadingMenus(true);
-      setErrorMenus(null);
-      setMenus([]);
-      try {
-        const response = await getMenusByCategoryId(selectedCategory);
-        console.log("Menus response:", response);
-        if (Array.isArray(response)) {
-          setMenus(response);
-           if (response.length === 0) {
-            console.log("Danh mục này chưa có món ăn nào.");
-          }
-        } else {
-          setErrorMenus("Dữ liệu món ăn không hợp lệ.");
-          setMenus([]);
-        }
-      } catch (err) {
-        console.error("Lỗi khi lấy dữ liệu món ăn:", err);
-        setErrorMenus("Không thể tải dữ liệu món ăn.");
-        setMenus([]);
-      } finally {
-        setIsLoadingMenus(false);
-      }
-    };
+    console.log("Fetching Categories for restaurant:", restaurant.id);
+    setIsLoadingCategories(true);
+    setErrorCategories(null);
+    setMenus([]);
+    setErrorMenus(null);
+    setIsLoadingMenus(false);
 
-    fetchMenus();
+    try {
+      const response = await getCategoriesByRestaurantId(restaurant.id);
+      console.log("Categories response:", response);
+      if (Array.isArray(response)) {
+        setCategory(response);
+      } else {
+        setErrorCategories("Dữ liệu danh mục không hợp lệ.");
+        setCategory([]);
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy dữ liệu danh mục:", err);
+      setErrorCategories("Không thể tải dữ liệu danh mục.");
+      setCategory([]);
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, [restaurant]);
+
+  useEffect(() => {
+    fetchCategoriesCallback();
+  }, [fetchCategoriesCallback])
+
+  const fetchMenusCallback = useCallback(async () => {
+    if (selectedCategory === null) {
+       console.log("Skipping menu fetch - no category selected");
+       if (menus.length > 0) setMenus([]);
+       setIsLoadingMenus(false);
+       setErrorMenus(null);
+       return;
+    }
+
+    console.log("Fetching Menus for category:", selectedCategory);
+    setIsLoadingMenus(true);
+    setErrorMenus(null);
+
+    try {
+      const response = await getMenusByCategoryId(selectedCategory);
+      console.log("Menus response:", response);
+      if (Array.isArray(response)) {
+        setMenus(response);
+      } else {
+        setErrorMenus("Dữ liệu món ăn không hợp lệ.");
+        setMenus([]);
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy dữ liệu món ăn:", err);
+      setErrorMenus("Không thể tải dữ liệu món ăn.");
+      setMenus([]);
+    } finally {
+      setIsLoadingMenus(false);
+    }
   }, [selectedCategory]);
+
+  useEffect(() => {
+      fetchMenusCallback();
+  }, [fetchMenusCallback]);
 
   const formatTime = (timeString) => {
     if (!timeString || typeof timeString !== "string") return "N/A";
@@ -153,7 +165,6 @@ export default function HomeVendor({ navigation, route }) {
       name: item.name,
       price: item.price ? `${item.price.toLocaleString('vi-VN')}đ` : 'N/A',
       status: item.available ? "Đang bán" : "Hết hàng",
-      numSell: 'N/A',
       description: item.description || "...",
       imageUrl: item.imageUrl,
     };
@@ -261,7 +272,7 @@ export default function HomeVendor({ navigation, route }) {
           <View style={{ alignItems: "flex-end" }}>
             <TouchableOpacity
               style={styles.edit_button}
-              onPress={() => navigation.navigate("EditCategory")}
+              onPress={() => navigation.navigate("EditCategory",{category:category,restaurantId:restaurant.id})}
             >
               <Text style={{ color: Color.DEFAULT_WHITE }}>
                 Chỉnh sửa danh mục
@@ -287,7 +298,9 @@ export default function HomeVendor({ navigation, route }) {
                   value={null}
                   enabled={false}
                 />
-                {category.map((item) => (
+                {category
+                 .filter(item => item.isActive === 'accepted')
+                .map((item) => (
                   <Picker.Item
                     key={item.id}
                     label={item.name}
@@ -335,7 +348,7 @@ export default function HomeVendor({ navigation, route }) {
   return (
     <View style={styles.container}>
       <Image
-        source={restaurant?.imageUrl ? { uri: restaurant.imageUrl } : require("../../assets/images/store.png")}
+        source={restaurant?.avatar ? { uri: restaurant.avatar } : require("../../assets/images/store.png")}
         style={styles.image}
         resizeMode="cover"
       />
@@ -349,12 +362,12 @@ export default function HomeVendor({ navigation, route }) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.listContentContainer,
-            { paddingBottom: NAV_HEIGHT + Display.setHeight(5) },
+            { paddingBottom: NAV_HEIGHT + insets.bottom + Display.setHeight(1) },
           ]}
         />
       </View>
 
-      <View style={styles.navContainer}>
+      <View style={[styles.navContainer, { bottom: insets.bottom }]}>
         <Nav nav={navigation} />
       </View>
     </View>
@@ -519,7 +532,6 @@ const styles = StyleSheet.create({
   },
   navContainer: {
     position: "absolute",
-    bottom: 0,
     left: 0,
     right: 0,
     height: NAV_HEIGHT,

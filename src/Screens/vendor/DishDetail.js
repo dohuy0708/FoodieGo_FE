@@ -2,12 +2,13 @@ import React from "react";
 import { Color } from "../../constants";
 import { View, Text, Image, StyleSheet,TouchableOpacity } from "react-native";
 import Display from "../../utils/Display"; 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function DishDetail({ navigation, route }) {
   const { data } = route.params;
+  const insets = useSafeAreaInsets();
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/dish.png")} 
+      <Image source={{ uri: data.imageUrl }} 
         style={styles.image}
         resizeMode="cover"
       />
@@ -17,7 +18,7 @@ export default function DishDetail({ navigation, route }) {
         <Text style={{ fontSize: 24, fontWeight: "bold", color: Color.DEFAULT_BLACK }}>{data.name}</Text>
         <Text style={{ fontSize: 16, color: Color.SECONDARY_BLACK }}>{data.description}</Text>
         <View style={{ flexDirection: "row", gap: Display.setWidth(12) }}> 
-          <Text style={{ fontSize: 18, color: Color.SECONDARY_BLACK }}>Đã bán: {data.numSell}</Text>
+          <Text style={{ fontSize: 18, color: Color.SECONDARY_BLACK }}>Giá bán: </Text>
           <Text
             style={{
               fontSize: 18,
@@ -55,7 +56,7 @@ export default function DishDetail({ navigation, route }) {
         >
           <Text style={styles.buttonText}>Xóa món ăn</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.editButton]}
+        <TouchableOpacity style={[styles.button, styles.editButton,{marginBottom: insets.bottom + Display.setHeight(2.5)}]}
          onPress={() => navigation.navigate("EditDish", { dishData: data })} >
           <Text style={styles.buttonText}>Chỉnh sửa</Text>
         </TouchableOpacity>
@@ -73,12 +74,12 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    aspectRatio: 16 / 9,
+    aspectRatio: 8/7,
  
   },
   information: {
     paddingHorizontal: Display.setWidth(5), 
-    paddingVertical: Display.setHeight(2.5), 
+    paddingVertical: Display.setHeight(1), 
     gap: Display.setHeight(1.8), 
   },
   buttonContainer: {

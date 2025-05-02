@@ -1,4 +1,4 @@
-
+const GRAPHQL_ENDPOINT = "http://192.168.1.2:3001/graphql";
 export const uploadImageToServer = async (selectedImage) => {
   if (!selectedImage || !selectedImage.uri) {
     Alert.alert("Lỗi", "Không có ảnh nào được chọn hoặc ảnh không hợp lệ.");
@@ -120,7 +120,6 @@ export const uploadImageToServer = async (selectedImage) => {
     return null;
   }
 };
-
 export const getCoordinatesOfLocation = async (address) => {
   if (!address || typeof address !== "string" || address.trim() === "") {
     console.error(
@@ -350,7 +349,12 @@ export const createNewRestaurant = async (restaurantData) => {
   }
 };
 export const getRestaurantByOwnerId = async (ownerId) => {
-  if (ownerId === null || ownerId === undefined || typeof ownerId !== "number" || !Number.isInteger(ownerId)) {
+  if (
+    ownerId === null ||
+    ownerId === undefined ||
+    typeof ownerId !== "number" ||
+    !Number.isInteger(ownerId)
+  ) {
     console.error("getRestaurantByOwnerId requires a valid integer ownerId.");
     return null;
   }
@@ -366,6 +370,7 @@ export const getRestaurantByOwnerId = async (ownerId) => {
         closeTime
         rating
         status
+        avatar
         address {
           id
           street
@@ -398,13 +403,18 @@ export const getRestaurantByOwnerId = async (ownerId) => {
     console.log("Server Response:", result);
 
     if (!response.ok) {
-        const errorMessage = `Request failed with status code: ${response.status}`;
-        console.error("Get restaurant by ownerId failed (HTTP Status):", errorMessage, result);
-        if (result && result.errors) {
-             const graphqlError = result.errors[0]?.message || "Unknown GraphQL error.";
-             console.error("GraphQL Errors:", graphqlError);
-        }
-        return null;
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Get restaurant by ownerId failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message || "Unknown GraphQL error.";
+        console.error("GraphQL Errors:", graphqlError);
+      }
+      return null;
     }
 
     if (result.errors) {
@@ -425,8 +435,8 @@ export const getRestaurantByOwnerId = async (ownerId) => {
       return result.data.findRestaurantsByOwnerId;
     } else {
       if (result.data && result.data.findRestaurantsByOwnerId === null) {
-         console.log("No restaurants found for ownerId:", ownerId);
-         return [];
+        console.log("No restaurants found for ownerId:", ownerId);
+        return [];
       }
       console.error(
         "Get restaurant by ownerId failed: Unexpected response structure",
@@ -440,10 +450,8 @@ export const getRestaurantByOwnerId = async (ownerId) => {
   }
 };
 export const getAddressById = async (addressId) => {
-  if (!addressId ) {
-    console.error(
-      "getAddressById requires a valid addressId."
-    );
+  if (!addressId) {
+    console.error("getAddressById requires a valid addressId.");
     return null;
   }
 
@@ -456,61 +464,63 @@ export const getAddressById = async (addressId) => {
         ward
       }
 }`;
-const variables = {
-  addressId: addressId,
+  const variables = {
+    addressId: addressId,
+  };
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response:", result);
+
+    if (!response.ok && !result.errors) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error("Get address by ID failed (HTTP Status):", errorMessage);
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0].message || "Unknown error from GraphQL.";
+      console.error("Get address by ID failed (GraphQL Errors):", errorMessage);
+      return null;
+    }
+
+    if (result.data && result.data.getAddressById) {
+      console.log("Address found successfully:", result.data.getAddressById);
+      return result.data.getAddressById;
+    } else {
+      console.error(
+        "Get address by ID failed: Unexpected response structure",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Get restaurant by ownerId Error (Network/Fetch):", error);
+    return null;
+  }
 };
-try
-{
-  const response = await fetch(GRAPHQL_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
-  });
-
-  const result = await response.json();
-  console.log("Server Response:", result);
-
-  if (!response.ok && !result.errors) {
-    const errorMessage = `Request failed with status code: ${response.status}`;
-    console.error("Get address by ID failed (HTTP Status):", errorMessage);
-    return null;
-  }
-
-  if (result.errors) {
-    const errorMessage =
-      result.errors[0].message || "Unknown error from GraphQL.";
-    console.error("Get address by ID failed (GraphQL Errors):", errorMessage);
-    return null;
-  }
-
-  if (result.data && result.data.getAddressById) {
-    console.log(
-      "Address found successfully:",
-      result.data.getAddressById
-    );
-    return result.data.getAddressById;
-  } else {
-    console.error(
-      "Get address by ID failed: Unexpected response structure",
-      result
-    );
-    return null;
-  }
-}
-catch (error) {
-  console.error("Get restaurant by ownerId Error (Network/Fetch):", error);
-  return null;
-}
-}
 export const getCategoriesByRestaurantId = async (restaurantId) => {
-  if (restaurantId === null || restaurantId === undefined || typeof restaurantId !== "number" || !Number.isInteger(restaurantId)) {
-    console.error("getCategoriesByRestaurantId requires a valid integer restaurantId.");
+  if (
+    restaurantId === null ||
+    restaurantId === undefined ||
+    typeof restaurantId !== "number" ||
+    !Number.isInteger(restaurantId)
+  ) {
+    console.error(
+      "getCategoriesByRestaurantId requires a valid integer restaurantId."
+    );
     return null;
   }
 
@@ -519,6 +529,7 @@ export const getCategoriesByRestaurantId = async (restaurantId) => {
       findCategoriesByRestaurantId(restaurantId: $restaurantId) {
         id
         name
+        isActive
       }
     }
   `;
@@ -546,13 +557,18 @@ export const getCategoriesByRestaurantId = async (restaurantId) => {
     console.log("Server Response (Categories):", result);
 
     if (!response.ok) {
-        const errorMessage = `Request failed with status code: ${response.status}`;
-        console.error("Get categories by restaurantId failed (HTTP Status):", errorMessage, result);
-        if (result && result.errors) {
-             const graphqlError = result.errors[0]?.message || "Unknown GraphQL error.";
-             console.error("GraphQL Errors:", graphqlError);
-        }
-        return null;
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Get categories by restaurantId failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message || "Unknown GraphQL error.";
+        console.error("GraphQL Errors:", graphqlError);
+      }
+      return null;
     }
 
     if (result.errors) {
@@ -566,10 +582,10 @@ export const getCategoriesByRestaurantId = async (restaurantId) => {
     }
 
     if (result.data && result.data.findCategoriesByRestaurantId !== undefined) {
-       if (result.data.findCategoriesByRestaurantId === null) {
-            console.log("No categories found for restaurantId:", restaurantId);
-            return [];
-       }
+      if (result.data.findCategoriesByRestaurantId === null) {
+        console.log("No categories found for restaurantId:", restaurantId);
+        return [];
+      }
       console.log(
         "Categories found successfully:",
         result.data.findCategoriesByRestaurantId
@@ -582,15 +598,21 @@ export const getCategoriesByRestaurantId = async (restaurantId) => {
       );
       return null;
     }
-
   } catch (error) {
-    console.error("Get categories by restaurantId Error (Network/Fetch):", error);
+    console.error(
+      "Get categories by restaurantId Error (Network/Fetch):",
+      error
+    );
     return null;
   }
 };
-
 export const getMenusByCategoryId = async (categoryId) => {
-  if (categoryId === null || categoryId === undefined || typeof categoryId !== "number" || !Number.isInteger(categoryId)) {
+  if (
+    categoryId === null ||
+    categoryId === undefined ||
+    typeof categoryId !== "number" ||
+    !Number.isInteger(categoryId)
+  ) {
     console.error("getMenusByCategoryId requires a valid integer categoryId.");
     return null;
   }
@@ -631,13 +653,18 @@ export const getMenusByCategoryId = async (categoryId) => {
     console.log("Server Response (Menus):", result);
 
     if (!response.ok) {
-        const errorMessage = `Request failed with status code: ${response.status}`;
-        console.error("Get menus by categoryId failed (HTTP Status):", errorMessage, result);
-        if (result && result.errors) {
-             const graphqlError = result.errors[0]?.message || "Unknown GraphQL error.";
-             console.error("GraphQL Errors:", graphqlError);
-        }
-        return null;
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Get menus by categoryId failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message || "Unknown GraphQL error.";
+        console.error("GraphQL Errors:", graphqlError);
+      }
+      return null;
     }
 
     if (result.errors) {
@@ -651,10 +678,10 @@ export const getMenusByCategoryId = async (categoryId) => {
     }
 
     if (result.data && result.data.findMenusByCategoryId !== undefined) {
-       if (result.data.findMenusByCategoryId === null) {
-            console.log("No menus found for categoryId:", categoryId);
-            return [];
-       }
+      if (result.data.findMenusByCategoryId === null) {
+        console.log("No menus found for categoryId:", categoryId);
+        return [];
+      }
       console.log(
         "Menus found successfully:",
         result.data.findMenusByCategoryId
@@ -667,9 +694,481 @@ export const getMenusByCategoryId = async (categoryId) => {
       );
       return null;
     }
-
   } catch (error) {
     console.error("Get menus by categoryId Error (Network/Fetch):", error);
+    return null;
+  }
+}
+export const updateCategory = async (categoryId, newName) => {
+  if (
+    categoryId === null ||
+    categoryId === undefined ||
+    typeof categoryId !== "number" ||
+    !Number.isInteger(categoryId)
+  ) {
+    console.error("updateCategoryAPI requires a valid integer categoryId.");
+    return null;
+  }
+  if (
+    newName === null ||
+    newName === undefined ||
+    typeof newName !== "string" ||
+    newName.trim() === ""
+  ) {
+    console.error("updateCategoryAPI requires a non-empty string newName.");
+    return null;
+  }
+
+  const query = `
+    mutation UpdateCategory($id: Int!, $name: String!) {
+      updateCategory(updateCategoryInput: {
+        id: $id,
+        name: $name
+      }) {
+        id
+        name
+      }
+    }
+  `;
+
+  const variables = {
+    id: categoryId,
+    name: newName.trim(),
+  };
+
+  console.log("Updating category:", categoryId, "to name:", newName.trim());
+
+  try {
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Update Category):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Update category failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message ||
+          "Unknown GraphQL error in HTTP error response.";
+        console.error("GraphQL Errors in HTTP error response:", graphqlError);
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0]?.message || "Unknown error from GraphQL.";
+      console.error(
+        "Update category failed (GraphQL Errors):",
+        errorMessage,
+        result.errors
+      );
+      return null;
+    }
+
+    if (result.data && result.data.updateCategory) {
+      console.log("Category updated successfully:", result.data.updateCategory);
+      return result.data.updateCategory;
+    } else {
+      console.error(
+        "Update category failed: Unexpected response structure",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Update category Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
+export const createCategory = async (categoryName, restaurantId) => {
+  if (
+    categoryName === null ||
+    categoryName === undefined ||
+    typeof categoryName !== "string" ||
+    categoryName.trim() === ""
+  ) {
+    console.error(
+      "createCategoryAPI requires a non-empty string categoryName."
+    );
+    return null;
+  }
+  if (
+    restaurantId === null ||
+    restaurantId === undefined ||
+    typeof restaurantId !== "number" ||
+    !Number.isInteger(restaurantId)
+  ) {
+    console.error("createCategoryAPI requires a valid integer restaurantId.");
+    return null;
+  }
+
+  const query = `
+    mutation CreateCategory($name: String!, $restaurantId: Int!) {
+      createCategory(createCategoryInput: {
+        name: $name,
+        restaurantId: $restaurantId
+      }) {
+        id
+        name
+      }
+    }
+  `;
+
+  const variables = {
+    name: categoryName.trim(),
+    restaurantId: restaurantId,
+  };
+
+  console.log(
+    "Creating category:",
+    categoryName.trim(),
+    "for restaurant:",
+    restaurantId
+  );
+
+  try {
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Create Category):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Create category failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message ||
+          "Unknown GraphQL error in HTTP error response.";
+        console.error("GraphQL Errors in HTTP error response:", graphqlError);
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0]?.message || "Unknown error from GraphQL.";
+      console.error(
+        "Create category failed (GraphQL Errors):",
+        errorMessage,
+        result.errors
+      );
+      return null;
+    }
+
+    if (result.data && result.data.createCategory) {
+      console.log("Category created successfully:", result.data.createCategory);
+      return result.data.createCategory;
+    } else {
+      console.error(
+        "Create category failed: Unexpected response structure",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Create category Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
+export const deleteCategory = async (categoryId) => {
+  if (
+    categoryId === null ||
+    categoryId === undefined ||
+    typeof categoryId !== "number" ||
+    !Number.isInteger(categoryId)
+  ) {
+    console.error("deleteCategoryAPI requires a valid integer categoryId.");
+    return null;
+  }
+
+  const query = `
+    mutation RemoveCategory($id: Int!) {
+      removeCategory(id: $id) {
+        id
+      }
+    }
+  `;
+
+  const variables = {
+    id: categoryId,
+  };
+
+  console.log("Attempting to delete category with ID:", categoryId);
+
+  try {
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Delete Category):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Delete category failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message ||
+          "Unknown GraphQL error in HTTP error response.";
+        console.error("GraphQL Errors in HTTP error response:", graphqlError);
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0]?.message || "Unknown error from GraphQL.";
+      console.error(
+        "Delete category failed (GraphQL Errors):",
+        errorMessage,
+        result.errors
+      );
+      return null;
+    }
+
+    if (result.data && result.data.removeCategory) {
+      console.log(
+        "Category deleted successfully (Server confirmed removal for ID):",
+        result.data.removeCategory.id
+      );
+      return true;
+    } else {
+      console.error(
+        "Delete category failed: Unexpected response structure or category not found by server",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Delete category Error (Network/Fetch):", error);
+    return null;
+  }
+};
+export const updateRestaurantAPI = async (updateData) => {
+  if (
+    !updateData ||
+    typeof updateData !== "object" ||
+    updateData.id === null ||
+    updateData.id === undefined ||
+    typeof updateData.id !== "number" ||
+    !Number.isInteger(updateData.id)
+  ) {
+    console.error(
+      "updateRestaurantAPI requires updateData object with an integer 'id'."
+    );
+    return null;
+  }
+
+  const query = `
+    mutation UpdateRestaurantMutation($input: UpdateRestaurantInput!) {
+      updateRestaurant(updateRestaurantInput: $input) {
+        id
+        name
+         description
+         status
+         phone
+      openTime
+         closeTime
+         address {
+           id
+          street
+           ward
+           district
+          province
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    input: updateData,
+  };
+
+  console.log("Updating restaurant with data:", updateData);
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Update Restaurant):", result);
+
+    if (!response.ok && !result.errors) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Update restaurant failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0]?.message || "Unknown error from GraphQL.";
+      console.error(
+        "Update restaurant failed (GraphQL Errors):",
+        errorMessage,
+        result.errors
+      );
+      return null;
+    }
+
+    if (result.data && result.data.updateRestaurant) {
+      console.log(
+        "Restaurant updated successfully:",
+        result.data.updateRestaurant
+      );
+      return result.data.updateRestaurant;
+    } else {
+      console.error(
+        "Update restaurant failed: Unexpected response structure",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Update restaurant Error (Network/Fetch):", error);
+    return null;
+  }
+};
+export const updateAddressAPI = async (addressUpdateData) => {
+  if (
+    !addressUpdateData ||
+    typeof addressUpdateData !== "object" ||
+    addressUpdateData.id === null ||
+    addressUpdateData.id === undefined ||
+    typeof addressUpdateData.id !== 'number' ||
+    !Number.isInteger(addressUpdateData.id)
+  ) {
+    console.error(
+      "updateAddressAPI requires addressUpdateData object with an integer 'id'."
+    );
+    return null;
+  }
+
+  const query = `
+    mutation UpdateAddressMutation($input: UpdateAddressInput!) {
+      updateAddress(updateAddressInput: $input) {
+        id
+        street
+        ward
+        district
+        province
+      }
+    }
+  `;
+
+  const variables = {
+    input: addressUpdateData,
+  };
+
+  console.log("Updating address with data:", addressUpdateData);
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Update Address):", result);
+
+    if (!response.ok && !result.errors) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error("Update address failed (HTTP Status):", errorMessage, result);
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0]?.message || "Unknown error from GraphQL.";
+      console.error("Update address failed (GraphQL Errors):", errorMessage, result.errors);
+      return null;
+    }
+
+    if (result.data && result.data.updateAddress) {
+      console.log(
+        "Address updated successfully:",
+        result.data.updateAddress
+      );
+      return result.data.updateAddress;
+    } else {
+      console.error(
+        "Update address failed: Unexpected response structure",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Update address Error (Network/Fetch):", error);
     return null;
   }
 };

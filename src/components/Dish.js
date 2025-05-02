@@ -14,14 +14,13 @@ export default function Dish({ data, navigation }) {
       style={styles.container}
       onPress={() => navigation.navigate("DishDetail", { data })}
     >
-      <Image
-        source={require("../assets/images/dish.png")}
+      <Image source={{ uri: data.imageUrl }} 
         style={styles.image}
       />
       <View style={{ gap: Display.setWidth(2.5) }}>
         <Text>{data.name}</Text>
-        <View style={{ flexDirection: "row", gap: Display.setWidth(8) }}>
-          <Text>{data.numSell}</Text>
+        <View style={{ flexDirection: "row" }}>
+         
           <Text style={{ color: Color.DEFAULT_YELLOW }}>{data.price}</Text>
         </View>
         <Text style={{ color: Color.DEFAULT_GREEN }}>{data.status}</Text>
