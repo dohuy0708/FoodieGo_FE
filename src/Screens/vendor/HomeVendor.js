@@ -16,6 +16,7 @@ import {
   getCategoriesByRestaurantId,
   getMenusByCategoryId,
 } from "../../services/vendorService";
+import useSessionStore from "../../utils/store";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Picker } from "@react-native-picker/picker";
 import Dish from "../../components/Dish";
@@ -46,9 +47,10 @@ export default function HomeVendor({ navigation, route }) {
   const [errorRestaurant, setErrorRestaurant] = useState(null);
   const [errorCategories, setErrorCategories] = useState(null);
   const [errorMenus, setErrorMenus] = useState(null);
-
+  const { setRestaurantId,setCategories } = useSessionStore();
   const fetchRestaurantCallback = useCallback(() => {
     async function fetchData() {
+      setSelectedCategory(null);
       console.log("Focus: Fetching Restaurant");
       setIsLoadingRestaurant(true);
       setErrorRestaurant(null);
@@ -59,6 +61,13 @@ export default function HomeVendor({ navigation, route }) {
         if (Array.isArray(response) && response.length > 0) {
           const restaurantData = response[0];
           setRestaurant(restaurantData);
+          if (restaurantData.id) { 
+            setRestaurantId(restaurantData.id);
+            console.log("Đã lưu restaurantId vào Context:", restaurantData.id);
+          } else {
+            console.warn("Dữ liệu nhà hàng có nhưng không tìm thấy ID.");
+            setRestaurantId(null); 
+          }
         } else {
           setErrorRestaurant("Không tìm thấy thông tin nhà hàng.");
           setRestaurant(null);
@@ -101,6 +110,7 @@ export default function HomeVendor({ navigation, route }) {
       console.log("Categories response:", response);
       if (Array.isArray(response)) {
         setCategory(response);
+        setCategories(response);
       } else {
         setErrorCategories("Dữ liệu danh mục không hợp lệ.");
         setCategory([]);
@@ -164,10 +174,13 @@ export default function HomeVendor({ navigation, route }) {
       id: item.id,
       name: item.name,
       price: item.price ? `${item.price.toLocaleString('vi-VN')}đ` : 'N/A',
-      status: item.available ? "Đang bán" : "Hết hàng",
+      status: item.available ,
       description: item.description || "...",
       imageUrl: item.imageUrl,
+      quantity: item.quantity || 0,
+      categoryId: selectedCategory,
     };
+    console.log("Dish data:", dishData);
     return <Dish data={dishData} navigation={navigation} />;
   };
 
@@ -323,8 +336,8 @@ export default function HomeVendor({ navigation, route }) {
           >
             <TouchableOpacity
               style={styles.addDishButton}
-              disabled={selectedCategory === null || isLoadingMenus}
-              onPress={() => navigation.navigate("AddDish", { categoryId: selectedCategory })}
+              disabled={ isLoadingMenus}
+              onPress={() => navigation.navigate("AddDish",{category:category})}
             >
               <Text style={{ color: Color.DEFAULT_WHITE }}>
                 Thêm món ăn mới

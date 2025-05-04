@@ -60,7 +60,7 @@ export default function EditVendor({ navigation, route }) {
   const [detailAddress, setDetailAddress] = useState("");
   const [status, setStatus] = useState([
     { id: 'open', name: "Đang mở cửa" },
-    { id: 'closed', name: "Tạm đóng cửa" },
+    { id: 'close', name: "Tạm đóng cửa" },
   ]);
 
   const selectImage = async () => {
@@ -300,7 +300,7 @@ export default function EditVendor({ navigation, route }) {
       }
       console.log("Address update successful:", updatedAddress);
       addressUpdateSuccess = true;
-
+      console.log("status", selectedStatus);
       const restaurantUpdateData = {
         id: restaurant.id,
         name: name.trim(),
@@ -587,6 +587,7 @@ export default function EditVendor({ navigation, route }) {
                   } else {
                       setSelectedStatus(null);
                   }
+                 
               }}
               style={styles.picker}
               enabled={!isSaving}

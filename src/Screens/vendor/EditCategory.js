@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Color } from "../../constants";
 import Feather from "@expo/vector-icons/Feather";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {
   View,
@@ -20,14 +19,9 @@ import Display from "../../utils/Display";
 import {
   createCategory,
   updateCategory,
-  // deleteCategory, // Replaced by update status logic
-} from "../../services/vendorService"; // Adjust import path
+  updateCategoryStatus
+} from "../../services/vendorService"; 
 
-const updateCategoryStatus = async (categoryId, newStatus) => {
-  console.log(`API SIMULATION: Updating category ${categoryId} status to ${newStatus}`);
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return true;
-};
 
 
 export default function EditCategory({ route, navigation }) {

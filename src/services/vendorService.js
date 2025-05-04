@@ -1,4 +1,4 @@
-const GRAPHQL_ENDPOINT = "http://192.168.1.2:3001/graphql";
+const GRAPHQL_ENDPOINT = "http://192.168.2.2:3001/graphql";
 export const uploadImageToServer = async (selectedImage) => {
   if (!selectedImage || !selectedImage.uri) {
     Alert.alert("Lỗi", "Không có ảnh nào được chọn hoặc ảnh không hợp lệ.");
@@ -626,6 +626,7 @@ export const getMenusByCategoryId = async (categoryId) => {
         price
         available
         imageUrl
+        quantity
       }
     }
   `;
@@ -698,7 +699,7 @@ export const getMenusByCategoryId = async (categoryId) => {
     console.error("Get menus by categoryId Error (Network/Fetch):", error);
     return null;
   }
-}
+};
 export const updateCategory = async (categoryId, newName) => {
   if (
     categoryId === null ||
@@ -724,9 +725,11 @@ export const updateCategory = async (categoryId, newName) => {
       updateCategory(updateCategoryInput: {
         id: $id,
         name: $name
+        
       }) {
         id
         name
+        
       }
     }
   `;
@@ -798,7 +801,96 @@ export const updateCategory = async (categoryId, newName) => {
     return null;
   }
 };
+export const updateCategoryStatus = async (categoryId, status) => {
+  if (
+    categoryId === null ||
+    categoryId === undefined ||
+    typeof categoryId !== "number" ||
+    !Number.isInteger(categoryId)
+  ) {
+    console.error("updateCategoryAPI requires a valid integer categoryId.");
+    return null;
+  }
+  console.log("status", status);
+  const query = `
+    mutation UpdateCategory($id: Int!, $status: String!) {
+      updateCategory(updateCategoryInput: {
+        id: $id,
+        
+        isActive:$status
+      }) {
+        id
+       
+        isActive
+      }
+    }
+  `;
 
+  const variables = {
+    id: categoryId,
+    status: status,
+  };
+console.log("variables", variables);
+  try {
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Update Category):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Update category failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message ||
+          "Unknown GraphQL error in HTTP error response.";
+        console.error("GraphQL Errors in HTTP error response:", graphqlError);
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0]?.message || "Unknown error from GraphQL.";
+      console.error(
+        "Update category failed (GraphQL Errors):",
+        errorMessage,
+        result.errors
+      );
+      return null;
+    }
+
+    if (result.data && result.data.updateCategory) {
+      console.log("Category updated successfully:", result.data.updateCategory);
+      return result.data.updateCategory;
+    } else {
+      console.error(
+        "Update category failed: Unexpected response structure",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Update category Error (Network/Fetch):", error);
+    return null;
+  }
+};
 export const createCategory = async (categoryName, restaurantId) => {
   if (
     categoryName === null ||
@@ -825,7 +917,8 @@ export const createCategory = async (categoryName, restaurantId) => {
     mutation CreateCategory($name: String!, $restaurantId: Int!) {
       createCategory(createCategoryInput: {
         name: $name,
-        restaurantId: $restaurantId
+        restaurantId: $restaurantId,
+        isActive: "accepted"
       }) {
         id
         name
@@ -906,94 +999,6 @@ export const createCategory = async (categoryName, restaurantId) => {
   }
 };
 
-export const deleteCategory = async (categoryId) => {
-  if (
-    categoryId === null ||
-    categoryId === undefined ||
-    typeof categoryId !== "number" ||
-    !Number.isInteger(categoryId)
-  ) {
-    console.error("deleteCategoryAPI requires a valid integer categoryId.");
-    return null;
-  }
-
-  const query = `
-    mutation RemoveCategory($id: Int!) {
-      removeCategory(id: $id) {
-        id
-      }
-    }
-  `;
-
-  const variables = {
-    id: categoryId,
-  };
-
-  console.log("Attempting to delete category with ID:", categoryId);
-
-  try {
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify({
-        query: query,
-        variables: variables,
-      }),
-    });
-
-    const result = await response.json();
-    console.log("Server Response (Delete Category):", result);
-
-    if (!response.ok) {
-      const errorMessage = `Request failed with status code: ${response.status}`;
-      console.error(
-        "Delete category failed (HTTP Status):",
-        errorMessage,
-        result
-      );
-      if (result && result.errors) {
-        const graphqlError =
-          result.errors[0]?.message ||
-          "Unknown GraphQL error in HTTP error response.";
-        console.error("GraphQL Errors in HTTP error response:", graphqlError);
-      }
-      return null;
-    }
-
-    if (result.errors) {
-      const errorMessage =
-        result.errors[0]?.message || "Unknown error from GraphQL.";
-      console.error(
-        "Delete category failed (GraphQL Errors):",
-        errorMessage,
-        result.errors
-      );
-      return null;
-    }
-
-    if (result.data && result.data.removeCategory) {
-      console.log(
-        "Category deleted successfully (Server confirmed removal for ID):",
-        result.data.removeCategory.id
-      );
-      return true;
-    } else {
-      console.error(
-        "Delete category failed: Unexpected response structure or category not found by server",
-        result
-      );
-      return null;
-    }
-  } catch (error) {
-    console.error("Delete category Error (Network/Fetch):", error);
-    return null;
-  }
-};
 export const updateRestaurantAPI = async (updateData) => {
   if (
     !updateData ||
@@ -1019,13 +1024,7 @@ export const updateRestaurantAPI = async (updateData) => {
          phone
       openTime
          closeTime
-         address {
-           id
-          street
-           ward
-           district
-          province
-        }
+        avatar
       }
     }
   `;
@@ -1097,7 +1096,7 @@ export const updateAddressAPI = async (addressUpdateData) => {
     typeof addressUpdateData !== "object" ||
     addressUpdateData.id === null ||
     addressUpdateData.id === undefined ||
-    typeof addressUpdateData.id !== 'number' ||
+    typeof addressUpdateData.id !== "number" ||
     !Number.isInteger(addressUpdateData.id)
   ) {
     console.error(
@@ -1130,7 +1129,6 @@ export const updateAddressAPI = async (addressUpdateData) => {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        
       },
       body: JSON.stringify({
         query,
@@ -1143,22 +1141,27 @@ export const updateAddressAPI = async (addressUpdateData) => {
 
     if (!response.ok && !result.errors) {
       const errorMessage = `Request failed with status code: ${response.status}`;
-      console.error("Update address failed (HTTP Status):", errorMessage, result);
+      console.error(
+        "Update address failed (HTTP Status):",
+        errorMessage,
+        result
+      );
       return null;
     }
 
     if (result.errors) {
       const errorMessage =
         result.errors[0]?.message || "Unknown error from GraphQL.";
-      console.error("Update address failed (GraphQL Errors):", errorMessage, result.errors);
+      console.error(
+        "Update address failed (GraphQL Errors):",
+        errorMessage,
+        result.errors
+      );
       return null;
     }
 
     if (result.data && result.data.updateAddress) {
-      console.log(
-        "Address updated successfully:",
-        result.data.updateAddress
-      );
+      console.log("Address updated successfully:", result.data.updateAddress);
       return result.data.updateAddress;
     } else {
       console.error(
@@ -1172,3 +1175,270 @@ export const updateAddressAPI = async (addressUpdateData) => {
     return null;
   }
 };
+
+export const createMenu = async (menuData) => {
+  if (
+    !menuData ||
+    !menuData.name ||
+    menuData.price == null ||
+    menuData.quantity == null ||
+    !menuData.available ||
+    menuData.categoryId == null
+  ) {
+    console.error(
+      "createMenuAPI: Dữ liệu đầu vào không hợp lệ.",
+      menuData
+    );
+    return null;
+  }
+
+  const mutation = `
+    mutation CreateNewMenu($createMenuInput: CreateMenuInput!) {
+      createMenu(createMenuInput: $createMenuInput) {
+        id
+        name
+        description
+        price
+        quantity
+        imageUrl
+        available
+        
+      }
+    }
+  `;
+
+  const variables = {
+    createMenuInput: menuData,
+  };
+
+  console.log("Sending Create Menu Request:", { query: mutation, variables });
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Create Menu):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status: ${response.status}`;
+      console.error(
+        "Create menu failed (HTTP Status):",
+        errorMessage,
+        result?.errors || "No GraphQL errors field"
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("GraphQL Error:", err.message)
+        );
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      console.error("Create menu failed (GraphQL Errors):", result.errors);
+      result.errors.forEach((err) =>
+        console.error("GraphQL Error:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.createMenu) {
+      console.log("Menu created successfully:", result.data.createMenu);
+      return result.data.createMenu;
+    } else {
+      console.error(
+        "Create menu failed: Unexpected response structure.",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Create menu Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
+export const updateMenu = async (menuUpdateData) => {
+  if (!menuUpdateData || menuUpdateData.id == null) {
+    console.error(
+      "updateMenuAPI: ID món ăn là bắt buộc để cập nhật.",
+      menuUpdateData
+    );
+    return null;
+  }
+
+  const { id, ...updateFields } = menuUpdateData;
+  if (Object.keys(updateFields).length === 0) {
+     console.warn("updateMenuAPI: Không có trường nào được cung cấp để cập nhật ngoài ID.");
+  }
+
+  const mutation = `
+    mutation UpdateExistingMenu($updateMenuInput: UpdateMenuInput!) {
+      updateMenu(updateMenuInput: $updateMenuInput) {
+        id
+        name
+        description
+        price
+        quantity
+        imageUrl
+        available
+        
+      }
+    }
+  `;
+
+  const variables = {
+    updateMenuInput: menuUpdateData,
+  };
+
+  console.log("Sending Update Menu Request:", { query: mutation, variables });
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Update Menu):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status: ${response.status}`;
+      console.error(
+        "Update menu failed (HTTP Status):",
+        errorMessage,
+        result?.errors || "No GraphQL errors field"
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("GraphQL Error:", err.message)
+        );
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      console.error("Update menu failed (GraphQL Errors):", result.errors);
+       result.errors.forEach((err) =>
+        console.error("GraphQL Error:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.updateMenu) {
+      console.log("Menu updated successfully:", result.data.updateMenu);
+      return result.data.updateMenu;
+    } else {
+      console.error(
+        "Update menu failed: Unexpected response structure.",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Update menu Error (Network/Fetch):", error);
+    return null;
+  }
+};
+export const getMenuById= async (menuId) => {
+  if (
+    menuId === null ||
+    menuId === undefined ||
+    typeof menuId !== "number" ||
+    !Number.isInteger(menuId)
+  ) {
+    console.error("getMenuById requires a valid integer ownerId.");
+    return null;
+  }
+  const query = `
+    query GetMenuByIdQuery($id: Int!) {
+      menu(id: $id) {
+        id
+        name
+        description
+        price
+        quantity
+        imageUrl
+        available
+       
+      }
+    }
+  `;
+  const variables = {
+    id: menuId,
+  };
+
+  console.log('Sending Get Menu Request:', { query, variables });
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        
+      },
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log('Server Response (Get Menu):', result);
+
+    if (!response.ok) {
+      const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
+      console.error(
+        'Lấy món ăn thất bại (HTTP Status):',
+        errorMessage,
+        result?.errors || 'Không có trường lỗi GraphQL'
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("GraphQL Error:", err.message)
+        );
+      }
+    }
+
+    if (result.errors) {
+      console.error("Update menu failed (GraphQL Errors):", result.errors);
+       result.errors.forEach((err) =>
+        console.error("GraphQL Error:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.menu) {
+      console.log('Lấy món ăn thành công:', result.data.menu);
+      return result.data.menu 
+    } else if (result.data && result.data.menu === null) {
+      console.log('Không tìm thấy món ăn với ID:', menuId);
+      return null;
+    } else {
+      console.error('Lấy món ăn thất bại: Cấu trúc response không mong muốn.', result);
+      return null;
+    }
+
+  } catch (error) {
+    console.error('Lỗi khi lấy món ăn (Network/Fetch):', error);
+    return null;
+  }
+}
