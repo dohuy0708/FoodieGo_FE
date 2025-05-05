@@ -93,7 +93,10 @@ export default function HomeScreen({ navigation }) {
             </TouchableOpacity>
             {/* search */}
             <View style={styles.searchContainer}>
-              <TouchableOpacity style={styles.searchSection}>
+              <TouchableOpacity
+                style={styles.searchSection}
+                onPress={() => navigation.navigate("SearchScreen")}
+              >
                 <Ionicons name="search-outline" size={24} color={"#fff"} />
                 <Text style={styles.searchText}>Tìm kiếm</Text>
               </TouchableOpacity>
@@ -157,7 +160,12 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.horizontalListContainer}>
             <View style={styles.listHeader}>
               <Text style={styles.listHeaderTitle}>Đề xuất</Text>
-              <Text style={styles.listHeaderSubtitle}>Xem tất cả</Text>
+              <Text
+                style={styles.listHeaderSubtitle}
+                onPress={() => navigation.navigate("ExploreScreen")}
+              >
+                Xem tất cả
+              </Text>
             </View>
             <FlatList
               data={restaurants}
@@ -180,7 +188,12 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.horizontalListContainer}>
             <View style={styles.listHeader}>
               <Text style={styles.listHeaderTitle}>Xem gần đây</Text>
-              <Text style={styles.listHeaderSubtitle}>Xem tất cả</Text>
+              <Text
+                style={styles.listHeaderSubtitle}
+                onPress={() => navigation.navigate("ExploreScreen")}
+              >
+                Xem tất cả
+              </Text>
             </View>
             <FlatList
               data={restaurants}

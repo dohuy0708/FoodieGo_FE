@@ -35,7 +35,14 @@ const styles = StyleSheet.create({
     flexDirection: "row", // Để các phần tử hiển thị theo hàng ngang
     alignItems: "center", // Căn giữa các phần tử theo chiều dọc
     zIndex: 1, // Đảm bảo header hiển thị phía trên cùng
-    // Đổ bóng (Android)
+
+    // Đổ bóng chỉ phía dưới (iOS)
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 }, // bóng chỉ ở dưới
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+
+    // Đổ bóng phía dưới (Android)
     elevation: 4,
   },
   side: {

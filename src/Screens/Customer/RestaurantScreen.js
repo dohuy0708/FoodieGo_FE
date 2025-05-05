@@ -19,45 +19,6 @@ import Display from "../../utils/Display";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../components";
 
-const ListHeader = () => (
-  <View
-    style={{
-      flexDirection: "row",
-      flex: 1,
-      width: 10,
-      justifyContent: "flex-end",
-    }}
-  >
-    <View
-      style={{
-        backgroundColor: Colors.DEFAULT_WHITE,
-        width: 10,
-        borderTopLeftRadius: 32,
-        borderBottomLeftRadius: 32,
-      }}
-    />
-  </View>
-);
-
-const ListFooter = () => (
-  <View
-    style={{
-      flexDirection: "row",
-      flex: 1,
-      width: 10,
-    }}
-  >
-    <View
-      style={{
-        backgroundColor: Colors.DEFAULT_WHITE,
-        width: 10,
-        borderTopRightRadius: 32,
-        borderBottomRightRadius: 32,
-      }}
-    />
-  </View>
-);
-
 const mockRestaurant = {
   id: 1,
   name: "Bún Chả Hương Liên",

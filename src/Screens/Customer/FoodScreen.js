@@ -59,58 +59,62 @@ const FoodScreen = ({ navigation }) => {
   const itemCount = 2;
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.container}>
-        {/* Food image */}
-        <Image
-          source={{
-            uri: "https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/M6HASPARCZHYNN4XTUYT7H6PTE.jpg&w=800&h=600",
-          }}
-          style={styles.backgroundImage}
-        />
-        {/* Nút Back nằm ở góc trái trên của ảnh */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Separator height={Display.setHeight(23)} />
-        {/* Food description */}
-        <View style={styles.mainContainer}>
-          {/* name  */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Cơm gà sốt bơ tỏi</Text>
-          </View>
-          {/* Description */}
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.desText}>Gà sốt bơ tỏi ngon tuyệt cú mèo</Text>
-          </View>
-          {/* Price */}
-          <View style={styles.footerContainer}>
-            <Text style={styles.priceText}> 35.000 VND</Text>
-            <View style={styles.itemAddContainer}>
-              {itemCount > 0 ? (
-                <>
-                  <AntDesign
-                    name="minus"
-                    color={Colors.DEFAULT_YELLOW}
-                    size={18}
-                    //onPress={() => removeFromCart(id)}
-                  />
-                  <Text style={styles.itemCountText}>{itemCount}</Text>
-                </>
-              ) : null}
+      <ScrollView>
+        <View style={styles.container}>
+          {/* Food image */}
+          <Image
+            source={{
+              uri: "https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/M6HASPARCZHYNN4XTUYT7H6PTE.jpg&w=800&h=600",
+            }}
+            style={styles.backgroundImage}
+          />
+          {/* Nút Back nằm ở góc trái trên của ảnh */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Separator height={Display.setHeight(23)} />
 
-              <AntDesign
-                name="plus"
-                color={Colors.DEFAULT_YELLOW}
-                size={18}
-                //  onPress={() => addToCart(id)}
-              />
+          {/* Food description */}
+          <View style={styles.mainContainer}>
+            {/* name  */}
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Cơm gà sốt bơ tỏi</Text>
+            </View>
+            {/* Description */}
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.desText}>
+                Gà sốt bơ tỏi ngon tuyệt cú mèo
+              </Text>
+            </View>
+            {/* Price */}
+            <View style={styles.footerContainer}>
+              <Text style={styles.priceText}> 35.000 VND</Text>
+              <View style={styles.itemAddContainer}>
+                {itemCount > 0 ? (
+                  <>
+                    <AntDesign
+                      name="minus"
+                      color={Colors.DEFAULT_YELLOW}
+                      size={18}
+                      //onPress={() => removeFromCart(id)}
+                    />
+                    <Text style={styles.itemCountText}>{itemCount}</Text>
+                  </>
+                ) : null}
+
+                <AntDesign
+                  name="plus"
+                  color={Colors.DEFAULT_YELLOW}
+                  size={18}
+                  //  onPress={() => addToCart(id)}
+                />
+              </View>
             </View>
           </View>
-        </View>
-        <ScrollView>
+
           <View style={styles.commentContainer}>
             <View style={styles.titleReviewContainer}>
               <Text style={styles.titleReview}>Bình luận</Text>
@@ -133,8 +137,8 @@ const FoodScreen = ({ navigation }) => {
               </View>
             ))}
           </View>
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
