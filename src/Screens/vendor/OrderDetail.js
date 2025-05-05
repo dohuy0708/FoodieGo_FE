@@ -1,50 +1,104 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
+  ScrollView
 } from "react-native";
 import { Color } from "../../constants";
-import { useState } from "react";
-import Display from "../../utils/Display"; 
+import Display from "../../utils/Display";
+import { findOrderDetailByOrderId, GRAPHQL_ENDPOINT } from "../../services/vendorService";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+const formatPrice = (price) => {
+  if (typeof price !== 'number') return "N/A";
+  return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+};
 
-export default function OrderDetail({ navigation }) { 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-  const order = {
-    id: "DH1",
-    customer: "Hoàng Huy",
-    status: "Đang giao",
-    date: "2023-10-01",
-    price: "100.000đ",
-    hour: 10,
-    minute: 30,
-    dishList: [
-      { id: 1, name: "Cháo ếch Singapore", num: 3, price: "50.000đ" },
-      { id: 2, name: "Cháo ếch om", num: 2, price: "45.000đ" },
-      { id: 3, name: "Phở bò", num: 2, price: "60.000đ" },
-      { id: 4, name: "Cháo ếch xào", num: 2, price: "40.000đ" },
-      { id: 5, name: "Cháo ếch chiên", num: 2, price: "40.000đ" },
-      { id: 6, name: "Phở bò", num: 2, price: "60.000đ" },
-      { id: 7, name: "Cháo ếch xào", num: 2, price: "40.000đ" },
-      { id: 8, name: "Cháo ếch chiên", num: 2, price: "40.000đ" },
-    ],
-  };
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) throw new Error("Invalid Date");
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    } catch (e) {
+        console.error("Error formatting date:", e);
+        return 'N/A';
+    }
+};
 
-  const renderDishItem = ({ item }) => ( 
+const formatTime = (dateString) => {
+    if (!dateString) return 'N/A';
+     try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) throw new Error("Invalid Date");
+        const hour = date.getHours().toString().padStart(2, '0');
+        const minute = date.getMinutes().toString().padStart(2, '0');
+        return `${hour}h${minute}p`;
+    } catch (e) {
+        console.error("Error formatting time:", e);
+        return 'N/A';
+    }
+}
+
+
+export default function OrderDetail({ navigation, route }) {
+  const { orderId, orderBaseInfo } = route.params;
+const insets = useSafeAreaInsets();
+  const [orderDetails, setOrderDetails] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchDetails = useCallback(async () => {
+    if (!orderId) {
+      setError("Không có ID đơn hàng hợp lệ.");
+      setIsLoading(false);
+      return;
+    }
+    console.log(`Đang lấy chi tiết cho đơn hàng ID: ${orderId}`);
+    setIsLoading(true);
+    setError(null);
+    try {
+      const details = await findOrderDetailByOrderId(orderId);
+      console.log("Phản hồi API (Chi tiết đơn hàng):", details);
+
+      if (details && Array.isArray(details)) {
+        setOrderDetails(details);
+      } else if (details === null) {
+        console.log(`Không tìm thấy chi tiết cho đơn hàng ID: ${orderId}`);
+        setOrderDetails([]);
+      } else {
+        throw new Error("Dữ liệu chi tiết đơn hàng trả về không hợp lệ.");
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy chi tiết đơn hàng:", err);
+      setError(err.message || "Không thể tải chi tiết đơn hàng.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    fetchDetails();
+  }, [fetchDetails]);
+
+  const renderDishItem = ({ item }) => (
     <View style={styles.dishItem}>
-      <View style={styles.viewText}>
-        <Text style={styles.dishNameText}>{item.name}</Text>
-        <Text style={styles.dishQuantityText}>x {item.num}</Text>
+      <View style={styles.dishNameContainer}>
+          <Text style={styles.dishNameText}>{item.menu?.name || 'Tên món ăn không xác định'}</Text>
+          {item.note && <Text style={styles.dishNoteText}>Ghi chú: {item.note}</Text>}
       </View>
-      <Text style={styles.dishPriceText}>{item.price}</Text>
+      <View style={styles.dishQuantityPriceContainer}>
+        <Text style={styles.dishQuantityText}>x {item.quantity}</Text>
+        <Text style={styles.dishPriceText}>
+            {formatPrice(item.menu?.price)}
+        </Text>
+      </View>
     </View>
   );
 
@@ -52,34 +106,43 @@ export default function OrderDetail({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.header}>Chi tiết đơn hàng</Text>
 
-     
       <View style={styles.orderInfoContainer}>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Mã đơn hàng</Text>
-          <Text style={[styles.infoValue, { fontWeight: "bold" }]}>{order.id}</Text>
+          <Text style={[styles.infoValue, { fontWeight: "bold" }]}>{orderBaseInfo?.id || `DH${orderId}`}</Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Người đặt</Text>
-          <Text style={styles.infoValue}>{order.customer}</Text>
+          <Text style={styles.infoValue}>{orderBaseInfo?.customer || 'N/A'}</Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Tổng tiền</Text>
-          <Text style={styles.infoValue}>{order.price}</Text>
+          <Text style={[styles.infoValue, styles.totalPriceText]}>{orderBaseInfo?.price || 'N/A'}</Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Thời gian</Text>
           <Text style={styles.infoValue}>
-            {order.hour}h{order.minute}p
+             {orderBaseInfo?.originalDate ? formatTime(orderBaseInfo.originalDate) : (orderBaseInfo?.hour !== undefined ? `${orderBaseInfo.hour}h${orderBaseInfo.minute}p` : 'N/A')}
           </Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Ngày</Text>
-          <Text style={styles.infoValue}>{formatDate(order.date)}</Text>
+          <Text style={styles.infoValue}>
+             {orderBaseInfo?.originalDate ? formatDate(orderBaseInfo.originalDate) : (orderBaseInfo?.date ? formatDate(orderBaseInfo.date) : 'N/A')}
+           </Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Tình trạng</Text>
-          <Text style={[styles.infoValue, { color: Color.DEFAULT_GREEN, fontWeight: "bold" }]}>
-            {order.status}
+          <Text style={[
+              styles.infoValue,
+              styles.statusTextBase,
+              orderBaseInfo?.status === 'Đã giao' ? styles.statusCompleted :
+              orderBaseInfo?.status === 'Đang giao' ? styles.statusDelivering :
+              orderBaseInfo?.status === 'Chờ xác nhận' ? styles.statusPending :
+              orderBaseInfo?.status === 'Đã hủy' ? styles.statusCancelled :
+              styles.statusDefault
+            ]}>
+            {orderBaseInfo?.status || 'N/A'}
           </Text>
         </View>
       </View>
@@ -88,169 +151,247 @@ export default function OrderDetail({ navigation }) {
         Danh sách món ăn
       </Text>
 
-     
       <View style={styles.listContainer}>
-        <FlatList
-          data={order.dishList}
-          renderItem={renderDishItem}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContentContainer} 
-        />
+        {isLoading ? (
+          <ActivityIndicator style={styles.loadingIndicator} size="large" color={Color.DEFAULT_GREEN} />
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+             <TouchableOpacity onPress={fetchDetails} style={styles.retryButton}>
+                <Text style={styles.retryButtonText}>Thử lại</Text>
+             </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={orderDetails}
+            renderItem={renderDishItem}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContentContainer}
+            ListEmptyComponent={<Text style={styles.emptyListText}>Đơn hàng này không có món ăn nào.</Text>}
+          />
+        )}
       </View>
 
-      
-      {order.status==="Chờ xác nhận"&&(<View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[
-            styles.button,
-            styles.cancelButton, 
-            
-          ]}
-          onPress={() => {
-            console.log("Cancel order:", order.id);
-          
-            navigation.goBack(); 
-          }}
-        >
-          <Text style={styles.buttonText}>Hủy đơn</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.confirmButton]} 
-          onPress={() => {
-            console.log("Confirm order:", order.id);
-          
-            navigation.goBack(); 
-          }}
-        >
-          <Text style={styles.buttonText}>Xác nhận</Text>
-        </TouchableOpacity>
-      </View>)}
+      {!isLoading && !error && orderBaseInfo?.status === "Chờ xác nhận" && (
+        <View style={[styles.buttonContainer,{marginBottom: insets.bottom + Display.setHeight(2)}]}>
+          <TouchableOpacity
+            style={[styles.button, styles.cancelButton]}
+            onPress={() => {
+              console.log("Hủy đơn:", orderId);
+              navigation.goBack();
+            }}
+          >
+            <Text style={styles.buttonText}>Hủy đơn</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.confirmButton]}
+            onPress={() => {
+              console.log("Xác nhận đơn:", orderId);
+              navigation.goBack();
+            }}
+          >
+            <Text style={styles.buttonText}>Xác nhận</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: Display.setWidth(2.5), 
-    paddingTop: Display.setHeight(5), 
-   
     flex: 1,
-    width: "100%",
+    paddingHorizontal: Display.setWidth(2.5),
+    paddingTop: Display.setHeight(5),
     backgroundColor: "#fff",
-   
-    gap: Display.setHeight(2.5), 
+    gap: Display.setHeight(2),
   },
   header: {
     textAlign: "center",
     color: Color.DEFAULT_GREEN,
     fontWeight: "bold",
-    fontSize: 28,
-    width: '100%', 
+    fontSize: 24,
+    marginBottom: Display.setHeight(1),
   },
   orderInfoContainer: {
-    width: "100%",
-    paddingVertical: Display.setHeight(1.2), 
-    paddingHorizontal: Display.setWidth(5), 
-    
+    paddingVertical: Display.setHeight(1.5),
+    paddingHorizontal: Display.setWidth(4),
     borderRadius: 8,
     borderWidth: 1,
     borderColor: Color.LIGHT_GREY2,
-    gap: Display.setHeight(1.2), 
+    gap: Display.setHeight(1),
   },
   viewText: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "100%",
-    alignItems: 'center', 
+    alignItems: 'center',
   },
   infoLabel: {
-    fontSize: 16, 
-    color: Color.DEFAULT_BLACK,
+    fontSize: 15,
+    color: Color.GRAY_DARK,
   },
   infoValue: {
-    fontSize: 16,
-    color: Color.SECONDARY_BLACK,
+    fontSize: 15,
+    color: Color.DEFAULT_BLACK,
+    fontWeight: '500',
     textAlign: 'right',
+    flexShrink: 1,
   },
+   totalPriceText: {
+       color: Color.DEFAULT_GREEN,
+       fontWeight: 'bold',
+   },
+    statusTextBase: {
+        fontWeight: 'bold',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        overflow: 'hidden',
+        fontSize: 14,
+         minWidth: 90,
+         textAlign: 'center',
+    },
+    statusPending: {
+        backgroundColor: Color.DEFAULT_ORANGE + '30',
+        color: Color.DEFAULT_ORANGE,
+    },
+    statusConfirmed: {
+        backgroundColor: Color.INFO + '30',
+        color: Color.INFO,
+    },
+    statusDelivering: {
+        backgroundColor: Color.WARNING + '30',
+        color: Color.WARNING,
+    },
+    statusCompleted: {
+        backgroundColor: Color.DEFAULT_GREEN + '30',
+        color: Color.DEFAULT_GREEN,
+    },
+    statusCancelled: {
+        backgroundColor: Color.DEFAULT_RED + '30',
+        color: Color.DEFAULT_RED,
+    },
+    statusDefault: {
+         backgroundColor: Color.LIGHT_GREY2,
+         color: Color.GRAY_DARK,
+    },
   listHeader: {
     fontWeight: "bold",
     textAlign: "center",
-    fontSize: 20, 
-    color: Color.DEFAULT_BLACK, 
-    width: '100%', 
-   
+    fontSize: 18,
+    color: Color.DEFAULT_BLACK,
+    marginTop: Display.setHeight(1),
   },
   listContainer: {
-    flex: 1, 
-    width: '100%',
+    flex: 1,
     borderWidth: 1,
     borderColor: Color.LIGHT_GREY2,
     borderRadius: 8,
-    marginBottom: Display.setHeight(2.5),
   },
+   loadingIndicator: {
+       marginTop: Display.setHeight(10),
+   },
+   errorContainer: {
+       flex: 1,
+       justifyContent: 'center',
+       alignItems: 'center',
+       padding: 20,
+   },
+   errorText: {
+       fontSize: 16,
+       color: Color.DEFAULT_RED,
+       textAlign: 'center',
+       marginBottom: 15,
+   },
+   retryButton: {
+      backgroundColor: Color.DEFAULT_GREEN,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 5,
+   },
+   retryButtonText: {
+       color: Color.DEFAULT_WHITE,
+       fontSize: 16,
+       fontWeight: 'bold',
+   },
+   emptyListText: {
+        textAlign: 'center',
+        marginTop: Display.setHeight(5),
+        fontSize: 16,
+        color: Color.GRAY_DARK,
+   },
   listContentContainer: {
-    paddingHorizontal: Display.setWidth(3), 
+    paddingHorizontal: Display.setWidth(3),
     paddingVertical: Display.setHeight(1.5),
-    gap: Display.setHeight(1.5), 
+    gap: Display.setHeight(1.5),
   },
-  dishItem: { 
+  dishItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     width: "100%",
-    paddingVertical: Display.setHeight(1), 
-    paddingHorizontal: Display.setWidth(2), 
-    backgroundColor: "#fff",
-    borderRadius: 6,
-   
+    paddingVertical: Display.setHeight(0.8),
+    borderBottomWidth: 1,
+    borderBottomColor: Color.LIGHT_GREY2,
+  },
+  dishNameContainer: {
+      flex: 1,
+      marginRight: Display.setWidth(2),
+  },
+  dishQuantityPriceContainer: {
+      alignItems: 'flex-end',
+      minWidth: Display.setWidth(15),
   },
   dishNameText: {
     fontSize: 15,
+    fontWeight: '500',
     color: Color.DEFAULT_BLACK,
-    flex: 1, 
+    marginBottom: 3,
+  },
+  dishNoteText: {
+      fontSize: 13,
+      color: Color.GRAY_DARK,
+      fontStyle: 'italic',
   },
   dishQuantityText: {
     fontSize: 15,
     color: Color.DEFAULT_GREEN,
     fontWeight: 'bold',
-    marginLeft: Display.setWidth(2), 
+    marginBottom: 3,
   },
   dishPriceText: {
-    fontSize: 15,
-    color: Color.DEFAULT_ORANGE, 
-    marginTop: Display.setHeight(0.5), 
-    alignSelf: 'flex-end', 
+    fontSize: 14,
+    color: Color.DEFAULT_ORANGE,
+    fontWeight: '500',
   },
   buttonContainer: {
     flexDirection: "row",
-    gap: Display.setWidth(2.5), 
-    paddingHorizontal: Display.setWidth(5), 
-    paddingVertical: Display.setHeight(2), 
-    backgroundColor: "white", 
-    justifyContent: "flex-end",
-    borderTopWidth: 1, 
+    gap: Display.setWidth(5),
+    paddingHorizontal: Display.setWidth(5),
+    paddingVertical: Display.setHeight(1.5),
+    justifyContent: "center",
+    borderTopWidth: 1,
     borderTopColor: Color.LIGHT_GREY2,
-    width: '100%', 
-    alignSelf: 'center', 
+    backgroundColor: '#fff',
   },
   button: {
-    paddingHorizontal: Display.setWidth(5),
-    paddingVertical: Display.setHeight(1.2), 
-   
-    height: Display.setHeight(6), 
-    borderRadius: 10,
+    flex: 1,
+    paddingVertical: Display.setHeight(1.5),
+    height: Display.setHeight(6),
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    minWidth: Display.setWidth(25), 
   },
   buttonText: {
     color: "white",
-    fontSize: 16, 
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   cancelButton: {
-      backgroundColor: Color.DEFAULT_YELLOW,
-      paddingHorizontal: Display.setWidth(7.5), 
+    backgroundColor: Color.DEFAULT_YELLOW,
   },
   confirmButton: {
-      backgroundColor: Color.DEFAULT_GREEN,
-      paddingHorizontal: Display.setWidth(7.5), 
+    backgroundColor: Color.DEFAULT_GREEN,
   },
 });
