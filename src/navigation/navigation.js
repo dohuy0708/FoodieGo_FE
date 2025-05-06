@@ -41,6 +41,7 @@ export default function Navigation() {
     <UserProvider>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="HomeVendor" component={HomeVendor} />
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         
           <Stack.Screen name="SplashScreen" component={SplashScreen} />
@@ -56,7 +57,7 @@ export default function Navigation() {
           <Stack.Screen name="FoodScreen" component={FoodScreen} />
           <Stack.Screen name="ExploreScreen" component={ExploreScreen} />
           <Stack.Screen name="SearchScreen" component={SearchScreen} />
-          <Stack.Screen name="HomeVendor" component={HomeVendor} />
+          
           <Stack.Screen name="Register" component={Register} />
           <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
           <Stack.Screen name="Category" component={Category} />

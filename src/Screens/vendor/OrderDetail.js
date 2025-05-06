@@ -6,50 +6,71 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
 } from "react-native";
-import  Colors  from "../../constants/Colors";
+import Colors from "../../constants/Colors";
 import Display from "../../utils/Display";
-import { findOrderDetailByOrderId, GRAPHQL_ENDPOINT } from "../../services/vendorService";
+import {
+  findOrderDetailByOrderId,
+  updateOrderStatus
+} from "../../services/vendorService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 const formatPrice = (price) => {
-  if (typeof price !== 'number') return "N/A";
-  return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  if (typeof price !== "number") return "N/A";
+  return price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 };
 
 const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) throw new Error("Invalid Date");
-        const day = date.getDate().toString().padStart(2, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-    } catch (e) {
-        console.error("Error formatting date:", e);
-        return 'N/A';
-    }
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) throw new Error("Invalid Date");
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch (e) {
+    console.error("Error formatting date:", e);
+    return "N/A";
+  }
 };
-
-const formatTime = (dateString) => {
-    if (!dateString) return 'N/A';
-     try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) throw new Error("Invalid Date");
-        const hour = date.getHours().toString().padStart(2, '0');
-        const minute = date.getMinutes().toString().padStart(2, '0');
-        return `${hour}h${minute}p`;
-    } catch (e) {
-        console.error("Error formatting time:", e);
-        return 'N/A';
+const handleConfirmOrder = async (orderId) => {
+  try {
+    const response = await updateOrderStatus(orderId, "confirmed");
+    if (response.status === 200) {
+      console.log("Đơn hàng đã được xác nhận thành công.");
+    } else {
+      console.error("Lỗi khi xác nhận đơn hàng:", response.data.message);
     }
-}
-
+  } catch (error) {
+    console.error("Lỗi khi xác nhận đơn hàng:", error.message);
+  }
+};
+const handleCancelOrder = async (orderId) => {
+  try {
+    const response = await updateOrderStatus(orderId, "cancelled");
+    
+  } catch (error) {
+    console.error("Lỗi khi hủy đơn hàng:", error.message);
+  }
+};
+const formatTime = (dateString) => {
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) throw new Error("Invalid Date");
+    const hour = date.getHours().toString().padStart(2, "0");
+    const minute = date.getMinutes().toString().padStart(2, "0");
+    return `${hour}h${minute}p`;
+  } catch (e) {
+    console.error("Error formatting time:", e);
+    return "N/A";
+  }
+};
 
 export default function OrderDetail({ navigation, route }) {
   const { orderId, orderBaseInfo } = route.params;
-const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
   const [orderDetails, setOrderDetails] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -90,13 +111,17 @@ const insets = useSafeAreaInsets();
   const renderDishItem = ({ item }) => (
     <View style={styles.dishItem}>
       <View style={styles.dishNameContainer}>
-          <Text style={styles.dishNameText}>{item.menu?.name || 'Tên món ăn không xác định'}</Text>
-          {item.note && <Text style={styles.dishNoteText}>Ghi chú: {item.note}</Text>}
+        <Text style={styles.dishNameText}>
+          {item.menu?.name || "Tên món ăn không xác định"}
+        </Text>
+        {item.note && (
+          <Text style={styles.dishNoteText}>Ghi chú: {item.note}</Text>
+        )}
       </View>
       <View style={styles.dishQuantityPriceContainer}>
         <Text style={styles.dishQuantityText}>x {item.quantity}</Text>
         <Text style={styles.dishPriceText}>
-            {formatPrice(item.menu?.price)}
+          {formatPrice(item.menu?.price)}
         </Text>
       </View>
     </View>
@@ -109,57 +134,85 @@ const insets = useSafeAreaInsets();
       <View style={styles.orderInfoContainer}>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Mã đơn hàng</Text>
-          <Text style={[styles.infoValue, { fontWeight: "bold" }]}>{orderBaseInfo?.id || `DH${orderId}`}</Text>
+          <Text style={[styles.infoValue, { fontWeight: "bold" }]}>
+            {orderBaseInfo?.id || `DH${orderId}`}
+          </Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Người đặt</Text>
-          <Text style={styles.infoValue}>{orderBaseInfo?.customer || 'N/A'}</Text>
+          <Text style={styles.infoValue}>
+            {orderBaseInfo?.customer || "N/A"}
+          </Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Tổng tiền</Text>
-          <Text style={[styles.infoValue, styles.totalPriceText]}>{orderBaseInfo?.price || 'N/A'}</Text>
+          <Text style={[styles.infoValue, styles.totalPriceText]}>
+            {orderBaseInfo?.price || "N/A"}
+          </Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Thời gian</Text>
           <Text style={styles.infoValue}>
-             {orderBaseInfo?.originalDate ? formatTime(orderBaseInfo.originalDate) : (orderBaseInfo?.hour !== undefined ? `${orderBaseInfo.hour}h${orderBaseInfo.minute}p` : 'N/A')}
+            {orderBaseInfo?.originalDate
+              ? formatTime(orderBaseInfo.originalDate)
+              : orderBaseInfo?.hour !== undefined
+              ? `${orderBaseInfo.hour}h${orderBaseInfo.minute}p`
+              : "N/A"}
           </Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Ngày</Text>
           <Text style={styles.infoValue}>
-             {orderBaseInfo?.originalDate ? formatDate(orderBaseInfo.originalDate) : (orderBaseInfo?.date ? formatDate(orderBaseInfo.date) : 'N/A')}
-           </Text>
+            {orderBaseInfo?.originalDate
+              ? formatDate(orderBaseInfo.originalDate)
+              : orderBaseInfo?.date
+              ? formatDate(orderBaseInfo.date)
+              : "N/A"}
+          </Text>
+        </View>
+        <View>
+          <Text style={styles.labelText}>Địa chỉ:</Text>
+          <Text>{orderBaseInfo.address || "N/A"}</Text>
         </View>
         <View style={styles.viewText}>
           <Text style={styles.infoLabel}>Tình trạng</Text>
-          <Text style={[
+          <Text
+            style={[
               styles.infoValue,
               styles.statusTextBase,
-              orderBaseInfo?.status === 'Đã giao' ? styles.statusCompleted :
-              orderBaseInfo?.status === 'Đang giao' ? styles.statusDelivering :
-              orderBaseInfo?.status === 'Chờ xác nhận' ? styles.statusPending :
-              orderBaseInfo?.status === 'Đã hủy' ? styles.statusCancelled :
-              styles.statusDefault
-            ]}>
-            {orderBaseInfo?.status || 'N/A'}
+              orderBaseInfo?.status === "Đã giao"
+                ? styles.statusCompleted
+                : orderBaseInfo?.status === "Đang giao"
+                ? styles.statusDelivering
+                : orderBaseInfo?.status === "Chờ xác nhận"
+                ? styles.statusPending
+                : orderBaseInfo?.status === "Đã hủy"
+                ? styles.statusCancelled
+                : orderBaseInfo?.status === "Đã xác nhận"
+                ? styles.statusConfirmed
+                : styles.statusDefault,
+            ]}
+          >
+            {orderBaseInfo?.status || "N/A"}
           </Text>
         </View>
       </View>
 
-      <Text style={styles.listHeader}>
-        Danh sách món ăn
-      </Text>
+      <Text style={styles.listHeader}>Danh sách món ăn</Text>
 
-      <View style={styles.listContainer}>
+      <View style={[styles.listContainer,{marginBottom:insets.bottom+Display.setHeight(2)}]}>
         {isLoading ? (
-          <ActivityIndicator style={styles.loadingIndicator} size="large" color={Colors.DEFAULT_GREEN} />
+          <ActivityIndicator
+            style={styles.loadingIndicator}
+            size="large"
+            color={Colors.DEFAULT_GREEN}
+          />
         ) : error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-             <TouchableOpacity onPress={fetchDetails} style={styles.retryButton}>
-                <Text style={styles.retryButtonText}>Thử lại</Text>
-             </TouchableOpacity>
+            <TouchableOpacity onPress={fetchDetails} style={styles.retryButton}>
+              <Text style={styles.retryButtonText}>Thử lại</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <FlatList
@@ -168,17 +221,26 @@ const insets = useSafeAreaInsets();
             keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContentContainer}
-            ListEmptyComponent={<Text style={styles.emptyListText}>Đơn hàng này không có món ăn nào.</Text>}
+            ListEmptyComponent={
+              <Text style={styles.emptyListText}>
+                Đơn hàng này không có món ăn nào.
+              </Text>
+            }
           />
         )}
       </View>
 
       {!isLoading && !error && orderBaseInfo?.status === "Chờ xác nhận" && (
-        <View style={[styles.buttonContainer,{marginBottom: insets.bottom + Display.setHeight(2)}]}>
+        <View
+          style={[
+            styles.buttonContainer,
+            { marginBottom: insets.bottom + Display.setHeight(2) },
+          ]}
+        >
           <TouchableOpacity
             style={[styles.button, styles.cancelButton]}
             onPress={() => {
-              console.log("Hủy đơn:", orderId);
+              handleCancelOrder(orderId);
               navigation.goBack();
             }}
           >
@@ -187,7 +249,7 @@ const insets = useSafeAreaInsets();
           <TouchableOpacity
             style={[styles.button, styles.confirmButton]}
             onPress={() => {
-              console.log("Xác nhận đơn:", orderId);
+              handleConfirmOrder(orderId);
               navigation.goBack();
             }}
           >
@@ -225,7 +287,7 @@ const styles = StyleSheet.create({
   viewText: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: 'center',
+    alignItems: "center",
   },
   infoLabel: {
     fontSize: 15,
@@ -234,48 +296,48 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 15,
     color: Colors.DEFAULT_BLACK,
-    fontWeight: '500',
-    textAlign: 'right',
+    fontWeight: "500",
+    textAlign: "right",
     flexShrink: 1,
   },
-   totalPriceText: {
-       color: Colors.DEFAULT_GREEN,
-       fontWeight: 'bold',
-   },
-    statusTextBase: {
-        fontWeight: 'bold',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
-        overflow: 'hidden',
-        fontSize: 14,
-         minWidth: 90,
-         textAlign: 'center',
-    },
-    statusPending: {
-        backgroundColor: Colors.DEFAULT_ORANGE + '30',
-        color: Colors.DEFAULT_ORANGE,
-    },
-    statusConfirmed: {
-        backgroundColor: Colors.INFO + '30',
-        color: Colors.INFO,
-    },
-    statusDelivering: {
-        backgroundColor: Colors.WARNING + '30',
-        color: Colors.WARNING,
-    },
-    statusCompleted: {
-        backgroundColor: Colors.DEFAULT_GREEN + '30',
-        color: Colors.DEFAULT_GREEN,
-    },
-    statusCancelled: {
-        backgroundColor: Colors.DEFAULT_RED + '30',
-        color: Colors.DEFAULT_RED,
-    },
-    statusDefault: {
-         backgroundColor: Colors.LIGHT_GREY2,
-         color: Colors.GRAY_DARK,
-    },
+  totalPriceText: {
+    color: Colors.DEFAULT_GREEN,
+    fontWeight: "bold",
+  },
+  statusTextBase: {
+    fontWeight: "bold",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: "hidden",
+    fontSize: 14,
+    minWidth: 90,
+    textAlign: "center",
+  },
+  statusPending: {
+    backgroundColor: Colors.DEFAULT_ORANGE + "30",
+    color: Colors.DEFAULT_ORANGE,
+  },
+  statusConfirmed: {
+    backgroundColor: Colors.INFO + "30",
+    color: '#2196f3',
+  },
+  statusDelivering: {
+    backgroundColor: Colors.WARNING + "30",
+    color: Colors.WARNING,
+  },
+  statusCompleted: {
+    backgroundColor: Colors.DEFAULT_GREEN + "30",
+    color: Colors.DEFAULT_GREEN,
+  },
+  statusCancelled: {
+    backgroundColor: Colors.DEFAULT_RED + "30",
+    color: Colors.DEFAULT_RED,
+  },
+  statusDefault: {
+    backgroundColor: Colors.LIGHT_GREY2,
+    color: Colors.GRAY_DARK,
+  },
   listHeader: {
     fontWeight: "bold",
     textAlign: "center",
@@ -289,81 +351,81 @@ const styles = StyleSheet.create({
     borderColor: Colors.LIGHT_GREY2,
     borderRadius: 8,
   },
-   loadingIndicator: {
-       marginTop: Display.setHeight(10),
-   },
-   errorContainer: {
-       flex: 1,
-       justifyContent: 'center',
-       alignItems: 'center',
-       padding: 20,
-   },
-   errorText: {
-       fontSize: 16,
-       color: Colors.DEFAULT_RED,
-       textAlign: 'center',
-       marginBottom: 15,
-   },
-   retryButton: {
-      backgroundColor: Colors.DEFAULT_GREEN,
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 5,
-   },
-   retryButtonText: {
-       color: Colors.DEFAULT_WHITE,
-       fontSize: 16,
-       fontWeight: 'bold',
-   },
-   emptyListText: {
-        textAlign: 'center',
-        marginTop: Display.setHeight(5),
-        fontSize: 16,
-        color: Colors.GRAY_DARK,
-   },
+  loadingIndicator: {
+    marginTop: Display.setHeight(10),
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.DEFAULT_RED,
+    textAlign: "center",
+    marginBottom: 15,
+  },
+  retryButton: {
+    backgroundColor: Colors.DEFAULT_GREEN,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  retryButtonText: {
+    color: Colors.DEFAULT_WHITE,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  emptyListText: {
+    textAlign: "center",
+    marginTop: Display.setHeight(5),
+    fontSize: 16,
+    color: Colors.GRAY_DARK,
+  },
   listContentContainer: {
     paddingHorizontal: Display.setWidth(3),
     paddingVertical: Display.setHeight(1.5),
     gap: Display.setHeight(1.5),
   },
   dishItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     width: "100%",
     paddingVertical: Display.setHeight(0.8),
     borderBottomWidth: 1,
     borderBottomColor: Colors.LIGHT_GREY2,
   },
   dishNameContainer: {
-      flex: 1,
-      marginRight: Display.setWidth(2),
+    flex: 1,
+    marginRight: Display.setWidth(2),
   },
   dishQuantityPriceContainer: {
-      alignItems: 'flex-end',
-      minWidth: Display.setWidth(15),
+    alignItems: "flex-end",
+    minWidth: Display.setWidth(15),
   },
   dishNameText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.DEFAULT_BLACK,
     marginBottom: 3,
   },
   dishNoteText: {
-      fontSize: 13,
-      color: Colors.GRAY_DARK,
-      fontStyle: 'italic',
+    fontSize: 13,
+    color: Colors.GRAY_DARK,
+    fontStyle: "italic",
   },
   dishQuantityText: {
     fontSize: 15,
     color: Colors.DEFAULT_GREEN,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 3,
   },
   dishPriceText: {
     fontSize: 14,
     color: Colors.DEFAULT_ORANGE,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -373,7 +435,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderTopWidth: 1,
     borderTopColor: Colors.LIGHT_GREY2,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   button: {
     flex: 1,
@@ -386,7 +448,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   cancelButton: {
     backgroundColor: Colors.DEFAULT_YELLOW,

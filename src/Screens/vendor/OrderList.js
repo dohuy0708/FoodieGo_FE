@@ -97,6 +97,7 @@ export default function OrderList({ navigation }) {
                     hour: hour,
                     minute: minute,
                     originalDate: dateObj,
+                    address:`${order.address?.street || 'N/A'}, ${order.address?.ward || 'N/A'}, ${order.address?.district || 'N/A'}, ${order.address?.province || 'N/A'}`,
                     
                 };
            });
@@ -170,7 +171,7 @@ export default function OrderList({ navigation }) {
             style={[
                 styles.statusText,
                 item.status === 'Đã giao' ? styles.statusCompleted :
-                item.status === 'Đang giao' ? styles.statusDelivering :
+                item.status === 'Đã xác nhận' ? styles.statusConfirmed :
                 item.status === 'Chờ xác nhận' ? styles.statusPending :
                 item.status === 'Đã hủy' ? styles.statusCancelled :
                 styles.statusDefault
@@ -194,6 +195,10 @@ export default function OrderList({ navigation }) {
         <View style={styles.viewText}>
           <Text style={styles.labelText}>Ngày</Text>
           <Text style={styles.valueText}>{item.originalDate ? formatDate(item.originalDate) : 'N/A'}</Text>
+        </View>
+        <View >
+          <Text style={styles.labelText}>Địa chỉ:</Text>
+          <Text >{item.address || 'N/A'}</Text>
         </View>
         <TouchableOpacity
           style={styles.detailsButton}
