@@ -6,7 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import { Color } from "../../constants";
+import Colors from "../../constants/Colors";
 export default function Category() {
   const category = [
     { id: 1, name: "Cháo ếch", num: 1000 },
@@ -26,12 +26,12 @@ export default function Category() {
           marginRight: 10,
           paddingHorizontal: 20,
           width: "fix-content",
-          backgroundColor: Color.DEFAULT_GREEN,
+          backgroundColor: Colors.DEFAULT_GREEN,
           paddingVertical: 10,
           borderRadius: 10,
         }}
       >
-        <Text style={{ color: Color.DEFAULT_WHITE }}>Thêm loại</Text>
+        <Text style={{ color: Colors.DEFAULT_WHITE }}>Thêm loại</Text>
       </TouchableOpacity>
       <FlatList
         data={category}
@@ -46,7 +46,7 @@ export default function Category() {
                 gap: 10,
               }}
             >
-              <Text style={{ fontSize: 18, color: Color.DEFAULT_GREEN }}>
+              <Text style={{ fontSize: 18, color: Colors.DEFAULT_GREEN }}>
                 Tên loại
               </Text>
               <Text style={{ fontSize: 18 }}>{item.name}</Text>
@@ -58,7 +58,7 @@ export default function Category() {
                 padding: 10,
               }}
             >
-              <Text style={{ fontSize: 18, color: Color.DEFAULT_GREEN }}>
+              <Text style={{ fontSize: 18, color: Colors.DEFAULT_GREEN }}>
                 Số cửa hàng
               </Text>
               <Text style={{ fontSize: 18 }}>{item.num}</Text>
@@ -68,7 +68,7 @@ export default function Category() {
                 style={[
                   styles.button,
                   {
-                    backgroundColor: Color.DEFAULT_YELLOW,
+                    backgroundColor: Colors.DEFAULT_YELLOW,
                     paddingHorizontal: 30,
                   },
                 ]}
@@ -79,7 +79,7 @@ export default function Category() {
               <TouchableOpacity
                 style={[
                   styles.button,
-                  { backgroundColor: Color.DEFAULT_GREEN },
+                  { backgroundColor: Colors.DEFAULT_GREEN },
                 ]}
               >
                 <Text style={{ color: "white" }}>Chỉnh sửa</Text>
@@ -103,14 +103,14 @@ const styles = StyleSheet.create({
   header: {
     marginTop: 40,
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 24,
     marginBottom: 15,
   },
   divider: {
     height: 1,
-    backgroundColor: Color.DEFAULT_GREY,
+    backgroundColor: Colors.DEFAULT_GREY,
     marginVertical: 10,
   },
   buttonContainer: {
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   button: {
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: Color.DEFAULT_YELLOW,
+    backgroundColor: Colors.DEFAULT_YELLOW,
     height: 50,
     borderRadius: 10,
     alignItems: "center",

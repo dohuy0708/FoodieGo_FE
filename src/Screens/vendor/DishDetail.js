@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import Display from "../../utils/Display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -59,7 +59,7 @@ export default function DishDetail({ navigation, route }) {
   if (isLoading && !currentDishData) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Color.DEFAULT_GREEN} />
+        <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN} />
       </View>
     );
   }
@@ -80,7 +80,7 @@ export default function DishDetail({ navigation, route }) {
     <View style={styles.container}>
       {isLoading && (
            <View style={styles.inlineLoading}>
-               <ActivityIndicator size="small" color={Color.DEFAULT_WHITE} />
+               <ActivityIndicator size="small" color={Colors.DEFAULT_WHITE} />
            </View>
        )}
       <Image
@@ -105,7 +105,7 @@ export default function DishDetail({ navigation, route }) {
         <Text
           style={[
             styles.statusText,
-            { color: isAvailable ? Color.DEFAULT_GREEN : Color.DEFAULT_RED },
+            { color: isAvailable ? Colors.DEFAULT_GREEN : Colors.DEFAULT_RED },
           ]}
         >
           {isAvailable ? "Đang bán" : "Tạm dừng bán"}
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: Color.DEFAULT_WHITE,
+      backgroundColor: Colors.DEFAULT_WHITE,
   },
    inlineLoading: {
         position: 'absolute',
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
       padding: 20,
   },
   errorText: {
-      color: Color.DEFAULT_RED,
+      color: Colors.DEFAULT_RED,
       fontSize: 16,
       textAlign: 'center',
       marginBottom: 10,
@@ -175,11 +175,11 @@ const styles = StyleSheet.create({
   dishName: {
       fontSize: 24,
       fontWeight: "bold",
-      color: Color.DEFAULT_BLACK
+      color: Colors.DEFAULT_BLACK
   },
   dishDescription: {
       fontSize: 16,
-      color: Color.SECONDARY_BLACK,
+      color: Colors.SECONDARY_BLACK,
       lineHeight: 22,
   },
   priceContainer: {
@@ -188,11 +188,11 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
       fontSize: 18,
-      color: Color.SECONDARY_BLACK
+      color: Colors.SECONDARY_BLACK
   },
   priceValue: {
       fontSize: 18,
-      color: Color.DEFAULT_ORANGE,
+      color: Colors.DEFAULT_ORANGE,
       fontWeight: "bold",
   },
   statusText: {
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: Display.setWidth(5),
     paddingBottom: Display.setHeight(2.5),
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     
     alignItems: 'flex-end',
   },
@@ -220,15 +220,15 @@ const styles = StyleSheet.create({
     minWidth: Display.setWidth(30),
   },
   buttonText: {
-    color: Color.DEFAULT_WHITE,
+    color: Colors.DEFAULT_WHITE,
     fontSize: 16,
     fontWeight: "500",
   },
   editButton: {
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
   },
    disabledButton: {
-        backgroundColor: Color.LIGHT_GREY,
+        backgroundColor: Colors.LIGHT_GREY,
         opacity: 0.7,
     },
 });

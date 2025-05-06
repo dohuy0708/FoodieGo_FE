@@ -4,7 +4,7 @@ import { useRoute } from "@react-navigation/native";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Color } from "../constants";
+import Colors from "../constants/Colors";
 import Display from "../utils/Display";
 export default function Nav({ nav }) {
   const route = useRoute();
@@ -22,7 +22,7 @@ export default function Nav({ nav }) {
         <Feather 
           name="home" 
           size={24} 
-          color={currentRoute === "HomeVendor" ? Color.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "HomeVendor" ? Colors.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
 
@@ -30,7 +30,7 @@ export default function Nav({ nav }) {
         <FontAwesome5 
           name="list-alt" 
           size={24} 
-          color={currentRoute === "OrderList" ? Color.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "OrderList" ? Colors.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
 
@@ -38,7 +38,7 @@ export default function Nav({ nav }) {
         <FontAwesome5 
           name="chart-bar" 
           size={24} 
-          color={currentRoute === "Statistic" ? Color.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "Statistic" ? Colors.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
 
@@ -46,7 +46,7 @@ export default function Nav({ nav }) {
         <FontAwesome5 
           name="bell" 
           size={24} 
-          color={currentRoute === "Notification" ? Color.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "Notification" ? Colors.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
 
@@ -54,7 +54,7 @@ export default function Nav({ nav }) {
         <MaterialCommunityIcons 
           name="account-outline" 
           size={24} 
-          color={currentRoute === "Account" ? Color.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "Account" ? Colors.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
     </View>

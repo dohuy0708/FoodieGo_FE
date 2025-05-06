@@ -1,4 +1,5 @@
-const GRAPHQL_ENDPOINT = "http://192.168.137.1:3001/graphql";
+
+import GRAPHQL_ENDPOINT from "../../config";
 export const uploadImageToServer = async (selectedImage) => {
   if (!selectedImage || !selectedImage.uri) {
     Alert.alert("Lỗi", "Không có ảnh nào được chọn hoặc ảnh không hợp lệ.");

@@ -12,15 +12,34 @@ import { Header } from "../../components";
 import Logo from "../../assets/images/Logo.png";
 import { Color, Fonts } from "../../constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
-const VerifyScreen = () => {
+import { verifySignup } from "../../services/authService";
+import Colors from "../../constants/Colors";
+
+const VerifyScreen = ({ navigation }) => {
   const [otp, setOTP] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const handleSendOTP = () => {
+
+  const handleSendOTP = async () => {
     if (otp.trim() === "") {
       setErrorMessage("Vui lòng nhập mã xác thực");
     } else {
       setErrorMessage("");
-      // Xử lý tiếp đăng nhập
+      try {
+        const data = await verifySignup(otp);
+        console.log("API response:", data);
+
+        if (
+          data.data &&
+          data.data.verifySignup &&
+          data.data.verifySignup.token
+        ) {
+          navigation.navigate("LoginScreen");
+        } else {
+          setErrorMessage("Xác thực thất bại. Vui lòng kiểm tra mã OTP.");
+        }
+      } catch (error) {
+        setErrorMessage("Có lỗi xảy ra khi xác thực.");
+      }
     }
   };
   return (
@@ -33,7 +52,7 @@ const VerifyScreen = () => {
         <Text
           style={[Fonts.bodyText, { alignSelf: "flex-start", marginLeft: 30 }]}
         >
-          Mã xác thực đã được gửi đến email của bạn
+          Mã xác thực đã được gửi đến email của bạn! Thời hạn 5 phút.
         </Text>
         <View style={styles.inputContainer}>
           <Ionicons
@@ -58,7 +77,7 @@ const VerifyScreen = () => {
         <TouchableOpacity
           style={{
             marginTop: 10,
-            backgroundColor: Color.DEFAULT_GREEN,
+            backgroundColor: Colors.DEFAULT_GREEN,
             padding: 10,
             borderRadius: 5,
             width: "90%",
@@ -78,7 +97,6 @@ const VerifyScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
     alignItems: "center",
     backgroundColor: "white",
   },

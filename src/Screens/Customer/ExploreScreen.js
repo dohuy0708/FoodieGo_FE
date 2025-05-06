@@ -44,7 +44,7 @@ const restaurants = [
   },
 ];
 
-const FavoriteScreen = ({ navigation }) => {
+const ExploreScreen = ({ navigation }) => {
   const [activeSortItem, setActiveSortItem] = useState("Mới nhất");
 
   const sortStyle = (isActive) =>
@@ -68,11 +68,7 @@ const FavoriteScreen = ({ navigation }) => {
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.headerContainer}>
-          <View style={styles.center}>
-            <Text style={styles.title}>Yêu thích</Text>
-          </View>
-        </View>
+        <Header title="Đề xuất" onBackPress={() => navigation.goBack()} />
 
         {/* Sort list */}
         <View style={styles.sortListContainer}>
@@ -168,4 +164,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FavoriteScreen;
+export default ExploreScreen;

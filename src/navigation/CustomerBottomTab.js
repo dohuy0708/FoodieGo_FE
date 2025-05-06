@@ -1,15 +1,16 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { Color } from "../constants";
+import { Color, Colors } from "../constants";
 import {
   FavoriteScreen,
   HomeScreen,
   NotificationScreen,
   OrderScreen,
   ProfileScreen,
-} from "../Screens/Customer";
+} from "../Screens/customer";
 import Display from "../utils/Display";
+import AccountScreen from "../Screens/customer/AccountScreen";
 
 const CustomerBottomTabs = createBottomTabNavigator();
 export default () => (
@@ -21,12 +22,12 @@ export default () => (
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         height: Display.setHeight(7),
-        backgroundColor: Color.DEFAULT_WHITE,
+        backgroundColor: Colors.DEFAULT_WHITE,
         borderTopWidth: 0,
       },
       tabBarShowLabel: true,
-      tabBarActiveTintColor: Color.DEFAULT_GREEN,
-      tabBarInactiveTintColor: Color.INACTIVE_GREY,
+      tabBarActiveTintColor: Colors.DEFAULT_GREEN,
+      tabBarInactiveTintColor: Colors.INACTIVE_GREY,
     }}
   >
     <CustomerBottomTabs.Screen
@@ -83,7 +84,7 @@ export default () => (
     />
     <CustomerBottomTabs.Screen
       name="Tôi"
-      component={ProfileScreen}
+      component={AccountScreen}
       options={{
         tabBarIcon: ({ focused, color }) => (
           <Ionicons

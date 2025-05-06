@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import Feather from "@expo/vector-icons/Feather";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import NavAdmin from "../../components/NavAdmin";
@@ -74,7 +74,7 @@ export default function Comment({ navigation }) {
       <View style={styles.dateSelector}>
         <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
         <TouchableOpacity onPress={showMode}>
-          <Feather name="calendar" size={24} color={Color.SECONDARY_BLACK} />
+          <Feather name="calendar" size={24} color={Colors.SECONDARY_BLACK} />
         </TouchableOpacity>
       </View>
 
@@ -95,10 +95,10 @@ export default function Comment({ navigation }) {
           placeholder="Tìm kiếm tên quán/bình luận..."
           value={searchTerm}
           onChangeText={setSearchTerm}
-          placeholderTextColor={Color.GRAY_BORDER}
+          placeholderTextColor={Colors.GRAY_BORDER}
         />
         <TouchableOpacity>
-          <EvilIcons name="search" size={28} color={Color.SECONDARY_BLACK} />
+          <EvilIcons name="search" size={28} color={Colors.SECONDARY_BLACK} />
         </TouchableOpacity>
       </View>
 
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
       left: 0,
       right: 0,
       height: NAV_HEIGHT,
-      backgroundColor: Color.DEFAULT_WHITE,
+      backgroundColor: Colors.DEFAULT_WHITE,
       borderTopWidth: 1,
       borderTopColor: "#e0e0e0",
     },
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   header: {
     marginTop: Display.setHeight(5),
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 24,
     marginBottom: Display.setHeight(1.8),
@@ -170,19 +170,19 @@ const styles = StyleSheet.create({
     paddingVertical: Display.setHeight(1),
     paddingHorizontal: Display.setWidth(3),
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderRadius: 8,
     backgroundColor: "#fafafa",
   },
   dateText: {
     fontSize: 16,
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderRadius: 8,
     paddingHorizontal: Display.setWidth(2.5),
     backgroundColor: "#fafafa",
@@ -193,14 +193,14 @@ const styles = StyleSheet.create({
     height: Display.setHeight(5.5),
     fontSize: 16,
     paddingVertical: Display.setHeight(0.6),
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
   },
   flatListStyle: {
       flex: 1,
   },
   divider: {
     height: 1,
-    backgroundColor: Color.LIGHT_GREY2,
+    backgroundColor: Colors.LIGHT_GREY2,
     marginBottom: Display.setHeight(1.8),
   },
   listItem: {
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 18,
     fontWeight: "bold",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     marginBottom: Display.setHeight(0.6),
   },
   itemContent: {
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     paddingVertical: Display.setHeight(0.5),
   },
   detailsLinkText: {
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     textDecorationLine: "underline",
     fontSize: 14,
   },

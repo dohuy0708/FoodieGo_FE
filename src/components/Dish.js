@@ -1,5 +1,5 @@
 import React from "react";
-import { Color } from "../constants";
+import Colors from "../constants/Colors";
 import { useState } from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import Display from "../utils/Display";
@@ -22,8 +22,8 @@ export default function Dish({ data, navigation }) {
 
             color:
               data.status === "available"
-                ? Color.DEFAULT_GREEN
-                : Color.DEFAULT_RED,
+                ? Colors.DEFAULT_GREEN
+                : Colors.DEFAULT_RED,
             fontWeight: "bold",
           }}
         >

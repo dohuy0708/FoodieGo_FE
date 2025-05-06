@@ -12,7 +12,7 @@ import {
   Platform,
   Alert
 } from "react-native";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import React, { useState, useEffect } from "react";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
@@ -335,7 +335,7 @@ export default function EditVendor({ navigation, route }) {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={Color.DEFAULT_GREEN}/>
+        <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN}/>
       </View>
     );
   }
@@ -344,8 +344,8 @@ export default function EditVendor({ navigation, route }) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
         <Text style={{ color: 'red', textAlign: 'center' }}>Lỗi: Không tải được dữ liệu nhà hàng để chỉnh sửa.</Text>
-         <TouchableOpacity onPress={() => navigation.goBack()} style={{marginTop: 15, padding: 10, backgroundColor: Color.DEFAULT_YELLOW, borderRadius: 5}}>
-            <Text style={{color: Color.DEFAULT_WHITE}}>Quay lại</Text>
+         <TouchableOpacity onPress={() => navigation.goBack()} style={{marginTop: 15, padding: 10, backgroundColor: Colors.DEFAULT_YELLOW, borderRadius: 5}}>
+            <Text style={{color: Colors.DEFAULT_WHITE}}>Quay lại</Text>
         </TouchableOpacity>
       </View>
     );
@@ -373,7 +373,7 @@ export default function EditVendor({ navigation, route }) {
             onPress={selectImage}
             disabled={isSaving}
           >
-            <Text style={{ color: Color.DEFAULT_WHITE }}>Thay đổi ảnh</Text>
+            <Text style={{ color: Colors.DEFAULT_WHITE }}>Thay đổi ảnh</Text>
           </TouchableOpacity>
         </View>
 
@@ -385,7 +385,7 @@ export default function EditVendor({ navigation, route }) {
               placeholder="Tên Nhà Hàng/Quán ăn (*)"
               value={name}
               onChangeText={setName}
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
               editable={!isSaving}
             />
           </View>
@@ -396,7 +396,7 @@ export default function EditVendor({ navigation, route }) {
               value={phone}
               onChangeText={setPhone}
               keyboardType="numeric"
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
               editable={!isSaving}
               maxLength={11} 
             />
@@ -410,7 +410,7 @@ export default function EditVendor({ navigation, route }) {
               multiline={true}
               numberOfLines={4}
               textAlignVertical="top"
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
               editable={!isSaving}
             />
           </View>
@@ -513,7 +513,7 @@ export default function EditVendor({ navigation, route }) {
               multiline={true}
               numberOfLines={4}
               textAlignVertical="top"
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
               editable={!isSaving}
             />
           </View>
@@ -530,7 +530,7 @@ export default function EditVendor({ navigation, route }) {
                   setOpenTime(text.replace(/[^0-9]/g, ""))
                 }
                 maxLength={2}
-                 placeholderTextColor={Color.LIGHT_GREY2}
+                 placeholderTextColor={Colors.LIGHT_GREY2}
                  editable={!isSaving}
               />
               <Text style={styles.timeSeparator}>:</Text>
@@ -543,7 +543,7 @@ export default function EditVendor({ navigation, route }) {
                   setMinuteOpenTime(text.replace(/[^0-9]/g, ""))
                 }
                 maxLength={2}
-                 placeholderTextColor={Color.LIGHT_GREY2}
+                 placeholderTextColor={Colors.LIGHT_GREY2}
                  editable={!isSaving}
               />
             </View>
@@ -560,7 +560,7 @@ export default function EditVendor({ navigation, route }) {
                   setCloseTime(text.replace(/[^0-9]/g, ""))
                 }
                 maxLength={2}
-                 placeholderTextColor={Color.LIGHT_GREY2}
+                 placeholderTextColor={Colors.LIGHT_GREY2}
                  editable={!isSaving}
               />
               <Text style={styles.timeSeparator}>:</Text>
@@ -573,7 +573,7 @@ export default function EditVendor({ navigation, route }) {
                   setMinuteCloseTime(text.replace(/[^0-9]/g, ""))
                 }
                 maxLength={2}
-                 placeholderTextColor={Color.LIGHT_GREY2}
+                 placeholderTextColor={Colors.LIGHT_GREY2}
                  editable={!isSaving}
               />
             </View>
@@ -619,7 +619,7 @@ export default function EditVendor({ navigation, route }) {
               disabled={isSaving}
             >
               {isSaving ? (
-                 <ActivityIndicator size="small" color={Color.DEFAULT_WHITE} />
+                 <ActivityIndicator size="small" color={Colors.DEFAULT_WHITE} />
               ) : (
                  <Text style={styles.buttonText}>Lưu Thay đổi</Text>
               )}
@@ -634,7 +634,7 @@ export default function EditVendor({ navigation, route }) {
 const styles = StyleSheet.create({
   container1: {
     flex: 1,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   scrollView: {
     flex: 1,
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
   changeImageButton: {
     position: "absolute",
     right: Display.setWidth(4),
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
     paddingHorizontal: Display.setWidth(4),
     paddingVertical: Display.setHeight(1.2),
     borderRadius: 10,
@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
     paddingTop: Display.setHeight(6),
     paddingBottom: Display.setHeight(2),
     width: "100%",
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     alignItems: "center",
     gap: Display.setHeight(2.2),
   },
@@ -677,23 +677,23 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 22,
-    color: Color.PRIMARY || Color.DEFAULT_GREEN,
+    color: Colors.PRIMARY || Colors.DEFAULT_GREEN,
     marginBottom: Display.setHeight(1.2),
   },
   input_container: {
     width: "100%",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER || '#ccc',
+    borderColor: Colors.GRAY_BORDER || '#ccc',
     borderRadius: 8,
     paddingHorizontal: Display.setWidth(4),
     paddingVertical: Display.setHeight(0.6),
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   textAreaContainer: {
     paddingVertical: Display.setHeight(1.2),
   },
   input_text: {
-    color: Color.SECONDARY_BLACK || '#333',
+    color: Colors.SECONDARY_BLACK || '#333',
     fontSize: 15,
     paddingVertical: Platform.OS === 'ios' ? Display.setHeight(1.2) : Display.setHeight(0.8),
   },
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
   picker_container: {
     width: "100%",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER || "#ccc",
+    borderColor: Colors.GRAY_BORDER || "#ccc",
     borderRadius: 8,
     overflow: "hidden",
     backgroundColor: "#f9f9f9",
@@ -714,18 +714,18 @@ const styles = StyleSheet.create({
   picker: {
     width: "100%",
     height: '100%',
-    color: Color.SECONDARY_BLACK || "#333",
+    color: Colors.SECONDARY_BLACK || "#333",
     backgroundColor: 'transparent',
      marginTop: Platform.OS === 'android' ? -Display.setHeight(1) : 0,
      marginBottom: Platform.OS === 'android' ? -Display.setHeight(1) : 0,
   },
   pickerPlaceholder: {
     fontSize: 14,
-    color: Color.LIGHT_GREY2 || '#aaa',
+    color: Colors.LIGHT_GREY2 || '#aaa',
   },
   pickerItem: {
     fontSize: 15,
-    color: Color.SECONDARY_BLACK || '#333',
+    color: Colors.SECONDARY_BLACK || '#333',
   },
   input_time_container: {
     flexDirection: "row",
@@ -735,23 +735,23 @@ const styles = StyleSheet.create({
   },
   timeLabel: {
     fontSize: 15,
-    color: Color.SECONDARY_BLACK || '#555',
+    color: Colors.SECONDARY_BLACK || '#555',
     marginRight: Display.setWidth(2.5),
   },
   input_time: {
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER || '#ccc',
+    borderColor: Colors.GRAY_BORDER || '#ccc',
     borderRadius: 5,
     paddingHorizontal: Display.setWidth(2.5),
     paddingVertical: Display.setHeight(1),
     width: Display.setWidth(18),
     textAlign: "center",
     fontSize: 15,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   timeSeparator: {
     fontSize: 15,
-    color: Color.SECONDARY_BLACK || '#333',
+    color: Colors.SECONDARY_BLACK || '#333',
     fontWeight: "bold",
   },
   buttonContainer: {
@@ -774,14 +774,14 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: Color.DEFAULT_WHITE,
+    color: Colors.DEFAULT_WHITE,
     fontSize: 15,
     fontWeight: '500',
   },
   cancelButton: {
-    backgroundColor: Color.DEFAULT_YELLOW,
+    backgroundColor: Colors.DEFAULT_YELLOW,
   },
   saveButton: {
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
   },
 });

@@ -7,18 +7,18 @@ import {
   Animated,
   Dimensions,
   ScrollView,
-  Platform, // Import Platform for potential adjustments
+  Platform, 
 } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 import { Calendar } from "react-native-calendars";
 import Feather from "@expo/vector-icons/Feather";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import Nav from "../../components/Nav";
-import Display from "../../utils/Display"; // Import Display
+import Display from "../../utils/Display"; 
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
-const NAV_HEIGHT = Display.setHeight(8); // Example Nav height
+const NAV_HEIGHT = Display.setHeight(8); 
 
 export default function Statistic({ navigation }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +29,7 @@ export default function Statistic({ navigation }) {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
 
-  // Mock Data - Keep as is
+ 
   const orderNumber = 1000;
   const orderRevenue = 1000000;
   const topDish = [
@@ -45,7 +45,7 @@ export default function Statistic({ navigation }) {
     { name: "Pizza", quantity: 2 },
   ];
 
-  // --- Bottom Sheet Animation Logic - Keep as is ---
+  
   const toggleBottomSheet = () => {
     const toValue = isOpen ? 0 : 1;
     Animated.spring(slideAnim, {
@@ -103,8 +103,8 @@ export default function Statistic({ navigation }) {
         const dateString = currentDate.toISOString().split("T")[0];
         markedDates[dateString] = {
           selected: true,
-          color: Color.DEFAULT_WHITE,
-          textColor: Color.DEFAULT_GREEN,
+          color: Colors.DEFAULT_WHITE,
+          textColor: Colors.DEFAULT_GREEN,
         };
         currentDate.setDate(currentDate.getDate() + 1);
       }
@@ -124,16 +124,16 @@ export default function Statistic({ navigation }) {
           onDayPress={onDayPress}
           markedDates={markedDates}
           theme={{
-            backgroundColor: Color.DEFAULT_GREEN,
-            calendarBackground: Color.DEFAULT_GREEN,
+            backgroundColor: Colors.DEFAULT_GREEN,
+            calendarBackground: Colors.DEFAULT_GREEN,
             textSectionTitleColor: "white",
-            selectedDayBackgroundColor: Color.DEFAULT_WHITE,
-            selectedDayTextColor: Color.DEFAULT_GREEN,
-            todayTextColor: Color.DEFAULT_YELLOW,
+            selectedDayBackgroundColor: Colors.DEFAULT_WHITE,
+            selectedDayTextColor: Colors.DEFAULT_GREEN,
+            todayTextColor: Colors.DEFAULT_YELLOW,
             dayTextColor: "white",
             monthTextColor: "white",
             arrowColor: "white",
-            textDisabledColor: Color.DEFAULT_GREY,
+            textDisabledColor: Colors.DEFAULT_GREY,
             "stylesheet.calendar.header": {
               week: {
                 marginTop: Display.setHeight(0.6), // 5
@@ -203,7 +203,7 @@ export default function Statistic({ navigation }) {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",
     color: (opacity = 1) => {
-      const rgb = Color.DEFAULT_GREEN.replace("#", "");
+      const rgb = Colors.DEFAULT_GREEN.replace("#", "");
       const r = parseInt(rgb.substring(0, 2), 16);
       const g = parseInt(rgb.substring(2, 4), 16);
       const b = parseInt(rgb.substring(4, 6), 16);
@@ -217,7 +217,7 @@ export default function Statistic({ navigation }) {
     propsForDots: {
       r: "6", // Keep fixed
       strokeWidth: "2", // Keep fixed
-      stroke: Color.DEFAULT_GREEN,
+      stroke: Colors.DEFAULT_GREEN,
     },
     propsForBackgroundLines: {
       strokeDasharray: "",
@@ -310,7 +310,7 @@ export default function Statistic({ navigation }) {
                 styles.topDishItem,
                 {
                   backgroundColor:
-                    index % 2 === 0 ? Color.LIGHT_GREY : Color.DEFAULT_WHITE,
+                    index % 2 === 0 ? Colors.LIGHT_GREY : Colors.DEFAULT_WHITE,
                 },
               ]}
             >
@@ -408,7 +408,7 @@ export default function Statistic({ navigation }) {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   scrollContainer: {
     flex: 1,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: Display.setHeight(2.5),
 
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28,
   },
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
 
     paddingVertical: Display.setHeight(1.2),
 
-    backgroundColor: Color.LIGHT_GREY,
+    backgroundColor: Colors.LIGHT_GREY,
     borderRadius: 8,
 
     paddingHorizontal: Display.setWidth(2.5),
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: Display.setHeight(1.8),
     paddingHorizontal: Display.setWidth(2.5), 
-    backgroundColor: Color.LIGHT_GREY,
+    backgroundColor: Colors.LIGHT_GREY,
     borderRadius: 8, 
     alignItems: "center",
     gap: Display.setHeight(1), 
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   statisticValue: {
     fontSize: 18,
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     fontSize: 18, 
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     marginBottom: Display.setHeight(1.8), 
     textAlign: "center",
@@ -509,17 +509,17 @@ const styles = StyleSheet.create({
     marginBottom: Display.setHeight(2.5), 
     borderRadius: 8, 
     borderWidth: 1, 
-    borderColor: Color.LIGHT_GREY2,
+    borderColor: Colors.LIGHT_GREY2,
     overflow: "hidden", 
   },
   topDishesTitle: {
     fontSize: 18, 
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     paddingVertical: Display.setHeight(1.8), 
     paddingHorizontal: Display.setWidth(4), 
     textAlign: "center",
-    backgroundColor: Color.LIGHT_GREY, 
+    backgroundColor: Colors.LIGHT_GREY, 
   },
   topDishItem: {
     flexDirection: "row",
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     paddingVertical: Display.setHeight(1.5),
     paddingHorizontal: Display.setWidth(4),
     borderTopWidth: 1,
-    borderTopColor: Color.LIGHT_GREY2,
+    borderTopColor: Colors.LIGHT_GREY2,
   },
   topDishText: {
     fontSize: 16,
@@ -545,8 +545,8 @@ const styles = StyleSheet.create({
     height: NAV_HEIGHT,
     width: "100%",
     borderTopWidth: 1,
-    borderTopColor: Color.LIGHT_GREY2,
-    backgroundColor: Color.DEFAULT_WHITE,
+    borderTopColor: Colors.LIGHT_GREY2,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   bottomSheet: {
     position: "absolute",
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: "80%",
     bottom: 0,
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: "#000",
@@ -586,20 +586,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   selectedType: {
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   typeText: {
-    color: Color.DEFAULT_WHITE,
+    color: Colors.DEFAULT_WHITE,
     fontSize: 16,
     fontWeight: "500",
   },
   selectedTypeText: {
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
   },
   divider: {
     width: "100%",
     height: 1,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     opacity: 0.5,
     marginVertical: Display.setHeight(2.5),
   },
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dateInfoText: {
-    color: Color.DEFAULT_WHITE,
+    color: Colors.DEFAULT_WHITE,
     fontSize: 14,
     fontWeight: "500",
   },
@@ -653,8 +653,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectedMonth: {
-    backgroundColor: Color.DEFAULT_WHITE,
-    borderColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
+    borderColor: Colors.DEFAULT_WHITE,
   },
   monthText: {
     color: "white",
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   selectedMonthText: {
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
   },
   applyButton: {
     paddingVertical: Display.setHeight(1.5),
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginTop: Display.setHeight(2.5),
     alignSelf: "center",
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -678,7 +678,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   applyButtonText: {
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontSize: 18,
     fontWeight: "bold",
   },

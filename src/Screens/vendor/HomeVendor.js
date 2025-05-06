@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useFocusEffect } from '@react-navigation/native';
-import { Color } from "../../constants";
+import Colors from "../../constants/Colors";
 import {
   View,
   Text,
@@ -188,7 +188,7 @@ export default function HomeVendor({ navigation, route }) {
     if (isLoadingRestaurant) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Color.DEFAULT_GREEN} />
+          <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN} />
           <Text style={styles.loadingText}>Đang tải thông tin nhà hàng...</Text>
         </View>
       );
@@ -243,7 +243,7 @@ export default function HomeVendor({ navigation, route }) {
                 })
               }
             >
-              <Text style={{ color: Color.DEFAULT_WHITE }}>
+              <Text style={{ color: Colors.DEFAULT_WHITE }}>
                 Chỉnh sửa thông tin
               </Text>
             </TouchableOpacity>
@@ -263,7 +263,7 @@ export default function HomeVendor({ navigation, route }) {
                       : "star-o"
                   }
                   size={20}
-                  color={Color.DEFAULT_YELLOW}
+                  color={Colors.DEFAULT_YELLOW}
                 />
               ))}
               <Text style={styles.ratingText}>{ratingDisplay}</Text>
@@ -276,7 +276,7 @@ export default function HomeVendor({ navigation, route }) {
           <Text
             style={[
               styles.statusText,
-              { color: isOpen ? Color.DEFAULT_GREEN : Color.DEFAULT_RED },
+              { color: isOpen ? Colors.DEFAULT_GREEN : Colors.DEFAULT_RED },
             ]}
           >
             {isOpen ? "Đang mở cửa" : "Đang đóng cửa"}
@@ -287,13 +287,13 @@ export default function HomeVendor({ navigation, route }) {
               style={styles.edit_button}
               onPress={() => navigation.navigate("EditCategory",{category:category,restaurantId:restaurant.id})}
             >
-              <Text style={{ color: Color.DEFAULT_WHITE }}>
+              <Text style={{ color: Colors.DEFAULT_WHITE }}>
                 Chỉnh sửa danh mục
               </Text>
             </TouchableOpacity>
           </View>
 
-          {isLoadingCategories && <ActivityIndicator style={{marginTop: 10}} color={Color.DEFAULT_GREEN} />}
+          {isLoadingCategories && <ActivityIndicator style={{marginTop: 10}} color={Colors.DEFAULT_GREEN} />}
           {errorCategories && <Text style={styles.inlineErrorText}>{errorCategories}</Text>}
 
           {!isLoadingCategories && category.length > 0 && (
@@ -307,7 +307,7 @@ export default function HomeVendor({ navigation, route }) {
               >
                 <Picker.Item
                   label="-- Chọn danh mục --"
-                  style={{ fontSize: 13, color: Color.GRAY_BORDER }}
+                  style={{ fontSize: 13, color: Colors.GRAY_BORDER }}
                   value={null}
                   enabled={false}
                 />
@@ -339,14 +339,14 @@ export default function HomeVendor({ navigation, route }) {
               disabled={ isLoadingMenus}
               onPress={() => navigation.navigate("AddDish",{category:category})}
             >
-              <Text style={{ color: Color.DEFAULT_WHITE }}>
+              <Text style={{ color: Colors.DEFAULT_WHITE }}>
                 Thêm món ăn mới
               </Text>
             </TouchableOpacity>
           </View>
 
            <View style={styles.menuStatusContainer}>
-                {isLoadingMenus && <ActivityIndicator size="small" color={Color.DEFAULT_ORANGE} />}
+                {isLoadingMenus && <ActivityIndicator size="small" color={Colors.DEFAULT_ORANGE} />}
                 {errorMenus && <Text style={styles.inlineErrorText}>{errorMenus}</Text>}
                 {!isLoadingMenus && !errorMenus && menus.length === 0 && selectedCategory !== null && (
                      <Text style={styles.infoText}>Danh mục này chưa có món ăn.</Text>
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: Color.DARK_ONE || "#333",
+    color: Colors.DARK_ONE || "#333",
   },
   errorContainer: {
     flex: 1,
@@ -445,19 +445,19 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: Color.DEFAULT_RED || "red",
+    color: Colors.DEFAULT_RED || "red",
     textAlign: "center",
     fontWeight: 'bold',
   },
   inlineErrorText: {
       fontSize: 14,
-      color: Color.DEFAULT_RED || 'red',
+      color: Colors.DEFAULT_RED || 'red',
       textAlign: 'center',
       marginTop: 5,
   },
   infoText: {
       fontSize: 14,
-      color: Color.DARK_TWO || '#555',
+      color: Colors.DARK_TWO || '#555',
       textAlign: 'center',
       marginTop: 5,
       fontStyle: 'italic'
@@ -515,14 +515,14 @@ const styles = StyleSheet.create({
     marginBottom: Display.setHeight(1.5),
   },
   edit_button: {
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
     paddingVertical: Display.setHeight(1.2),
     paddingHorizontal: Display.setWidth(4),
     borderRadius: 8,
     alignItems: "center",
   },
   addDishButton: {
-    backgroundColor: Color.DEFAULT_ORANGE || "#FFA500",
+    backgroundColor: Colors.DEFAULT_ORANGE || "#FFA500",
     paddingVertical: Display.setHeight(1.2),
     paddingHorizontal: Display.setWidth(4),
     borderRadius: 8,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   picker_container: {
     width: "100%",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER || "#ccc",
+    borderColor: Colors.GRAY_BORDER || "#ccc",
     borderRadius: 8,
     overflow: "hidden",
     marginTop: Display.setHeight(1.8),
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   picker: {
     height: Display.setHeight(7),
     width: "100%",
-    color: Color.SECONDARY_BLACK || "#333",
+    color: Colors.SECONDARY_BLACK || "#333",
     backgroundColor: "transparent",
   },
   navContainer: {
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: NAV_HEIGHT,
-    backgroundColor: Color.DEFAULT_WHITE || "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
     zIndex: 10,

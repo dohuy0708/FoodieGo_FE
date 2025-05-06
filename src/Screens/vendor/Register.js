@@ -10,7 +10,7 @@ import {
   Alert,
   Platform,
 } from "react-native";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import React, { useState, useEffect } from "react";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
@@ -279,7 +279,7 @@ export default function Register({ navigation }) {
             placeholder="Tên Nhà Hàng/Quán ăn (*)"
             value={name}
             onChangeText={setName}
-            placeholderTextColor={Color.LIGHT_GREY2}
+            placeholderTextColor={Colors.LIGHT_GREY2}
           />
         </View>
         <View style={styles.input_container}>
@@ -289,7 +289,7 @@ export default function Register({ navigation }) {
             keyboardType="numeric"
             value={phone}
             onChangeText={setPhone}
-            placeholderTextColor={Color.LIGHT_GREY2}
+            placeholderTextColor={Colors.LIGHT_GREY2}
           />
         </View>
         <View style={[styles.input_container, styles.textAreaContainer]}>
@@ -301,7 +301,7 @@ export default function Register({ navigation }) {
             multiline={true}
             numberOfLines={4}
             textAlignVertical="top"
-            placeholderTextColor={Color.LIGHT_GREY2}
+            placeholderTextColor={Colors.LIGHT_GREY2}
           />
         </View>
 
@@ -391,7 +391,7 @@ export default function Register({ navigation }) {
             multiline={true}
             numberOfLines={4}
             textAlignVertical="top"
-            placeholderTextColor={Color.LIGHT_GREY2}
+            placeholderTextColor={Colors.LIGHT_GREY2}
           />
         </View>
 
@@ -405,7 +405,7 @@ export default function Register({ navigation }) {
               value={openTime}
               onChangeText={(text) => setOpenTime(text.replace(/[^0-9]/g, ""))}
               maxLength={2}
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
             />
             <Text style={styles.timeSeparator}>:</Text>
             <TextInput
@@ -417,7 +417,7 @@ export default function Register({ navigation }) {
                 setMinuteOpenTime(text.replace(/[^0-9]/g, ""))
               }
               maxLength={2}
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
             />
           </View>
         </View>
@@ -431,7 +431,7 @@ export default function Register({ navigation }) {
               value={closeTime}
               onChangeText={(text) => setCloseTime(text.replace(/[^0-9]/g, ""))}
               maxLength={2}
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
             />
             <Text style={styles.timeSeparator}>:</Text>
             <TextInput
@@ -443,7 +443,7 @@ export default function Register({ navigation }) {
                 setMinuteCloseTime(text.replace(/[^0-9]/g, ""))
               }
               maxLength={2}
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
             />
           </View>
         </View>
@@ -478,7 +478,7 @@ export default function Register({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   scrollView: {
     flex: 1,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28,
     width: "100%",
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   },
   subHeaderText: {
     fontSize: 14,
-    color: Color.DEFAULT_RED,
+    color: Colors.DEFAULT_RED,
     width: "100%",
     textAlign: "center",
     marginBottom: Display.setHeight(1.5),
@@ -508,18 +508,18 @@ const styles = StyleSheet.create({
   input_container: {
     width: "100%",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderRadius: 8,
     paddingHorizontal: Display.setWidth(3.5),
     paddingVertical:
       Platform.OS === "ios" ? Display.setHeight(1.2) : Display.setHeight(0.6),
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   textAreaContainer: {
     paddingVertical: Display.setHeight(1.2),
   },
   input_text: {
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
     fontSize: 16,
     paddingVertical: Platform.OS === "ios" ? 0 : Display.setHeight(0.6),
   },
@@ -531,25 +531,25 @@ const styles = StyleSheet.create({
   picker_container: {
     width: "100%",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderRadius: 10,
     overflow: "hidden",
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     justifyContent: "center",
   },
   picker: {
     width: "100%",
     height: Display.setHeight(7),
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
     backgroundColor: "transparent",
   },
   pickerPlaceholder: {
-    color: Color.LIGHT_GREY2,
+    color: Colors.LIGHT_GREY2,
     fontSize: 12,
   },
   pickerItem: {
     fontSize: 12,
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
   },
   input_time_container: {
     flexDirection: "row",
@@ -559,23 +559,23 @@ const styles = StyleSheet.create({
   },
   timeLabel: {
     fontSize: 16,
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
     marginRight: Display.setWidth(2),
   },
   input_time: {
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderRadius: 5,
     paddingHorizontal: Display.setWidth(2.5),
     paddingVertical: Display.setHeight(1),
     width: Display.setWidth(18),
     textAlign: "center",
     fontSize: 16,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   timeSeparator: {
     fontSize: 16,
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
     fontWeight: "bold",
   },
   view_image: {
@@ -583,9 +583,9 @@ const styles = StyleSheet.create({
     width: "100%",
     aspectRatio: 16 / 9,
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderRadius: 10,
-    backgroundColor: Color.LIGHT_GREY,
+    backgroundColor: Colors.LIGHT_GREY,
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
   },
 
   submitButton: {
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
 
     width: "100%",
   },

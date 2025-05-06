@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   ScrollView
 } from "react-native";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import Display from "../../utils/Display";
 import { findOrderDetailByOrderId, GRAPHQL_ENDPOINT } from "../../services/vendorService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -153,7 +153,7 @@ const insets = useSafeAreaInsets();
 
       <View style={styles.listContainer}>
         {isLoading ? (
-          <ActivityIndicator style={styles.loadingIndicator} size="large" color={Color.DEFAULT_GREEN} />
+          <ActivityIndicator style={styles.loadingIndicator} size="large" color={Colors.DEFAULT_GREEN} />
         ) : error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 24,
     marginBottom: Display.setHeight(1),
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Display.setWidth(4),
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Color.LIGHT_GREY2,
+    borderColor: Colors.LIGHT_GREY2,
     gap: Display.setHeight(1),
   },
   viewText: {
@@ -229,17 +229,17 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 15,
-    color: Color.GRAY_DARK,
+    color: Colors.GRAY_DARK,
   },
   infoValue: {
     fontSize: 15,
-    color: Color.DEFAULT_BLACK,
+    color: Colors.DEFAULT_BLACK,
     fontWeight: '500',
     textAlign: 'right',
     flexShrink: 1,
   },
    totalPriceText: {
-       color: Color.DEFAULT_GREEN,
+       color: Colors.DEFAULT_GREEN,
        fontWeight: 'bold',
    },
     statusTextBase: {
@@ -253,40 +253,40 @@ const styles = StyleSheet.create({
          textAlign: 'center',
     },
     statusPending: {
-        backgroundColor: Color.DEFAULT_ORANGE + '30',
-        color: Color.DEFAULT_ORANGE,
+        backgroundColor: Colors.DEFAULT_ORANGE + '30',
+        color: Colors.DEFAULT_ORANGE,
     },
     statusConfirmed: {
-        backgroundColor: Color.INFO + '30',
-        color: Color.INFO,
+        backgroundColor: Colors.INFO + '30',
+        color: Colors.INFO,
     },
     statusDelivering: {
-        backgroundColor: Color.WARNING + '30',
-        color: Color.WARNING,
+        backgroundColor: Colors.WARNING + '30',
+        color: Colors.WARNING,
     },
     statusCompleted: {
-        backgroundColor: Color.DEFAULT_GREEN + '30',
-        color: Color.DEFAULT_GREEN,
+        backgroundColor: Colors.DEFAULT_GREEN + '30',
+        color: Colors.DEFAULT_GREEN,
     },
     statusCancelled: {
-        backgroundColor: Color.DEFAULT_RED + '30',
-        color: Color.DEFAULT_RED,
+        backgroundColor: Colors.DEFAULT_RED + '30',
+        color: Colors.DEFAULT_RED,
     },
     statusDefault: {
-         backgroundColor: Color.LIGHT_GREY2,
-         color: Color.GRAY_DARK,
+         backgroundColor: Colors.LIGHT_GREY2,
+         color: Colors.GRAY_DARK,
     },
   listHeader: {
     fontWeight: "bold",
     textAlign: "center",
     fontSize: 18,
-    color: Color.DEFAULT_BLACK,
+    color: Colors.DEFAULT_BLACK,
     marginTop: Display.setHeight(1),
   },
   listContainer: {
     flex: 1,
     borderWidth: 1,
-    borderColor: Color.LIGHT_GREY2,
+    borderColor: Colors.LIGHT_GREY2,
     borderRadius: 8,
   },
    loadingIndicator: {
@@ -300,18 +300,18 @@ const styles = StyleSheet.create({
    },
    errorText: {
        fontSize: 16,
-       color: Color.DEFAULT_RED,
+       color: Colors.DEFAULT_RED,
        textAlign: 'center',
        marginBottom: 15,
    },
    retryButton: {
-      backgroundColor: Color.DEFAULT_GREEN,
+      backgroundColor: Colors.DEFAULT_GREEN,
       paddingVertical: 10,
       paddingHorizontal: 20,
       borderRadius: 5,
    },
    retryButtonText: {
-       color: Color.DEFAULT_WHITE,
+       color: Colors.DEFAULT_WHITE,
        fontSize: 16,
        fontWeight: 'bold',
    },
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: Display.setHeight(5),
         fontSize: 16,
-        color: Color.GRAY_DARK,
+        color: Colors.GRAY_DARK,
    },
   listContentContainer: {
     paddingHorizontal: Display.setWidth(3),
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: Display.setHeight(0.8),
     borderBottomWidth: 1,
-    borderBottomColor: Color.LIGHT_GREY2,
+    borderBottomColor: Colors.LIGHT_GREY2,
   },
   dishNameContainer: {
       flex: 1,
@@ -346,23 +346,23 @@ const styles = StyleSheet.create({
   dishNameText: {
     fontSize: 15,
     fontWeight: '500',
-    color: Color.DEFAULT_BLACK,
+    color: Colors.DEFAULT_BLACK,
     marginBottom: 3,
   },
   dishNoteText: {
       fontSize: 13,
-      color: Color.GRAY_DARK,
+      color: Colors.GRAY_DARK,
       fontStyle: 'italic',
   },
   dishQuantityText: {
     fontSize: 15,
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: 'bold',
     marginBottom: 3,
   },
   dishPriceText: {
     fontSize: 14,
-    color: Color.DEFAULT_ORANGE,
+    color: Colors.DEFAULT_ORANGE,
     fontWeight: '500',
   },
   buttonContainer: {
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     paddingVertical: Display.setHeight(1.5),
     justifyContent: "center",
     borderTopWidth: 1,
-    borderTopColor: Color.LIGHT_GREY2,
+    borderTopColor: Colors.LIGHT_GREY2,
     backgroundColor: '#fff',
   },
   button: {
@@ -389,9 +389,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   cancelButton: {
-    backgroundColor: Color.DEFAULT_YELLOW,
+    backgroundColor: Colors.DEFAULT_YELLOW,
   },
   confirmButton: {
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
   },
 });

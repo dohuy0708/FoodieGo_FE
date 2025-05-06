@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import { Picker } from "@react-native-picker/picker"; // Import Picker
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import Display from "../../utils/Display";
 import NavAdmin from "../../components/NavAdmin";
 
@@ -65,10 +65,10 @@ export default function ListVendor({ navigation }) {
   const renderItem = ({ item }) => {
     const statusTrimmed = item.status.trim();
 
-    let statusColor = Color.DEFAULT_BLACK;
-    if (statusTrimmed === "Đã xác nhận") statusColor = Color.DEFAULT_GREEN;
-    else if (statusTrimmed === "Chờ xác nhận") statusColor = Color.DEFAULT_ORANGE;
-    else if (statusTrimmed === "Đình chỉ") statusColor = Color.DEFAULT_RED;
+    let statusColor = Colors.DEFAULT_BLACK;
+    if (statusTrimmed === "Đã xác nhận") statusColor = Colors.DEFAULT_GREEN;
+    else if (statusTrimmed === "Chờ xác nhận") statusColor = Colors.DEFAULT_ORANGE;
+    else if (statusTrimmed === "Đình chỉ") statusColor = Colors.DEFAULT_RED;
 
     return (
       <View style={styles.listItemContainer}>
@@ -123,10 +123,10 @@ export default function ListVendor({ navigation }) {
           placeholder="Tìm kiếm cửa hàng..."
           value={searchTerm}
           onChangeText={setSearchTerm}
-          placeholderTextColor={Color.LIGHT_GREY2}
+          placeholderTextColor={Colors.LIGHT_GREY2}
         />
         <TouchableOpacity>
-          <EvilIcons name="search" size={28} color={Color.SECONDARY_BLACK} />
+          <EvilIcons name="search" size={28} color={Colors.SECONDARY_BLACK} />
         </TouchableOpacity>
       </View>
 
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: NAV_HEIGHT,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
   },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   header: {
     marginTop: Display.setHeight(5),
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 24,
     marginBottom: Display.setHeight(1.8),
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderRadius: 8,
     paddingHorizontal: Display.setWidth(2.5),
     backgroundColor: "#fafafa",
@@ -203,12 +203,12 @@ const styles = StyleSheet.create({
     height: Display.setHeight(5.5),
     fontSize: 16,
     paddingVertical: Display.setHeight(0.6),
-    color: Color.DEFAULT_BLACK,
+    color: Colors.DEFAULT_BLACK,
   },
   picker_container: { 
     width: "100%",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderRadius: 8,
     backgroundColor: "#fafafa",
     marginBottom: Display.setHeight(2), 
@@ -218,12 +218,12 @@ const styles = StyleSheet.create({
   picker: { 
     width: "100%",
     height: '100%', 
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
     backgroundColor: 'transparent', 
   },
   pickerItem: { 
     fontSize: 14,
-    color: Color.SECONDARY_BLACK,
+    color: Colors.SECONDARY_BLACK,
   },
   flatListStyle: {
       flex: 1,
@@ -241,11 +241,11 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Color.LIGHT_GREY2,
+    backgroundColor: Colors.LIGHT_GREY2,
   },
   itemNameText: {
       fontSize: 18,
-      color: Color.DEFAULT_GREEN,
+      color: Colors.DEFAULT_GREEN,
       fontWeight: 'bold',
   },
   itemStatusRow: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
       marginRight: Display.setWidth(2),
   },
   detailsLinkText: {
-      color: Color.DEFAULT_GREEN,
+      color: Colors.DEFAULT_GREEN,
       textDecorationLine: "underline",
       fontSize: 15,
   },
@@ -283,21 +283,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   deleteButton: {
-      backgroundColor: Color.DEFAULT_YELLOW,
+      backgroundColor: Colors.DEFAULT_YELLOW,
   },
   confirmButton: {
-      backgroundColor: Color.DEFAULT_GREEN,
+      backgroundColor: Colors.DEFAULT_GREEN,
   },
   suspendButton: {
-       backgroundColor: Color.DEFAULT_YELLOW,
+       backgroundColor: Colors.DEFAULT_YELLOW,
   },
   reactivateButton: {
-      backgroundColor: Color.DEFAULT_GREEN,
+      backgroundColor: Colors.DEFAULT_GREEN,
   },
   emptyListText: {
     textAlign: 'center',
     marginTop: Display.setHeight(5),
     fontSize: 16,
-    color: Color.DEFAULT_GREY,
+    color: Colors.DEFAULT_GREY,
   },
 });

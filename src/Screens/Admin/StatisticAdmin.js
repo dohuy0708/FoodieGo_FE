@@ -12,7 +12,7 @@ import {
 import { BarChart } from "react-native-chart-kit";
 import { Calendar } from "react-native-calendars";
 import Feather from "@expo/vector-icons/Feather";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import NavAdmin from "../../components/NavAdmin";
 import Display from "../../utils/Display";
 
@@ -85,8 +85,8 @@ export default function StatisticAdmin({ navigation }) {
         const dateString = currentDate.toISOString().split("T")[0];
         markedDates[dateString] = {
           selected: true,
-          color: Color.DEFAULT_WHITE,
-          textColor: Color.DEFAULT_GREEN,
+          color: Colors.DEFAULT_WHITE,
+          textColor: Colors.DEFAULT_GREEN,
         };
         currentDate.setDate(currentDate.getDate() + 1);
       }
@@ -106,16 +106,16 @@ export default function StatisticAdmin({ navigation }) {
           onDayPress={onDayPress}
           markedDates={markedDates}
           theme={{
-            backgroundColor: Color.DEFAULT_GREEN,
-            calendarBackground: Color.DEFAULT_GREEN,
+            backgroundColor: Colors.DEFAULT_GREEN,
+            calendarBackground: Colors.DEFAULT_GREEN,
             textSectionTitleColor: "white",
-            selectedDayBackgroundColor: Color.DEFAULT_WHITE,
-            selectedDayTextColor: Color.DEFAULT_GREEN,
-            todayTextColor: Color.DEFAULT_YELLOW,
+            selectedDayBackgroundColor: Colors.DEFAULT_WHITE,
+            selectedDayTextColor: Colors.DEFAULT_GREEN,
+            todayTextColor: Colors.DEFAULT_YELLOW,
             dayTextColor: "white",
             monthTextColor: "white",
             arrowColor: "white",
-            textDisabledColor: Color.DEFAULT_GREY,
+            textDisabledColor: Colors.DEFAULT_GREY,
             "stylesheet.calendar.header": {
               week: {
                 marginTop: Display.setHeight(0.6),
@@ -183,7 +183,7 @@ export default function StatisticAdmin({ navigation }) {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",
     color: (opacity = 1) => {
-      const rgb = Color.DEFAULT_GREEN.replace("#", "");
+      const rgb = Colors.DEFAULT_GREEN.replace("#", "");
       const r = parseInt(rgb.substring(0, 2), 16);
       const g = parseInt(rgb.substring(2, 4), 16);
       const b = parseInt(rgb.substring(4, 6), 16);
@@ -197,7 +197,7 @@ export default function StatisticAdmin({ navigation }) {
     propsForDots: {
       r: "6",
       strokeWidth: "2",
-      stroke: Color.DEFAULT_GREEN,
+      stroke: Colors.DEFAULT_GREEN,
     },
     propsForBackgroundLines: {
       strokeDasharray: "",
@@ -267,7 +267,7 @@ export default function StatisticAdmin({ navigation }) {
           </View>
           <View style={styles.statisticBox}>
             <Text style={styles.statisticLabel}>Tổng số người dùng </Text>
-            <Text style={[styles.statisticValue,{ color:Color.DEFAULT_YELLOW }]}>{totalUser}</Text>
+            <Text style={[styles.statisticValue,{ color:Colors.DEFAULT_YELLOW }]}>{totalUser}</Text>
           </View>
           <View style={styles.statisticBox}>
             <Text style={styles.statisticLabel}>Tổng cửa hàng mới</Text>
@@ -275,7 +275,7 @@ export default function StatisticAdmin({ navigation }) {
           </View>
           <View style={styles.statisticBox}>
             <Text style={styles.statisticLabel}>Tổng số cửa hàng </Text>
-            <Text style={[styles.statisticValue,{ color:Color.DEFAULT_YELLOW }]}>{totalRestaurant}</Text>
+            <Text style={[styles.statisticValue,{ color:Colors.DEFAULT_YELLOW }]}>{totalRestaurant}</Text>
           </View>
         </View>
 
@@ -361,7 +361,7 @@ export default function StatisticAdmin({ navigation }) {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   scrollContainer: {
     flex: 1,
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: NAV_HEIGHT,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
   },
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   header: {
     textAlign: "center",
     marginBottom: Display.setHeight(2.5),
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28,
   },
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Display.setHeight(2.5),
     paddingVertical: Display.setHeight(1.2),
-    backgroundColor: Color.LIGHT_GREY,
+    backgroundColor: Colors.LIGHT_GREY,
     borderRadius: 8,
     paddingHorizontal: Display.setWidth(2.5),
   },
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: Display.setHeight(1.8),
     paddingHorizontal: Display.setWidth(2.5),
-    backgroundColor: Color.LIGHT_GREY,
+    backgroundColor: Colors.LIGHT_GREY,
     borderRadius: 8,
     alignItems: "center",
     gap: Display.setHeight(1),
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   },
   statisticValue: {
     fontSize: 18,
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     textAlign: "right",
   },
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     fontSize: 18,
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     marginBottom: Display.setHeight(1.8),
     textAlign: "center",
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     right: 0,
     height: "80%",
     bottom: 0,
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: "#000",
@@ -497,20 +497,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   selectedType: {
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   typeText: {
-    color: Color.DEFAULT_WHITE,
+    color: Colors.DEFAULT_WHITE,
     fontSize: 16,
     fontWeight: "500",
   },
   selectedTypeText: {
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
   },
   divider: {
     width: "100%",
     height: 1,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     opacity: 0.5,
     marginVertical: Display.setHeight(2.5),
   },
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dateInfoText: {
-    color: Color.DEFAULT_WHITE,
+    color: Colors.DEFAULT_WHITE,
     fontSize: 14,
     fontWeight: "500",
   },
@@ -564,8 +564,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectedMonth: {
-    backgroundColor: Color.DEFAULT_WHITE,
-    borderColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
+    borderColor: Colors.DEFAULT_WHITE,
   },
   monthText: {
     color: "white",
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   selectedMonthText: {
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
   },
   applyButton: {
     paddingVertical: Display.setHeight(1.5),
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginTop: Display.setHeight(2.5),
     alignSelf: "center",
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   applyButtonText: {
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontSize: 18,
     fontWeight: "bold",
   },

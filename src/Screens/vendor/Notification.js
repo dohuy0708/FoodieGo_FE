@@ -6,7 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import { useState } from "react";
 import Nav from "../../components/Nav";
 import Display from "../../utils/Display"; 
@@ -153,15 +153,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Color.DEFAULT_WHITE,
+    backgroundColor: Colors.DEFAULT_WHITE,
     borderTopWidth: 1, 
-    borderTopColor: Color.LIGHT_GREY2,
+    borderTopColor: Colors.LIGHT_GREY2,
    
   },
   divider: {
     width: "100%",
     height: 1, 
-    backgroundColor: Color.LIGHT_GREY2, 
+    backgroundColor: Colors.LIGHT_GREY2, 
   },
   container: {
     paddingHorizontal: Display.setWidth(3), 
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28, 
     width: '100%', 
@@ -202,10 +202,10 @@ const styles = StyleSheet.create({
   },
   textStyle: {
       fontSize: 15, 
-      color: Color.DEFAULT_BLACK,
+      color: Colors.DEFAULT_BLACK,
   },
   button: {
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
     paddingVertical: Display.setHeight(1.2), 
     paddingHorizontal: Display.setWidth(5), 
     borderRadius: 5,

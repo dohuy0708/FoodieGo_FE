@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Display from "../../utils/Display";
 import Nav from "../../components/Nav";
@@ -23,7 +23,7 @@ export default function Account({ navigation }) {
           <MaterialIcons
             name="account-circle"
             size={Display.setWidth(50)}
-            color={Color.DEFAULT_GREEN}
+            color={Colors.DEFAULT_GREEN}
             style={{ alignSelf: "center" }}
           />
           <TouchableOpacity style={[styles.button, styles.logoutButton]}>
@@ -40,21 +40,21 @@ export default function Account({ navigation }) {
             style={styles.input}
             secureTextEntry={true}
             placeholder="Nhập mật khẩu cũ"
-            placeholderTextColor={Color.LIGHT_GREY2}
+            placeholderTextColor={Colors.LIGHT_GREY2}
           />
           <Text style={styles.label}>Mật khẩu mới</Text>
           <TextInput
             style={styles.input}
             secureTextEntry={true}
             placeholder="Nhập mật khẩu mới"
-            placeholderTextColor={Color.LIGHT_GREY2}
+            placeholderTextColor={Colors.LIGHT_GREY2}
           />
           <Text style={styles.label}>Nhập lại mật khẩu mới</Text>
           <TextInput
             style={styles.input}
             secureTextEntry={true}
             placeholder="Nhập lại mật khẩu mới"
-            placeholderTextColor={Color.LIGHT_GREY2}
+            placeholderTextColor={Colors.LIGHT_GREY2}
           />
           <TouchableOpacity style={[styles.button, styles.changePassButton]}>
             <Text style={styles.buttonText}>Đổi mật khẩu</Text>
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   header: {
     marginTop: Display.setHeight(5),
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 24,
     marginBottom: Display.setHeight(1.8),
@@ -95,14 +95,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     marginBottom: Display.setHeight(1.8),
   },
   usernameText: {
     fontSize: 20,
     textAlign: "center",
     marginTop: Display.setHeight(1.2),
-    color: Color.DEFAULT_BLACK,
+    color: Colors.DEFAULT_BLACK,
   },
   changePass: {
     borderRadius: 10,
@@ -110,22 +110,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: Display.setWidth(2.5),
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: Color.LIGHT_GREY2,
+    borderColor: Colors.LIGHT_GREY2,
     gap: Display.setHeight(1.8),
     marginBottom: Display.setHeight(2.5),
   },
   label: {
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontSize: 16,
   },
   input: {
-    borderColor: Color.GRAY_BORDER,
+    borderColor: Colors.GRAY_BORDER,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: Display.setWidth(2.5),
     paddingVertical: Display.setHeight(1.2),
     fontSize: 16,
-    color: Color.DEFAULT_BLACK,
+    color: Colors.DEFAULT_BLACK,
   },
   button: {
     paddingHorizontal: Display.setWidth(5),
@@ -137,11 +137,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   logoutButton: {
-    backgroundColor: Color.DEFAULT_YELLOW,
+    backgroundColor: Colors.DEFAULT_YELLOW,
     marginTop: Display.setHeight(2),
   },
   changePassButton: {
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
     alignSelf: "flex-end",
     marginTop: Display.setHeight(1),
   },
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: NAV_HEIGHT,
-    backgroundColor: Color.DEFAULT_WHITE || "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
   },

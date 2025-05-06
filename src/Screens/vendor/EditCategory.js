@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import Feather from "@expo/vector-icons/Feather";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {
@@ -236,14 +236,14 @@ export default function EditCategory({ route, navigation }) {
               style={styles.iconButton}
               disabled={isLoading}
             >
-              <Feather name="edit-2" size={22} color={isLoading ? Color.LIGHT_GREY2 : Color.DARK_FIVE} />
+              <Feather name="edit-2" size={22} color={isLoading ? Colors.LIGHT_GREY2 : Colors.DARK_FIVE} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => openBlockModal(item)}
               style={styles.iconButton}
               disabled={isLoading}
             >
-              <MaterialCommunityIcons name="eye-off-outline" size={24} color={isLoading ? Color.LIGHT_GREY2 : Color.DEFAULT_RED} />
+              <MaterialCommunityIcons name="eye-off-outline" size={24} color={isLoading ? Colors.LIGHT_GREY2 : Colors.DEFAULT_RED} />
             </TouchableOpacity>
           </>
         ) : (
@@ -252,7 +252,7 @@ export default function EditCategory({ route, navigation }) {
             style={styles.iconButton}
             disabled={isLoading}
           >
-             <MaterialCommunityIcons name="eye-outline" size={24} color={isLoading ? Color.LIGHT_GREY2 : Color.DEFAULT_GREEN} />
+             <MaterialCommunityIcons name="eye-outline" size={24} color={isLoading ? Colors.LIGHT_GREY2 : Colors.DEFAULT_GREEN} />
           </TouchableOpacity>
         )}
       </View>
@@ -309,19 +309,19 @@ export default function EditCategory({ route, navigation }) {
               value={categoryInput}
               onChangeText={setCategoryInput}
               autoCapitalize="sentences"
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
               editable={!isLoading}
             />
-            {isLoading && <ActivityIndicator size="small" color={Color.DEFAULT_GREEN} style={{marginTop: 5}}/>}
+            {isLoading && <ActivityIndicator size="small" color={Colors.DEFAULT_GREEN} style={{marginTop: 5}}/>}
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: Color.DEFAULT_YELLOW }, isLoading && styles.disabledButton ]}
+                style={[styles.modalButton, { backgroundColor: Colors.DEFAULT_YELLOW }, isLoading && styles.disabledButton ]}
                 onPress={closeModal}
                 disabled={isLoading} >
                 <Text style={styles.buttonText}>Hủy bỏ</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: Color.DEFAULT_GREEN }, isLoading && styles.disabledButton ]}
+                style={[styles.modalButton, { backgroundColor: Colors.DEFAULT_GREEN }, isLoading && styles.disabledButton ]}
                 onPress={handleSaveChanges}
                 disabled={isLoading} >
                 <Text style={styles.buttonText}>Lưu</Text>
@@ -345,18 +345,18 @@ export default function EditCategory({ route, navigation }) {
               value={categoryInput}
               onChangeText={setCategoryInput}
               autoCapitalize="sentences"
-              placeholderTextColor={Color.LIGHT_GREY2}
+              placeholderTextColor={Colors.LIGHT_GREY2}
               editable={!isLoading} />
-             {isLoading && <ActivityIndicator size="small" color={Color.DEFAULT_GREEN} style={{marginTop: 5}}/>}
+             {isLoading && <ActivityIndicator size="small" color={Colors.DEFAULT_GREEN} style={{marginTop: 5}}/>}
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[ styles.modalButton, { backgroundColor: Color.DEFAULT_YELLOW }, isLoading && styles.disabledButton ]}
+                style={[ styles.modalButton, { backgroundColor: Colors.DEFAULT_YELLOW }, isLoading && styles.disabledButton ]}
                 onPress={closeModal}
                 disabled={isLoading} >
                 <Text style={styles.buttonText}>Hủy bỏ</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[ styles.modalButton, { backgroundColor: Color.DEFAULT_GREEN }, isLoading && styles.disabledButton ]}
+                style={[ styles.modalButton, { backgroundColor: Colors.DEFAULT_GREEN }, isLoading && styles.disabledButton ]}
                 onPress={handleAddCategory}
                 disabled={isLoading} >
                 <Text style={styles.buttonText}>Thêm</Text>
@@ -377,16 +377,16 @@ export default function EditCategory({ route, navigation }) {
             <Text style={styles.confirmationText}>
               Bạn có chắc chắn muốn ẩn danh mục "{categoryToBlock?.name}" không? Khách hàng sẽ không thấy danh mục và các món trong đó.
             </Text>
-             {isLoading && <ActivityIndicator size="small" color={Color.DEFAULT_RED} style={{marginTop: 5}}/>}
+             {isLoading && <ActivityIndicator size="small" color={Colors.DEFAULT_RED} style={{marginTop: 5}}/>}
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[ styles.modalButton, { backgroundColor: Color.DEFAULT_YELLOW }, isLoading && styles.disabledButton ]}
+                style={[ styles.modalButton, { backgroundColor: Colors.DEFAULT_YELLOW }, isLoading && styles.disabledButton ]}
                 onPress={closeModal}
                 disabled={isLoading} >
                 <Text style={styles.buttonText}>Hủy bỏ</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[ styles.modalButton, { backgroundColor: Color.DEFAULT_RED }, isLoading && styles.disabledButton ]}
+                style={[ styles.modalButton, { backgroundColor: Colors.DEFAULT_RED }, isLoading && styles.disabledButton ]}
                 onPress={handleBlockCategory}
                 disabled={isLoading} >
                 <Text style={styles.buttonText}>Ẩn danh mục</Text>
@@ -407,16 +407,16 @@ export default function EditCategory({ route, navigation }) {
             <Text style={styles.confirmationText}>
               Bạn có chắc chắn muốn hiển thị lại danh mục "{categoryToUnblock?.name}" không?
             </Text>
-             {isLoading && <ActivityIndicator size="small" color={Color.DEFAULT_GREEN} style={{marginTop: 5}}/>}
+             {isLoading && <ActivityIndicator size="small" color={Colors.DEFAULT_GREEN} style={{marginTop: 5}}/>}
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[ styles.modalButton, { backgroundColor: Color.DEFAULT_YELLOW }, isLoading && styles.disabledButton ]}
+                style={[ styles.modalButton, { backgroundColor: Colors.DEFAULT_YELLOW }, isLoading && styles.disabledButton ]}
                 onPress={closeModal}
                 disabled={isLoading} >
                 <Text style={styles.buttonText}>Hủy bỏ</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[ styles.modalButton, { backgroundColor: Color.DEFAULT_GREEN }, isLoading && styles.disabledButton ]}
+                style={[ styles.modalButton, { backgroundColor: Colors.DEFAULT_GREEN }, isLoading && styles.disabledButton ]}
                 onPress={handleUnblockCategory}
                 disabled={isLoading} >
                 <Text style={styles.buttonText}>Hiển thị lại</Text>
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   addCategoryButton: {
-    backgroundColor: Color.DEFAULT_GREEN,
+    backgroundColor: Colors.DEFAULT_GREEN,
     paddingVertical: Display.setHeight(1.2),
     paddingHorizontal: Display.setWidth(5),
     borderRadius: 5,
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 25,
     width: "100%",
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
       fontSize: 18,
       fontWeight: '600',
-      color: Color.DARK_TWO,
+      color: Colors.DARK_TWO,
       width: '100%',
       marginTop: Display.setHeight(2),
       marginBottom: Display.setHeight(1),
@@ -491,12 +491,12 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 16,
-    color: Color.DEFAULT_BLACK,
+    color: Colors.DEFAULT_BLACK,
     flex: 1,
     marginRight: Display.setWidth(2),
   },
    blockedText: {
-    color: Color.DARK_THREE,
+    color: Colors.DARK_THREE,
     fontStyle: 'italic',
   },
   categoryItemActions: {
@@ -509,14 +509,14 @@ const styles = StyleSheet.create({
   },
    divider: {
     height: 1,
-    backgroundColor: Color.LIGHT_GREY2,
+    backgroundColor: Colors.LIGHT_GREY2,
     width: '90%',
     marginVertical: Display.setHeight(2.5),
   },
   emptyListText: {
       textAlign: 'center',
       marginTop: 15,
-      color: Color.GRAY,
+      color: Colors.GRAY,
       fontStyle: 'italic',
   },
   modalOverlay: {
@@ -545,16 +545,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
-    color: Color.DEFAULT_GREEN,
+    color: Colors.DEFAULT_GREEN,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: Color.GRAY_BORDER || '#ccc',
+    borderColor: Colors.GRAY_BORDER || '#ccc',
     borderRadius: 5,
     paddingVertical: Display.setHeight(1.2),
     paddingHorizontal: Display.setWidth(2.5),
     fontSize: 16,
-    color: Color.DEFAULT_BLACK,
+    color: Colors.DEFAULT_BLACK,
     width: '100%',
   },
   modalButtons: {
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   },
   confirmationText: {
     fontSize: 16,
-    color: Color.DARK_TWO,
+    color: Colors.DARK_TWO,
     textAlign: 'center',
     lineHeight: Display.setHeight(2.5),
   },

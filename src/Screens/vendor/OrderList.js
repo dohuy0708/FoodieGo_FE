@@ -11,7 +11,7 @@ import {
   RefreshControl 
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Color } from "../../constants";
+import  Colors  from "../../constants/Colors";
 import Feather from "@expo/vector-icons/Feather";
 import Nav from "../../components/Nav";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -216,7 +216,7 @@ export default function OrderList({ navigation }) {
         <View style={styles.dateSelector}>
           <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-            <Feather name="calendar" size={24} color={Color.DEFAULT_GREEN} />
+            <Feather name="calendar" size={24} color={Colors.DEFAULT_GREEN} />
           </TouchableOpacity>
         </View>
       </View>
@@ -232,7 +232,7 @@ export default function OrderList({ navigation }) {
 
       {isLoadingOrders && (
         <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Color.DEFAULT_GREEN} />
+            <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN} />
             <Text style={styles.loadingText}>Đang tải đơn hàng...</Text>
         </View>
       )}
@@ -277,18 +277,18 @@ export default function OrderList({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Color.BG_COLOR || "#f8f9fa",
+    backgroundColor: Colors.BG_COLOR || "#f8f9fa",
   },
   headerContainer: {
     paddingHorizontal: 15,
     paddingBottom: 15,
-    backgroundColor: Color.DEFAULT_WHITE || "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: Color.GRAY_BORDER || "#eee",
+    borderBottomColor: Colors.GRAY_BORDER || "#eee",
   },
   header: {
     textAlign: "center",
-    color: Color.PRIMARY_DARK || Color.DEFAULT_GREEN,
+    color: Colors.PRIMARY_DARK || Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 22,
     marginBottom: 15,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: Color.LIGHT_GRAY_BG || '#f0f0f0',
+    backgroundColor: Colors.LIGHT_GRAY_BG || '#f0f0f0',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   dateText: {
       fontSize: 16,
       fontWeight: '500',
-      color: Color.TEXT_DARK || '#333',
+      color: Colors.TEXT_DARK || '#333',
   },
   listStyle: {
     flex: 1,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   orderItem: {
     paddingVertical: 12,
     paddingHorizontal: 15,
-    backgroundColor: Color.DEFAULT_WHITE || "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderRadius: 8,
     marginBottom: 12,
     gap: 8,
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   divider: {
      height: 1,
-     backgroundColor: Color.GRAY_BORDER || "#eee",
+     backgroundColor: Colors.GRAY_BORDER || "#eee",
      marginVertical: 5,
   },
   viewText: {
@@ -341,20 +341,20 @@ const styles = StyleSheet.create({
   },
   labelText: {
       fontSize: 14,
-      color: Color.GRAY_DARK || '#555',
+      color: Colors.GRAY_DARK || '#555',
       marginRight: 5,
   },
   valueText: {
       fontSize: 14,
       fontWeight: '500',
-      color: Color.TEXT_DARK || '#333',
+      color: Colors.TEXT_DARK || '#333',
       flexShrink: 1,
       textAlign: 'right',
   },
   orderIdText: {
       fontSize: 15,
       fontWeight: 'bold',
-      color: Color.PRIMARY || Color.DEFAULT_GREEN,
+      color: Colors.PRIMARY || Colors.DEFAULT_GREEN,
   },
   statusText: {
       fontSize: 13,
@@ -365,30 +365,30 @@ const styles = StyleSheet.create({
       overflow: 'hidden',
       textAlign: 'center',
       minWidth: 110,
-      color: Color.DEFAULT_WHITE,
+      color: Colors.DEFAULT_WHITE,
   },
   statusPending: {
-      backgroundColor: Color.DEFAULT_ORANGE || '#ff9800',
+      backgroundColor: Colors.DEFAULT_ORANGE || '#ff9800',
   },
   statusConfirmed: {
-      backgroundColor: Color.INFO || '#2196f3',
+      backgroundColor: Colors.INFO || '#2196f3',
   },
   statusDelivering: {
-      backgroundColor: Color.WARNING || '#ffc107',
+      backgroundColor: Colors.WARNING || '#ffc107',
       color: '#333',
   },
   statusCompleted: {
-      backgroundColor: Color.DEFAULT_GREEN || '#4caf50',
+      backgroundColor: Colors.DEFAULT_GREEN || '#4caf50',
   },
   statusCancelled: {
-      backgroundColor: Color.DEFAULT_RED || '#f44336',
+      backgroundColor: Colors.DEFAULT_RED || '#f44336',
   },
   statusDefault: {
-       backgroundColor: Color.GRAY_MEDIUM || '#9e9e9e',
+       backgroundColor: Colors.GRAY_MEDIUM || '#9e9e9e',
   },
    priceText: {
       fontWeight: 'bold',
-      color: Color.SUCCESS || Color.DEFAULT_GREEN,
+      color: Colors.SUCCESS || Colors.DEFAULT_GREEN,
    },
    detailsButton: {
        marginTop: 10,
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
        paddingVertical: 5,
    },
    detailsButtonText: {
-       color: Color.PRIMARY || Color.DEFAULT_GREEN,
+       color: Colors.PRIMARY || Colors.DEFAULT_GREEN,
        textDecorationLine: "underline",
        fontSize: 14,
        fontWeight: 'bold',
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   loadingText: {
       marginTop: 10,
       fontSize: 16,
-      color: Color.GRAY_DARK,
+      color: Colors.GRAY_DARK,
   },
   errorContainer: {
       flex: 1,
@@ -422,17 +422,17 @@ const styles = StyleSheet.create({
   errorText: {
       textAlign: 'center',
       fontSize: 16,
-      color: Color.DEFAULT_RED,
+      color: Colors.DEFAULT_RED,
       marginBottom: 15,
   },
    retryButton: {
-      backgroundColor: Color.PRIMARY || Color.DEFAULT_GREEN,
+      backgroundColor: Colors.PRIMARY || Colors.DEFAULT_GREEN,
       paddingVertical: 10,
       paddingHorizontal: 20,
       borderRadius: 5,
    },
    retryButtonText: {
-       color: Color.DEFAULT_WHITE,
+       color: Colors.DEFAULT_WHITE,
        fontSize: 16,
        fontWeight: 'bold',
    },
@@ -446,15 +446,15 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: "center",
     fontSize: 16,
-    color: Color.GRAY_DARK,
+    color: Colors.GRAY_DARK,
   },
   navContainer: {
     position: "absolute",
     left: 0,
     right: 0,
-    backgroundColor: Color.DEFAULT_WHITE || "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderTopWidth: 1,
-    borderTopColor: Color.GRAY_BORDER || "#e0e0e0",
+    borderTopColor: Colors.GRAY_BORDER || "#e0e0e0",
     height: 60,
   },
 });
