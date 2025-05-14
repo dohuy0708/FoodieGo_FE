@@ -1,4 +1,3 @@
-
 import GRAPHQL_ENDPOINT from "../../config";
 export const uploadImageToServer = async (selectedImage) => {
   if (!selectedImage || !selectedImage.uri) {
@@ -1686,7 +1685,9 @@ export const findOrderDetailByOrderId = async (orderId) => {
     typeof orderId !== "number" ||
     !Number.isInteger(orderId)
   ) {
-    console.error("findOrderDetailByOrderId yêu cầu một orderId là số nguyên hợp lệ.");
+    console.error(
+      "findOrderDetailByOrderId yêu cầu một orderId là số nguyên hợp lệ."
+    );
     return null;
   }
 
@@ -1708,14 +1709,14 @@ export const findOrderDetailByOrderId = async (orderId) => {
     orderId: orderId,
   };
 
-  console.log('Gửi yêu cầu lấy chi tiết đơn hàng:', { query, variables });
+  console.log("Gửi yêu cầu lấy chi tiết đơn hàng:", { query, variables });
 
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify({
         query: query,
@@ -1724,14 +1725,14 @@ export const findOrderDetailByOrderId = async (orderId) => {
     });
 
     const result = await response.json();
-    console.log('Phản hồi từ Server (Lấy chi tiết đơn hàng):', result);
+    console.log("Phản hồi từ Server (Lấy chi tiết đơn hàng):", result);
 
     if (!response.ok) {
       const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
       console.error(
-        'Lấy chi tiết đơn hàng thất bại (HTTP Status):',
+        "Lấy chi tiết đơn hàng thất bại (HTTP Status):",
         errorMessage,
-        result?.errors || 'Không có trường lỗi GraphQL'
+        result?.errors || "Không có trường lỗi GraphQL"
       );
       if (result && result.errors) {
         result.errors.forEach((err) =>
@@ -1742,34 +1743,40 @@ export const findOrderDetailByOrderId = async (orderId) => {
     }
 
     if (result.errors) {
-      console.error("Lấy chi tiết đơn hàng thất bại (Lỗi GraphQL):", result.errors);
-       result.errors.forEach((err) =>
+      console.error(
+        "Lấy chi tiết đơn hàng thất bại (Lỗi GraphQL):",
+        result.errors
+      );
+      result.errors.forEach((err) =>
         console.error("Lỗi GraphQL:", err.message)
       );
       return null;
     }
 
     if (result.data && result.data.findOrderDetailByOrderId !== undefined) {
-        const orderDetails = result.data.findOrderDetailByOrderId;
-        if (orderDetails === null) {
-             console.log('Không tìm thấy chi tiết đơn hàng hoặc đơn hàng không tồn tại với ID:', orderId);
-             return null;
-        } else {
-            console.log('Lấy chi tiết đơn hàng thành công:', orderDetails);
-            return orderDetails;
-        }
+      const orderDetails = result.data.findOrderDetailByOrderId;
+      if (orderDetails === null) {
+        console.log(
+          "Không tìm thấy chi tiết đơn hàng hoặc đơn hàng không tồn tại với ID:",
+          orderId
+        );
+        return null;
+      } else {
+        console.log("Lấy chi tiết đơn hàng thành công:", orderDetails);
+        return orderDetails;
+      }
     } else {
-      console.error('Lấy chi tiết đơn hàng thất bại: Cấu trúc response không mong muốn.', result);
+      console.error(
+        "Lấy chi tiết đơn hàng thất bại: Cấu trúc response không mong muốn.",
+        result
+      );
       return null;
     }
-
   } catch (error) {
-    console.error('Lỗi khi lấy chi tiết đơn hàng (Network/Fetch):', error);
+    console.error("Lỗi khi lấy chi tiết đơn hàng (Network/Fetch):", error);
     return null;
   }
 };
-
-
 export const updateOrderStatus = async (orderId, newStatus) => {
   if (
     orderId === null ||
@@ -1780,7 +1787,6 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     console.error("updateOrderStatus yêu cầu một orderId là số nguyên hợp lệ.");
     return { success: false, error: [{ message: "orderId không hợp lệ." }] };
   }
-
 
   const mutation = `
     mutation UpdateOrderStatusMutation($payload: UpdateOrderInput!) {
@@ -1795,18 +1801,20 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     payload: {
       id: orderId,
       status: newStatus,
-    }
+    },
   };
 
-  console.log('Gửi yêu cầu cập nhật trạng thái đơn hàng:', { query: mutation, variables });
+  console.log("Gửi yêu cầu cập nhật trạng thái đơn hàng:", {
+    query: mutation,
+    variables,
+  });
 
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify({
         query: mutation,
@@ -1815,45 +1823,463 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     });
 
     const result = await response.json();
-    console.log('Phản hồi từ Server (Cập nhật trạng thái):', result);
+    console.log("Phản hồi từ Server (Cập nhật trạng thái):", result);
 
     if (!response.ok) {
       const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
       console.error(
-        'Cập nhật trạng thái thất bại (HTTP Status):',
+        "Cập nhật trạng thái thất bại (HTTP Status):",
         errorMessage,
-        result?.errors || 'Không có trường lỗi GraphQL'
+        result?.errors || "Không có trường lỗi GraphQL"
       );
       if (result && result.errors) {
         result.errors.forEach((err) =>
-          console.error("Lỗi GraphQL:", err.message, err.extensions ? JSON.stringify(err.extensions) : '')
+          console.error(
+            "Lỗi GraphQL:",
+            err.message,
+            err.extensions ? JSON.stringify(err.extensions) : ""
+          )
         );
       }
-      return { success: false, error: result?.errors || [{ message: errorMessage }] };
+      return {
+        success: false,
+        error: result?.errors || [{ message: errorMessage }],
+      };
     }
 
     if (result.errors) {
-      console.error("Cập nhật trạng thái thất bại (Lỗi GraphQL):", result.errors);
-       result.errors.forEach((err) =>
-        console.error("Lỗi GraphQL:", err.message, err.extensions ? JSON.stringify(err.extensions) : '')
+      console.error(
+        "Cập nhật trạng thái thất bại (Lỗi GraphQL):",
+        result.errors
+      );
+      result.errors.forEach((err) =>
+        console.error(
+          "Lỗi GraphQL:",
+          err.message,
+          err.extensions ? JSON.stringify(err.extensions) : ""
+        )
       );
       return { success: false, error: result.errors };
     }
 
     if (result.data && result.data.updateOrder) {
-      console.log('Cập nhật trạng thái thành công:', result.data.updateOrder);
+      console.log("Cập nhật trạng thái thành công:", result.data.updateOrder);
       return { success: true, data: result.data.updateOrder };
     } else if (result.data && result.data.updateOrder === null) {
-       console.log('Cập nhật trạng thái trả về null, có thể không tìm thấy ID:', orderId);
-       return { success: false, error: [{ message: `Không tìm thấy đơn hàng với ID ${orderId} để cập nhật.` }] };
+      console.log(
+        "Cập nhật trạng thái trả về null, có thể không tìm thấy ID:",
+        orderId
+      );
+      return {
+        success: false,
+        error: [
+          { message: `Không tìm thấy đơn hàng với ID ${orderId} để cập nhật.` },
+        ],
+      };
+    } else {
+      console.error(
+        "Cập nhật trạng thái thất bại: Cấu trúc response không mong muốn.",
+        result
+      );
+      return {
+        success: false,
+        error: [{ message: "Cấu trúc response không mong muốn." }],
+      };
     }
-    else {
-      console.error('Cập nhật trạng thái thất bại: Cấu trúc response không mong muốn.', result);
-       return { success: false, error: [{ message: 'Cấu trúc response không mong muốn.' }] };
+  } catch (error) {
+    console.error("Lỗi khi cập nhật trạng thái (Network/Fetch):", error);
+    return {
+      success: false,
+      error: [{ message: `Lỗi mạng hoặc fetch: ${error.message}` }],
+    };
+  }
+};
+export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
+  if (
+    restaurantId === null ||
+    restaurantId === undefined ||
+    typeof restaurantId !== "number" ||
+    !Number.isInteger(restaurantId)
+  ) {
+    console.error(
+      "getTop10MenuByRestaurantId requires a valid integer restaurantId."
+    );
+    return null;
+  }
+
+  const query = `
+    query GetTop10MenuByRestaurantId($restaurantId: Int!,$year: Int!, $month: Int) {
+      findTop10MenuByRestaurantId(restaurantId: $restaurantId, year: $year, month: $month) {
+       menu
+       {
+          id
+          name
+         
+        }
+        totalOrders
+       
+       }
+        
+      }
+    
+  `;
+  const variables = {
+    restaurantId: restaurantId,
+    year: year,
+    month: month,
+  };
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log(
+      "Phản hồi từ Server (Lấy 10 món ăn hàng đầu):",
+      result.data.findTop10MenuByRestaurantId
+    );
+
+    if (!response.ok) {
+      const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại (HTTP Status):",
+        errorMessage,
+        result?.errors || "Không có trường lỗi GraphQL"
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("Lỗi GraphQL:", err.message)
+        );
+      }
+      return null;
     }
 
+    if (result.errors) {
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        result.errors
+      );
+      result.errors.forEach((err) =>
+        console.error("Lỗi GraphQL:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.findTop10MenuByRestaurantId) {
+      console.log(
+        "Lấy 10 món ăn hàng đầu thành công:",
+        result.data.findTop10MenuByRestaurantId
+      );
+      return result.data.findTop10MenuByRestaurantId;
+    } else if (
+      result.data &&
+      result.data.findTop10MenuByRestaurantId === null
+    ) {
+      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
+      return [];
+    } else {
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại: Cấu trúc response không mong muốn.",
+        result
+      );
+      return null;
+    }
   } catch (error) {
-    console.error('Lỗi khi cập nhật trạng thái (Network/Fetch):', error);
-     return { success: false, error: [{ message: `Lỗi mạng hoặc fetch: ${error.message}` }] };
+    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
+    return null;
+  }
+};
+export const getTotalOrderByRestaurantId = async (
+  restaurantId,
+  year,
+  month
+) => {
+  if (
+    restaurantId === null ||
+    restaurantId === undefined ||
+    typeof restaurantId !== "number" ||
+    !Number.isInteger(restaurantId)
+  ) {
+    console.error(
+      "getTotalOrderByRestaurantId requires a valid integer restaurantId."
+    );
+    return null;
+  }
+
+  const query = `
+    query getTotalOrderByRestaurantId($restaurantId: Int!,$year: Int!, $month: Int) {
+      getTotalOrderByRestaurantId(restaurantId: $restaurantId, year: $year, month: $month) 
+      }
+    
+  `;
+  const variables = {
+    restaurantId: restaurantId,
+    year: year,
+    month: month,
+  };
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("order:", result.data.getTotalOrderByRestaurantId);
+
+    if (!response.ok) {
+      const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại (HTTP Status):",
+        errorMessage,
+        result?.errors || "Không có trường lỗi GraphQL"
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("Lỗi GraphQL:", err.message)
+        );
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        result.errors
+      );
+      result.errors.forEach((err) =>
+        console.error("Lỗi GraphQL:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.getTotalOrderByRestaurantId) {
+      console.log(
+        "Lấy order thành công:",
+        result.data.getTotalOrderByRestaurantId
+      );
+      return result.data.getTotalOrderByRestaurantId;
+    } else if (
+      result.data &&
+      result.data.getTotalOrderByRestaurantId === null
+    ) {
+      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
+      return [];
+    } else {
+      console.error(
+        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
+    return null;
+  }
+};
+export const getTotalRevenueByRestaurantId = async (
+  restaurantId,
+  year,
+  month
+) => {
+  if (
+    restaurantId === null ||
+    restaurantId === undefined ||
+    typeof restaurantId !== "number" ||
+    !Number.isInteger(restaurantId)
+  ) {
+    console.error(
+      "getTotalRevenueByRestaurantId requires a valid integer restaurantId."
+    );
+    return null;
+  }
+
+  const query = `
+    query getTotalRevenueByRestaurantId($restaurantId: Int!,$year: Int!, $month: Int) {
+      getTotalRevenueByRestaurantId(restaurantId: $restaurantId, year: $year, month: $month) 
+      }
+    
+  `;
+  const variables = {
+    restaurantId: restaurantId,
+    year: year,
+    month: month,
+  };
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("order:", result.data.getTotalRevenueByRestaurantId);
+
+    if (!response.ok) {
+      const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại (HTTP Status):",
+        errorMessage,
+        result?.errors || "Không có trường lỗi GraphQL"
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("Lỗi GraphQL:", err.message)
+        );
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        result.errors
+      );
+      result.errors.forEach((err) =>
+        console.error("Lỗi GraphQL:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.getTotalRevenueByRestaurantId) {
+      console.log(
+        "Lấy order thành công:",
+        result.data.getTotalRevenueByRestaurantId
+      );
+      return result.data.getTotalRevenueByRestaurantId;
+    } else if (
+      result.data &&
+      result.data.getTotalRevenueByRestaurantId === null
+    ) {
+      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
+      return [];
+    } else {
+      console.error(
+        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
+    return null;
+  }
+};
+export const getTotalRevenueByRestaurantIdByYear = async (
+  restaurantId,
+  year
+) => {
+  if (
+    restaurantId === null ||
+    restaurantId === undefined ||
+    typeof restaurantId !== "number" ||
+    !Number.isInteger(restaurantId)
+  ) {
+    console.error(
+      "getTotalRevenueByRestaurantIdByYear requires a valid integer restaurantId."
+    );
+    return null;
+  }
+
+  const query = `
+    query getTotalRevenueByRestaurantIdByYear($restaurantId: Int!,$year: Int!) {
+      getTotalRevenueByRestaurantIdByYear(restaurantId: $restaurantId, year: $year)
+      {
+        
+        totalRevenue} 
+      }
+    
+  `;
+  const variables = {
+    restaurantId: restaurantId,
+    year: year,
+  };
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: query,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("order:", result.data.getTotalRevenueByRestaurantIdByYear);
+
+    if (!response.ok) {
+      const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại (HTTP Status):",
+        errorMessage,
+        result?.errors || "Không có trường lỗi GraphQL"
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("Lỗi GraphQL:", err.message)
+        );
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      console.error(
+        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        result.errors
+      );
+      result.errors.forEach((err) =>
+        console.error("Lỗi GraphQL:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.getTotalRevenueByRestaurantIdByYear) {
+      console.log(
+        "Lấy order thành công:",
+        result.data.getTotalRevenueByRestaurantIdByYear
+      );
+      return result.data.getTotalRevenueByRestaurantIdByYear;
+    } else if (
+      result.data &&
+      result.data.getTotalRevenueByRestaurantIdByYear === null
+    ) {
+      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
+    } else {
+      console.error(
+        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
+    return null;
   }
 };

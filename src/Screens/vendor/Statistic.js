@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import {
   View,
   Text,
@@ -7,46 +7,191 @@ import {
   Animated,
   Dimensions,
   ScrollView,
-  Platform, 
+  Platform,
 } from "react-native";
 import { BarChart } from "react-native-chart-kit";
-import { Calendar } from "react-native-calendars";
+import useSessionStore from "../../utils/store";
+// Calendar import is removed as it's no longer used
 import Feather from "@expo/vector-icons/Feather";
-import  Colors  from "../../constants/Colors";
+import Colors from "../../constants/Colors";
 import Nav from "../../components/Nav";
-import Display from "../../utils/Display"; 
-
+import Display from "../../utils/Display";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getTop10MenuByRestaurantId,getTotalOrderByRestaurantId,getTotalRevenueByRestaurantId, getTotalRevenueByRestaurantIdByYear } from "../../services/vendorService";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
-const NAV_HEIGHT = Display.setHeight(8); 
+const NAV_HEIGHT = Display.setHeight(8);
 
 export default function Statistic({ navigation }) {
   const [isOpen, setIsOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const [viewType, setViewType] = useState("week");
-  const [selectedStartDate, setSelectedStartDate] = useState(null);
-  const [selectedEndDate, setSelectedEndDate] = useState(null);
+  const restaurantId = useSessionStore((state) => state.restaurantId);
+  // View type for the main screen: 'month' or 'year'
+  const [viewType, setViewType] = useState("month");
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
 
- 
-  const orderNumber = 1000;
-  const orderRevenue = 1000000;
-  const topDish = [
-    { name: "Mì xào hải sản", quantity: 100 },
-    { name: "Cơm tấm sườn bì chả", quantity: 80 },
-    { name: "Bánh mì thịt nướng", quantity: 60 },
-    { name: "Phở bò tái chín", quantity: 50 },
-    { name: "Gà rán", quantity: 40 },
-    { name: "Bún chả Hà Nội", quantity: 30 },
-    { name: "Cá kho tộ", quantity: 20 },
-    { name: "Chả giò", quantity: 10 },
-    { name: "Sushi", quantity: 5 },
-    { name: "Pizza", quantity: 2 },
-  ];
+  // State for bottom sheet picker
+  const [pickerSelectionType, setPickerSelectionType] = useState(viewType); // 'month' or 'year'
+  const [tempSelectedYear, setTempSelectedYear] = useState(currentYear);
+  const [tempSelectedMonth, setTempSelectedMonth] = useState(currentMonth);
 
-  
+  const insets = useSafeAreaInsets();
+
+  // --- Mock Data - In a real app, this would be fetched based on filters ---
+  const [orderNumber, setOrderNumber] = useState([]);
+  const [orderRevenue, setOrderRevenue] = useState(1000000);
+  const [topDish, setTopDish] = useState([]);
+
+  const [yearlyChartData, setYearlyChartData] = useState({
+    labels: [
+      "T1",
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "T8",
+      "T9",
+      "T10",
+      "T11",
+      "T12",
+    ],
+    datasets: [
+      {
+        data: [300, 500, 400, 700, 600, 800, 900, 750, 650, 850, 950, 1000], // Sample monthly revenue
+      },
+    ],
+  });
+  // --- End Mock Data ---
+
+  // Effect to simulate data fetching when filters change
+  useEffect(() => {
+    // Simulate fetching/filtering data based on viewType, currentYear, currentMonth
+    console.log(
+      `Fetching data for: ${viewType}, Year: ${currentYear}, Month: ${
+        viewType === "month" ? currentMonth : "N/A"
+      }`
+    );
+    // Example: update orderNumber and orderRevenue based on filters (simplified)
+    if (viewType === "year") {
+      setOrderNumber(
+        currentYear === 2023 ? 12000 : 10000 + (currentYear % 2020) * 100
+      );
+      setOrderRevenue(
+        currentYear === 2023
+          ? 150000000
+          : 120000000 + (currentYear % 2020) * 1000000
+      );
+      // Update chart data for the selected year if necessary
+      // For now, yearlyChartData.datasets[0].data is static but could be fetched
+    } else {
+      // month view
+      setOrderNumber(1000 + currentMonth * 10 + (currentYear % 2020) * 50);
+      setOrderRevenue(
+        1000000 + currentMonth * 100000 + (currentYear % 2020) * 500000
+      );
+    }
+    // Top dishes could also be updated here
+  }, [viewType, currentYear, currentMonth]);
+  useEffect(() => {
+    const fetchTopDishes = async () => {
+      let responseDish;
+      try {
+        if(viewType === "year") {
+            responseDish = await getTop10MenuByRestaurantId(restaurantId, currentYear,null);
+        }
+        else {
+            responseDish = await getTop10MenuByRestaurantId(restaurantId, currentYear, currentMonth);
+        }
+        if (responseDish ) {
+          
+          const topDishes = responseDish.map((dish) => ({
+            name: dish.menu.name,
+            quantity: dish.totalOrders,
+          }));
+          console.log("Top  data:", topDishes);
+          setTopDish(topDishes);
+        }
+      } catch (error) {
+        console.error("Error fetching top dishes:", error);
+      }
+    };
+    fetchTopDishes();
+  }, [viewType, currentYear, currentMonth]);
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      let responseOrder;
+      let responseRevenue;
+      try {
+        if(viewType === "year") {
+            responseOrder = await getTotalOrderByRestaurantId(restaurantId, currentYear, undefined);
+            responseRevenue = await getTotalRevenueByRestaurantId(restaurantId, currentYear, undefined);
+        }
+        else {
+            responseOrder = await getTotalOrderByRestaurantId(restaurantId, currentYear, currentMonth);
+            responseRevenue = await getTotalRevenueByRestaurantId(restaurantId, currentYear, currentMonth);
+        }
+        if (responseOrder) {
+         
+          console.log("Order data:", responseOrder);
+         
+          setOrderNumber( responseOrder);
+        }
+        if (responseRevenue) {
+          console.log("Revenue data:", responseRevenue);
+          setOrderRevenue(responseRevenue);
+        }
+        
+      } catch (error) {
+        console.error("Error fetching order data:", error);
+      }
+    };
+    fetchOrderData();
+  }, [viewType, currentYear, currentMonth]);
+  useEffect(() => {
+    const fetchYearlyChartData = async () => {
+      let responseYearlyData;
+      try {
+        responseYearlyData = await getTotalRevenueByRestaurantIdByYear(restaurantId, currentYear);
+        if (responseYearlyData) {
+          const chartData = {
+            labels: [
+              "T1",
+              "T2",
+              "T3",
+              "T4",
+              "T5",
+              "T6",
+              "T7",
+              "T8",
+              "T9",
+              "T10",
+              "T11",
+              "T12",
+            ],
+            datasets: [
+              {
+                data: responseYearlyData.map((item) => item.totalRevenue/1000),
+              },
+            ],
+          };
+          setYearlyChartData(chartData);
+        }
+      } catch (error) {
+        console.error("Error fetching yearly chart data:", error);
+      }
+    };
+    fetchYearlyChartData();
+  }, [currentYear]);
   const toggleBottomSheet = () => {
+    if (!isOpen) {
+      // Sync picker state with current main view state when opening
+      setPickerSelectionType(viewType);
+      setTempSelectedYear(currentYear);
+      setTempSelectedMonth(currentMonth);
+    }
     const toValue = isOpen ? 0 : 1;
     Animated.spring(slideAnim, {
       toValue,
@@ -57,114 +202,36 @@ export default function Statistic({ navigation }) {
     setIsOpen(!isOpen);
   };
 
-  // --- Helper Functions - Keep as is ---
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+  const handleApplyFilters = () => {
+    setViewType(pickerSelectionType);
+    setCurrentYear(tempSelectedYear);
+    if (pickerSelectionType === "month") {
+      setCurrentMonth(tempSelectedMonth);
+    }
+    // Data fetching/update will be triggered by the useEffect hook
+    toggleBottomSheet();
   };
+
   const formatCurrency = (amount) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
-  const getWeekDates = (selectedDate) => {
-    const date = new Date(selectedDate);
-    const day = date.getDay();
-    const startDate = new Date(date);
-    startDate.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6);
-    return {
-      start: startDate.toISOString().split("T")[0],
-      end: endDate.toISOString().split("T")[0],
-    };
-  };
 
-  // --- Event Handlers - Keep as is ---
-  const onMonthPress = (month) => {
-    setCurrentMonth(month);
-  };
-  const onDayPress = (day) => {
-    const weekDates = getWeekDates(day.dateString);
-    setSelectedStartDate(weekDates.start);
-    setSelectedEndDate(weekDates.end);
-  };
-
-  // --- Picker Render Functions - Apply Display ---
-  const renderWeekPicker = () => {
-    const markedDates = {};
-    if (selectedStartDate && selectedEndDate) {
-      let currentDate = new Date(selectedStartDate);
-      const endDate = new Date(selectedEndDate);
-      endDate.setHours(12, 0, 0, 0);
-      while (currentDate <= endDate) {
-        const dateString = currentDate.toISOString().split("T")[0];
-        markedDates[dateString] = {
-          selected: true,
-          color: Colors.DEFAULT_WHITE,
-          textColor: Colors.DEFAULT_GREEN,
-        };
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-    }
-
-    return (
-      <View style={styles.pickerContainer}>
-        {selectedStartDate && selectedEndDate && (
-          <View style={styles.selectedDateInfo}>
-            <Text style={styles.dateInfoText}>
-              Tuần từ {formatDate(selectedStartDate)} đến{" "}
-              {formatDate(selectedEndDate)}
-            </Text>
-          </View>
-        )}
-        <Calendar
-          onDayPress={onDayPress}
-          markedDates={markedDates}
-          theme={{
-            backgroundColor: Colors.DEFAULT_GREEN,
-            calendarBackground: Colors.DEFAULT_GREEN,
-            textSectionTitleColor: "white",
-            selectedDayBackgroundColor: Colors.DEFAULT_WHITE,
-            selectedDayTextColor: Colors.DEFAULT_GREEN,
-            todayTextColor: Colors.DEFAULT_YELLOW,
-            dayTextColor: "white",
-            monthTextColor: "white",
-            arrowColor: "white",
-            textDisabledColor: Colors.DEFAULT_GREY,
-            "stylesheet.calendar.header": {
-              week: {
-                marginTop: Display.setHeight(0.6), // 5
-                flexDirection: "row",
-                justifyContent: "space-between",
-              },
-            },
-            textMonthFontSize: 16, // Keep fixed
-            textDayHeaderFontSize: 14, // Keep fixed
-          }}
-          firstDay={1}
-        />
-      </View>
-    );
-  };
-
-  const renderMonthPicker = () => {
+  // --- Picker Render Functions ---
+  const renderMonthAndYearPicker = () => {
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
     return (
       <View style={styles.monthPickerContainer}>
         <View style={styles.yearSelector}>
           <TouchableOpacity
             style={styles.yearArrowButton}
-            onPress={() => setCurrentYear((year) => year - 1)}
+            onPress={() => setTempSelectedYear((year) => year - 1)}
           >
             <Feather name="chevron-left" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.yearText}>{currentYear}</Text>
+          <Text style={styles.yearText}>{tempSelectedYear}</Text>
           <TouchableOpacity
             style={styles.yearArrowButton}
-            onPress={() => setCurrentYear((year) => year + 1)}
+            onPress={() => setTempSelectedYear((year) => year + 1)}
           >
             <Feather name="chevron-right" size={24} color="white" />
           </TouchableOpacity>
@@ -175,14 +242,14 @@ export default function Statistic({ navigation }) {
               key={month}
               style={[
                 styles.monthButton,
-                currentMonth === month && styles.selectedMonth,
+                tempSelectedMonth === month && styles.selectedMonth,
               ]}
-              onPress={() => onMonthPress(month)}
+              onPress={() => setTempSelectedMonth(month)}
             >
               <Text
                 style={[
                   styles.monthText,
-                  currentMonth === month && styles.selectedMonthText,
+                  tempSelectedMonth === month && styles.selectedMonthText,
                 ]}
               >
                 Tháng {month}
@@ -194,11 +261,35 @@ export default function Statistic({ navigation }) {
     );
   };
 
-  // --- Chart Setup - Apply Display ---
-  const [weeklyData, setWeeklyData] = useState({
-    labels: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
-    data: [300, 500, 400, 700, 600, 800, 900],
-  });
+  const renderYearPicker = () => {
+    return (
+      <View style={styles.monthPickerContainer}>
+        <View style={styles.yearSelector}>
+          <TouchableOpacity
+            style={styles.yearArrowButton}
+            onPress={() => setTempSelectedYear((year) => year - 1)}
+          >
+            <Feather name="chevron-left" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.yearText}>{tempSelectedYear}</Text>
+          <TouchableOpacity
+            style={styles.yearArrowButton}
+            onPress={() => setTempSelectedYear((year) => year + 1)}
+          >
+            <Feather name="chevron-right" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ alignItems: "center", marginTop: Display.setHeight(2) }}>
+          <Text style={{ color: Colors.DEFAULT_WHITE, fontSize: 16 }}>
+            Thống kê cho cả năm {tempSelectedYear}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  // --- Chart Setup ---
   const chartConfig = {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",
@@ -210,13 +301,13 @@ export default function Statistic({ navigation }) {
       return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     },
     labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    strokeWidth: 2, // Keep fixed
-    barPercentage: 0.8, // Keep fixed
+    strokeWidth: 2,
+    barPercentage: 0.6, // Adjusted for more bars
     useShadowColorFromDataset: false,
     decimalPlaces: 0,
     propsForDots: {
-      r: "6", // Keep fixed
-      strokeWidth: "2", // Keep fixed
+      r: "6",
+      strokeWidth: "2",
       stroke: Colors.DEFAULT_GREEN,
     },
     propsForBackgroundLines: {
@@ -226,27 +317,30 @@ export default function Statistic({ navigation }) {
   };
 
   const renderChart = () => {
+    // Chart width calculation for 12 months
+    const chartContentWidth =
+      yearlyChartData.labels.length * Display.setWidth(10); // Approx 40px per bar
     const chartWidth = Math.max(
       screenWidth - Display.setWidth(10),
-      weeklyData.labels.length * Display.setWidth(15)
-    ); // Adjusted width calculation
+      chartContentWidth
+    );
+
     return (
       <View style={styles.chartOuterContainer}>
-        <Text style={styles.chartTitle}>Doanh thu theo ngày</Text>
+        <Text style={styles.chartTitle}>
+          Doanh thu theo tháng năm {currentYear}
+        </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <BarChart
-            data={{
-              labels: weeklyData.labels,
-              datasets: [{ data: weeklyData.data }],
-            }}
-            width={chartWidth} // Use calculated responsive width
+            data={yearlyChartData}
+            width={chartWidth}
             height={Display.setHeight(37)} // ~300px
             chartConfig={chartConfig}
             style={styles.chart}
             showValuesOnTopOfBars={true}
             fromZero={true}
             yAxisLabel=""
-            yAxisSuffix="k"
+            yAxisSuffix="k" // Assuming data is in thousands
             verticalLabelRotation={0}
           />
         </ScrollView>
@@ -255,9 +349,9 @@ export default function Statistic({ navigation }) {
     );
   };
 
-  // --- Main Render - Apply Display ---
+  // --- Main Render ---
   return (
-    <View style={styles.mainContainer}>
+    <View style={[styles.mainContainer, { paddingBottom: insets.bottom }]}>
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContentContainer}
@@ -266,18 +360,12 @@ export default function Statistic({ navigation }) {
         <Text style={styles.header}>Thống kê</Text>
 
         <View style={styles.dateDisplayContainer}>
-          {viewType === "week" ? (
-            selectedStartDate && selectedEndDate ? (
-              <Text style={styles.dateDisplayText}>
-                {formatDate(selectedStartDate)} - {formatDate(selectedEndDate)}
-              </Text>
-            ) : (
-              <Text style={styles.dateDisplayText}>Chưa chọn tuần</Text>
-            )
-          ) : (
+          {viewType === "month" ? (
             <Text style={styles.dateDisplayText}>
               Tháng {currentMonth}/{currentYear}
             </Text>
+          ) : (
+            <Text style={styles.dateDisplayText}>Năm {currentYear}</Text>
           )}
           <TouchableOpacity onPress={toggleBottomSheet}>
             <Feather name="calendar" size={24} color="black" />
@@ -297,13 +385,13 @@ export default function Statistic({ navigation }) {
           </View>
         </View>
 
-        {viewType === "week" && renderChart()}
+        {viewType === "year" && renderChart()}
 
         <View style={styles.topDishesContainer}>
           <Text style={styles.topDishesTitle}>
             Top 10 món ăn đặt nhiều nhất
           </Text>
-          {topDish.map((dish, index) => (
+          {topDish&&topDish.map((dish, index) => (
             <View
               key={index}
               style={[
@@ -327,12 +415,10 @@ export default function Statistic({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* Nav Component Area */}
       <View style={styles.navArea}>
         <Nav nav={navigation} />
       </View>
 
-      {/* Bottom Sheet */}
       <Animated.View
         style={[
           styles.bottomSheet,
@@ -341,7 +427,7 @@ export default function Statistic({ navigation }) {
               {
                 translateY: slideAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [screenHeight, 0], // Keep using screenHeight
+                  outputRange: [screenHeight, 0],
                 }),
               },
             ],
@@ -359,43 +445,45 @@ export default function Statistic({ navigation }) {
             <TouchableOpacity
               style={[
                 styles.typeButton,
-                viewType === "week" && styles.selectedType,
+                pickerSelectionType === "month" && styles.selectedType,
               ]}
-              onPress={() => setViewType("week")}
+              onPress={() => setPickerSelectionType("month")}
             >
               <Text
                 style={[
                   styles.typeText,
-                  viewType === "week" && styles.selectedTypeText,
-                ]}
-              >
-                Tuần
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                viewType === "month" && styles.selectedType,
-              ]}
-              onPress={() => setViewType("month")}
-            >
-              <Text
-                style={[
-                  styles.typeText,
-                  viewType === "month" && styles.selectedTypeText,
+                  pickerSelectionType === "month" && styles.selectedTypeText,
                 ]}
               >
                 Tháng
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.typeButton,
+                pickerSelectionType === "year" && styles.selectedType,
+              ]}
+              onPress={() => setPickerSelectionType("year")}
+            >
+              <Text
+                style={[
+                  styles.typeText,
+                  pickerSelectionType === "year" && styles.selectedTypeText,
+                ]}
+              >
+                Năm
+              </Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.divider} />
 
-          {viewType === "week" ? renderWeekPicker() : renderMonthPicker()}
+          {pickerSelectionType === "month"
+            ? renderMonthAndYearPicker()
+            : renderYearPicker()}
 
           <TouchableOpacity
             style={styles.applyButton}
-            onPress={toggleBottomSheet}
+            onPress={handleApplyFilters}
           >
             <Text style={styles.applyButtonText}>Áp dụng</Text>
           </TouchableOpacity>
@@ -416,15 +504,12 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     paddingHorizontal: Display.setWidth(4),
-
     paddingTop: Display.setHeight(5),
-
     paddingBottom: NAV_HEIGHT + Display.setHeight(2),
   },
   header: {
     textAlign: "center",
     marginBottom: Display.setHeight(2.5),
-
     color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28,
@@ -435,38 +520,32 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Display.setHeight(2.5),
-
     paddingVertical: Display.setHeight(1.2),
-
     backgroundColor: Colors.LIGHT_GREY,
     borderRadius: 8,
-
     paddingHorizontal: Display.setWidth(2.5),
   },
   dateDisplayText: {
     fontSize: 16,
-
     fontWeight: "500",
     color: "#333",
   },
   statsRow: {
     marginBottom: Display.setHeight(3),
-
     flexDirection: "row",
-
     gap: Display.setWidth(4),
   },
   statisticBox: {
     flex: 1,
     paddingVertical: Display.setHeight(1.8),
-    paddingHorizontal: Display.setWidth(2.5), 
+    paddingHorizontal: Display.setWidth(2.5),
     backgroundColor: Colors.LIGHT_GREY,
-    borderRadius: 8, 
+    borderRadius: 8,
     alignItems: "center",
-    gap: Display.setHeight(1), 
+    gap: Display.setHeight(1),
   },
   statisticLabel: {
-    fontSize: 15, 
+    fontSize: 15,
     color: "#555",
     textAlign: "center",
   },
@@ -478,48 +557,47 @@ const styles = StyleSheet.create({
   },
   chartOuterContainer: {
     backgroundColor: "#fff",
-    paddingVertical: Display.setHeight(1.8), 
-    borderRadius: 10, 
-    marginBottom: Display.setHeight(3), 
+    paddingVertical: Display.setHeight(1.8),
+    borderRadius: 10,
+    marginBottom: Display.setHeight(3),
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 }, 
-    shadowOpacity: 0.1, 
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3, 
+    elevation: 3,
   },
   chartTitle: {
-    fontSize: 18, 
+    fontSize: 18,
     color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
-    marginBottom: Display.setHeight(1.8), 
+    marginBottom: Display.setHeight(1.8),
     textAlign: "center",
   },
   chart: {
-    marginVertical: Display.setHeight(1), 
-    borderRadius: 16, 
+    marginVertical: Display.setHeight(1),
+    borderRadius: 16,
   },
   chartUnitText: {
     textAlign: "center",
-    marginTop: Display.setHeight(1.2), 
-    fontSize: 12, 
+    marginTop: Display.setHeight(1.2),
+    fontSize: 12,
     color: "#666",
   },
   topDishesContainer: {
-   
-    marginBottom: Display.setHeight(2.5), 
-    borderRadius: 8, 
-    borderWidth: 1, 
+    marginBottom: Display.setHeight(2.5),
+    borderRadius: 8,
+    borderWidth: 1,
     borderColor: Colors.LIGHT_GREY2,
-    overflow: "hidden", 
+    overflow: "hidden",
   },
   topDishesTitle: {
-    fontSize: 18, 
+    fontSize: 18,
     color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
-    paddingVertical: Display.setHeight(1.8), 
-    paddingHorizontal: Display.setWidth(4), 
+    paddingVertical: Display.setHeight(1.8),
+    paddingHorizontal: Display.setWidth(4),
     textAlign: "center",
-    backgroundColor: Colors.LIGHT_GREY, 
+    backgroundColor: Colors.LIGHT_GREY,
   },
   topDishItem: {
     flexDirection: "row",
@@ -552,7 +630,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    height: "80%",
+    height: "80%", // Can be adjusted
     bottom: 0,
     backgroundColor: Colors.DEFAULT_GREEN,
     borderTopLeftRadius: 20,
@@ -566,7 +644,7 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     flex: 1,
     padding: Display.setWidth(5),
-    paddingTop: Display.setHeight(5),
+    paddingTop: Display.setHeight(5), // Increased padding to not overlap close button
   },
   closeButton: {
     position: "absolute",
@@ -603,24 +681,10 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     marginVertical: Display.setHeight(2.5),
   },
-  pickerContainer: {
-    flex: 1,
-    width: "100%",
-  },
-  selectedDateInfo: {
-    marginBottom: Display.setHeight(1.8),
-    padding: Display.setWidth(2.5),
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  dateInfoText: {
-    color: Colors.DEFAULT_WHITE,
-    fontSize: 14,
-    fontWeight: "500",
-  },
+  // Styles for Month & Year Picker in BottomSheet
   monthPickerContainer: {
-    flex: 1,
+    // Reused for both month&year and year-only picker
+    flex: 1, // Allow it to take available space
     width: "100%",
     gap: Display.setHeight(2.5),
   },
@@ -629,6 +693,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Display.setWidth(5),
+    marginTop: Display.setHeight(1), // Added margin for spacing
   },
   yearArrowButton: {
     padding: Display.setWidth(1.2),
@@ -642,10 +707,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: Display.setWidth(4),
+    gap: Display.setWidth(4), // Gap between month buttons
   },
   monthButton: {
-    width: "30%",
+    width: "30%", // Adjust for 3 buttons per row
     paddingVertical: Display.setHeight(1.8),
     borderRadius: 10,
     borderWidth: 1,
@@ -668,7 +733,7 @@ const styles = StyleSheet.create({
     paddingVertical: Display.setHeight(1.5),
     paddingHorizontal: Display.setWidth(6),
     borderRadius: 25,
-    marginTop: Display.setHeight(2.5),
+    marginTop: Display.setHeight(2.5), // Ensure it's visible
     alignSelf: "center",
     backgroundColor: Colors.DEFAULT_WHITE,
     shadowColor: "#000",
