@@ -13,26 +13,27 @@ import OrderList from "../Screens/vendor/OrderList";
 import OrderDetail from "../Screens/vendor/OrderDetail";
 import Notification from "../Screens/vendor/Notification";
 import Statistic from "../Screens/vendor/Statistic";
-import Category from "../Screens/admin/Category";
-import ListVendor from "../Screens/admin/ListVendor";
-import Comment from "../Screens/admin/Comment";
-import StatisticAdmin from "../Screens/admin/StatisticAdmin";
+import Category from "../Screens/Admin/Category";
+import ListVendor from "../Screens/Admin/ListVendor";
+import Comment from "../Screens/Admin/Comment";
+import StatisticAdmin from "../Screens/Admin/StatisticAdmin";
 import Account from "../Screens/vendor/Account";
-import SplashScreen from "../Screens/customer/SplashScreen";
+import SplashScreen from "../Screens/Customer/SplashScreen";
 import LoginScreen from "../Screens/auth/LoginScreen";
 
 import SignUpScreen from "../Screens/auth/SignUpScreen";
-import ProfileScreen from "../Screens/customer/ProfileScreen";
+import ProfileScreen from "../Screens/Customer/ProfileScreen";
 import ForgotPassScreen from "../Screens/auth/ForgotPassScreen";
 import ChangePassScreen from "../Screens/auth/ChangePassScreen";
 import VerifyScreen from "../Screens/auth/VerifyScreen";
 import CustomerBottomTab from "./CustomerBottomTab";
 import { UserProvider } from "../context/UserContext";
-import AboutUsScreen from "../Screens/customer/AboutUsScreen";
-import RestaurantScreen from "../Screens/customer/RestaurantScreen";
-import FoodScreen from "../Screens/customer/FoodScreen";
-import ExploreScreen from "../Screens/customer/ExploreScreen";
-import SearchScreen from "../Screens/customer/SearchScreen";
+import AboutUsScreen from "../Screens/Customer/AboutUsScreen";
+import RestaurantScreen from "../Screens/Customer/RestaurantScreen";
+import FoodScreen from "../Screens/Customer/FoodScreen";
+import ExploreScreen from "../Screens/Customer/ExploreScreen";
+import SearchScreen from "../Screens/Customer/SearchScreen";
+import AddressScreen from "../Screens/Customer/AddressScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -41,23 +42,24 @@ export default function Navigation() {
     <UserProvider>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="HomeVendor" component={HomeVendor} />
-        <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        
+          <Stack.Screen name="LoginScreen" component={LoginScreen} />
+          <Stack.Screen name="HomeVendor" component={HomeVendor} />
+
           <Stack.Screen name="SplashScreen" component={SplashScreen} />
           <Stack.Screen name="MainApp" component={CustomerBottomTab} />
-          
+
           <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
           <Stack.Screen name="VerifyScreen" component={VerifyScreen} />
           <Stack.Screen name="ForgotPassScreen" component={ForgotPassScreen} />
           <Stack.Screen name="ChangePassScreen" component={ChangePassScreen} />
           <Stack.Screen name="AboutUsScreen" component={AboutUsScreen} />
           <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+          <Stack.Screen name="AddressScreen" component={AddressScreen} />
           <Stack.Screen name="RestaurantScreen" component={RestaurantScreen} />
           <Stack.Screen name="FoodScreen" component={FoodScreen} />
           <Stack.Screen name="ExploreScreen" component={ExploreScreen} />
           <Stack.Screen name="SearchScreen" component={SearchScreen} />
-          
+
           <Stack.Screen name="Register" component={Register} />
           <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
           <Stack.Screen name="Category" component={Category} />

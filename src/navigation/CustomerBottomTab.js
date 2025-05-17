@@ -8,9 +8,9 @@ import {
   NotificationScreen,
   OrderScreen,
   ProfileScreen,
-} from "../Screens/customer";
+} from "../Screens/Customer";
 import Display from "../utils/Display";
-import AccountScreen from "../Screens/customer/AccountScreen";
+import AccountScreen from "../Screens/Customer/AccountScreen";
 
 const CustomerBottomTabs = createBottomTabNavigator();
 export default () => (
