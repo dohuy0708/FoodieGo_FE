@@ -43,7 +43,10 @@ const HistoryOrderCard = ({
 
       <View style={styles.statusContainer}>
         {isFeedback == true && (
-          <TouchableOpacity style={styles.feedbackButton}>
+          <TouchableOpacity
+            style={styles.feedbackButton}
+            onPress={() => navigate("FeedbackScreen", { orderId: id })}
+          >
             <Text style={styles.buttonText}>Đánh giá</Text>
           </TouchableOpacity>
         )}

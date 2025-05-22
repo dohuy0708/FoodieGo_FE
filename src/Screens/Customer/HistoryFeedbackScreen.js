@@ -30,7 +30,7 @@ const sampleFoods = [
   },
 ];
 
-const FeedbackScreen = ({ navigation }) => {
+const HistoryFeedbackScreen = ({ navigation }) => {
   const [reviews, setReviews] = useState(
     sampleFoods.map((item) => ({
       ...item,
@@ -126,17 +126,13 @@ const FeedbackScreen = ({ navigation }) => {
               <View style={styles.divider} />
             </View>
           ))}
-
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitText}>Gửi</Text>
-          </TouchableOpacity>
         </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
-export default FeedbackScreen;
+export default HistoryFeedbackScreen;
 
 const styles = StyleSheet.create({
   container: {

@@ -24,6 +24,7 @@ const OrderScreen = ({ navigation }) => {
           firstFood: "Bún chả",
           firstFoodImg: "https://link-to-image.jpg",
           itemCount: 2,
+          itemPrice: 25000,
           totalItem: 3,
           totalPrice: 75000,
           status: "Chờ xác nhận",
@@ -34,6 +35,7 @@ const OrderScreen = ({ navigation }) => {
           firstFood: "Bún chả",
           firstFoodImg: "https://link-to-image.jpg",
           itemCount: 2,
+          itemPrice: 25000,
           totalItem: 3,
           totalPrice: 75000,
           status: "Đang giao",
@@ -124,7 +126,7 @@ const OrderScreen = ({ navigation }) => {
                   key={order.id}
                   {...order}
                   navigate={(orderId) =>
-                    navigation.navigate("OrderDetailScreen", { orderId })
+                    navigation.navigate("FeedbackScreen", { orderId })
                   }
                 />
               ))}

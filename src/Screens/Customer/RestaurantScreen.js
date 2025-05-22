@@ -5,6 +5,7 @@ import {
   StyleSheet,
   StatusBar,
   Image,
+  TouchableWithoutFeedback,
   ScrollView,
   FlatList,
   TouchableOpacity,
@@ -18,6 +19,10 @@ import { Colors } from "../../constants";
 import Display from "../../utils/Display";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../components";
+import { useCart } from "../../context/CartContext";
+import CartDetailPanel from "../../components/CartModal";
+import CartPanelModal from "../../components/CartModal";
+import CartModal from "../../components/CartModal";
 
 const mockRestaurant = {
   id: 1,
@@ -85,6 +90,13 @@ const RestaurantScreen = ({
     params: { restaurantId },
   },
 }) => {
+  const [isCartVisible, setCartVisible] = useState(false);
+
+  const toggleCartModal = () => {
+    setCartVisible(!isCartVisible);
+  };
+
+  //  old
   const [restaurant, setRestaurant] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   //const [isBookmarked, setIsBookmarked] = useState(false);
@@ -183,7 +195,6 @@ const RestaurantScreen = ({
             </View>
           </View>
           <Separator height={Display.setHeight(1)} />
-
           <View style={styles.categoriesContainer}>
             <FlatList
               data={restaurant?.categories}
@@ -214,7 +225,6 @@ const RestaurantScreen = ({
               )}
             />
           </View>
-
           {/* food list */}
           <View style={styles.foodList}>
             {restaurant?.foods
@@ -231,12 +241,101 @@ const RestaurantScreen = ({
             <Separator height={Display.setHeight(2)} />
           </View>
         </ScrollView>
+        {/* {hasItems(restaurantId) && ( */}
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 5,
+            paddingVertical: 5,
+            backgroundColor: "#f9f9f9", // Màu nền hơi xám trắng
+            // Thêm một chút bóng mờ (elevation cho Android, shadow cho iOS)
+            borderTopColor: "#e0e0e0",
+            borderTopWidth: 0.5,
+          }}
+          onPress={toggleCartModal}
+        >
+          {/* Phần giỏ hàng */}
+          <View style={{ position: "relative" }}>
+            <Text style={{ fontSize: 24, color: "#000000", marginLeft: 10 }}>
+              🛒
+            </Text>
+            {/* <Icon name="cart-outline" size={32} color="#000000" /> */}
+            <View
+              style={{
+                position: "absolute",
+                top: -5,
+                right: -8,
+                backgroundColor: "red",
+                borderRadius: 10,
+                width: 20,
+                height: 20,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{ color: "white", fontSize: 12, fontWeight: "bold" }}
+              >
+                5
+              </Text>
+            </View>
+          </View>
+
+          {/* Phần giá tiền */}
+          <View style={{ flex: 1, alignItems: "flex-end", marginRight: 10 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "bold",
+                color: Colors.DEFAULT_YELLOW,
+              }}
+            >
+              314.000 đ
+            </Text>
+          </View>
+
+          {/* Phần nút Giao hàng */}
+          <TouchableOpacity
+            style={{
+              marginRight: 10,
+              backgroundColor: Colors.DEFAULT_GREEN, // Màu xanh mòng két (LightSeaGreen)
+              paddingVertical: 8,
+              paddingHorizontal: 10,
+              borderRadius: 5, // Bo góc nhiều cho nút
+            }}
+            onPress={() => {
+              // Xử lý sự kiện khi nhấn nút Giao hàng
+              navigation.navigate("OrderConfirmScreen");
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 14, fontWeight: "bold" }}>
+              Giao hàng
+            </Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
+        {}
+        {/*CartPanelModel */}
       </View>
+      <CartModal
+        visible={isCartVisible}
+        onClose={() => setCartVisible(false)}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.4)", // Màu mờ đen 40%
+    zIndex: 1,
+  },
   container: {
     flex: 1,
     justifyContent: "center",

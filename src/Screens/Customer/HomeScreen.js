@@ -54,6 +54,26 @@ export default function HomeScreen({ navigation }) {
 
   const [activeSortItem, setActiveSortItem] = useState("Gần đây");
 
+  const categories = [
+    { id: 1, name: "Cơm", icon: "rice", iconType: "MaterialCommunityIcons" },
+    {
+      id: 2,
+      name: "Bún, Phở",
+      icon: "noodles",
+      iconType: "MaterialCommunityIcons",
+    },
+    { id: 3, name: "Ăn vặt", icon: "pizza", iconType: "Ionicons" },
+    { id: 4, name: "Đồ uống", icon: "cup", iconType: "MaterialCommunityIcons" },
+    { id: 5, name: "Cafe", icon: "cafe", iconType: "Ionicons" },
+    { id: 8, name: "Chay", icon: "leaf", iconType: "Ionicons" },
+    {
+      id: 9,
+      name: "Gà rán",
+      icon: "food-drumstick",
+      iconType: "MaterialCommunityIcons",
+    },
+  ];
+
   /* List  restaurant info*/
 
   const sortStyle = (isActive) =>
@@ -104,54 +124,28 @@ export default function HomeScreen({ navigation }) {
 
             {/* categories container */}
             <View style={styles.categoriesContainer}>
-              <TouchableOpacity style={styles.category}>
-                <MaterialCommunityIcons
-                  style={styles.categoryIcon}
-                  name="rice"
-                  size={28}
-                  color="white"
-                />
-
-                <Text style={styles.categoryText}>Cơm</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.category}>
-                <MaterialCommunityIcons
-                  style={styles.categoryIcon}
-                  name="noodles"
-                  size={26}
-                  color="white"
-                />
-                <Text style={styles.categoryText}>Bún, Phở</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.category}>
-                <Ionicons
-                  style={styles.categoryIcon}
-                  name="pizza"
-                  size={24}
-                  color="white"
-                />
-                <Text style={styles.categoryText}>Ăn vặt</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.category}>
-                <MaterialCommunityIcons
-                  style={styles.categoryIcon}
-                  name="cup"
-                  size={24}
-                  color="white"
-                />
-
-                <Text style={styles.categoryText}>Đồ uống</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.category}>
-                <Ionicons
-                  style={styles.categoryIcon}
-                  name="cafe"
-                  size={24}
-                  color="white"
-                />
-
-                <Text style={styles.categoryText}>Cafe</Text>
-              </TouchableOpacity>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {categories.map((category) => (
+                  <TouchableOpacity key={category.id} style={styles.category}>
+                    {category.iconType === "MaterialCommunityIcons" ? (
+                      <MaterialCommunityIcons
+                        style={styles.categoryIcon}
+                        name={category.icon}
+                        size={28}
+                        color="white"
+                      />
+                    ) : (
+                      <Ionicons
+                        style={styles.categoryIcon}
+                        name={category.icon}
+                        size={28}
+                        color="white"
+                      />
+                    )}
+                    <Text style={styles.categoryText}>{category.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           </View>
 
@@ -187,7 +181,7 @@ export default function HomeScreen({ navigation }) {
           </View>
           <View style={styles.horizontalListContainer}>
             <View style={styles.listHeader}>
-              <Text style={styles.listHeaderTitle}>Xem gần đây</Text>
+              <Text style={styles.listHeaderTitle}>Đã xem </Text>
               <Text
                 style={styles.listHeaderSubtitle}
                 onPress={() => navigation.navigate("ExploreScreen")}
@@ -360,6 +354,8 @@ const styles = StyleSheet.create({
   },
   category: {
     alignItems: "center",
+    padding: 5,
+    marginHorizontal: 5,
   },
   categoryIcon: {
     height: 30,

@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Header } from "../../components";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const OrderDetailScreen = ({ navigation }) => {
+const OrderConfirmScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -84,6 +84,12 @@ const OrderDetailScreen = ({ navigation }) => {
             <Text style={styles.text}>Phương thức thanh toán: </Text>
             {/* <Image source={require("./paypal.png")} style={styles.paypalIcon} /> */}
           </View>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate("PaymentScreen")}
+          >
+            <Text style={styles.buttonText}>Đặt đơn - 156.000 đ</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -204,4 +210,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-export default OrderDetailScreen;
+export default OrderConfirmScreen;

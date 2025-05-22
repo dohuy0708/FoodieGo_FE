@@ -8,6 +8,7 @@ const OrderCard = ({
   storeName,
   firstFood,
   firstFoodImg,
+  itemPrice,
   itemCount,
   totalItem,
   totalPrice,
@@ -21,15 +22,6 @@ const OrderCard = ({
           <Ionicons style={styles.icon} name="storefront-outline" size={22} />
           <Text style={styles.storeName}>{storeName}</Text>
         </View>
-        <Text
-          style={[
-            styles.statusTag,
-            status === "Chờ xác nhận" && styles.statusPending,
-            status === "Đang giao" && styles.statusDelivering,
-          ]}
-        >
-          {status}
-        </Text>
       </View>
 
       <View style={styles.itemDetails}>
@@ -39,17 +31,31 @@ const OrderCard = ({
           }}
           style={styles.foodImage}
         />
-        <Text style={styles.itemCount}>
-          {itemCount}x {firstFood}
+        <Text style={styles.itemCount}>{firstFood}</Text>
+        <Text>
+          {itemPrice}đ x {itemCount}
         </Text>
       </View>
 
-      <View style={styles.total}>
-        <Text style={styles.totalText}>Tổng thanh toán ({totalItem} món)</Text>
-        <Text style={styles.price}>{totalPrice} đ</Text>
+      <View>
+        <View style={styles.total}>
+          <Text style={styles.totalText}>
+            Tổng thanh toán ({totalItem} món)
+          </Text>
+          <Text style={styles.price}>{totalPrice} đ</Text>
+        </View>
       </View>
 
       <View style={styles.statusContainer}>
+        <Text
+          style={[
+            styles.statusTag,
+            status === "Chờ xác nhận" && styles.statusPending,
+            status === "Đang giao" && styles.statusDelivering,
+          ]}
+        >
+          {status}
+        </Text>
         {status === "Chờ xác nhận" && (
           <TouchableOpacity style={styles.cancelButton}>
             <Text style={styles.buttonText}>Hủy đơn</Text>
@@ -158,7 +164,7 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     alignItems: "center",
     marginTop: 2,
   },
