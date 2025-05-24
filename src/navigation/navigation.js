@@ -34,6 +34,7 @@ import FoodScreen from "../Screens/Customer/FoodScreen";
 import ExploreScreen from "../Screens/Customer/ExploreScreen";
 import SearchScreen from "../Screens/Customer/SearchScreen";
 import AddressScreen from "../Screens/Customer/AddressScreen";
+import AddAddressScreens from "../Screens/Customer/AddAddressScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -55,6 +56,7 @@ export default function Navigation() {
           <Stack.Screen name="AboutUsScreen" component={AboutUsScreen} />
           <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
           <Stack.Screen name="AddressScreen" component={AddressScreen} />
+          <Stack.Screen name="AddAddressScreen" component={AddAddressScreens} />
           <Stack.Screen name="RestaurantScreen" component={RestaurantScreen} />
           <Stack.Screen name="FoodScreen" component={FoodScreen} />
           <Stack.Screen name="ExploreScreen" component={ExploreScreen} />

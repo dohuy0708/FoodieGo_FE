@@ -74,6 +74,7 @@ const AddressScreen = ({ navigation }) => {
 
   const handleAddAddress = () => {
     // Navigate to add new address screen
+    navigation.navigate("AddAddressScreen");
     console.log("Add new address");
   };
 
