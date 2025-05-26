@@ -11,41 +11,47 @@ import { Colors } from "../constants";
 const RestaurantMediumCard = ({
   id,
   name,
-  images: { poster },
+  avatar,
   tags,
   distance,
+  description,
   time,
   navigate,
 }) => {
-  // const dispatch = useDispatch();
-  // const isBookmarked = useSelector(
-  //   (state) =>
-  //     state?.bookmarkState?.bookmarks?.filter(
-  //       (item) => item?.restaurantId === id
-  //     )?.length > 0
-  // );
-  // const addBookmark = () =>
-  //   dispatch(BookmarkAction.addBookmark({ restaurantId: id }));
-  // const removeBookmark = () =>
-  //   dispatch(BookmarkAction.removeBookmark({ restaurantId: id }));
   return (
     <TouchableOpacity
       style={styles.container}
       activeOpacity={0.8}
-      onPress={() => navigate(id)}
+      onPress={() => {
+        const restaurant = {
+          id,
+          name,
+          avatar,
+          tags,
+          distance,
+          description,
+          time,
+        };
+
+        navigate(restaurant);
+      }}
     >
       <Image
-        // source={{ uri: StaticImageService.getPoster(poster) }}
         source={{
-          uri: "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
-        }} // Replace with your image URL}}
+          uri:
+            avatar?.length > 0
+              ? avatar
+              : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
+        }}
         style={styles.posterStyle}
       />
       {/* Description*/}
       <View style={styles.descriptionContainer}>
         <Text style={styles.titleText}>{name}</Text>
         <Text style={styles.desText}>
-          Cơm gà sốt tỏi chuẩn vị, thơm ngon, giòn rụm...
+          {description?.length > 50
+            ? description.substring(0, 50) + "..."
+            : description}
         </Text>
         {/* <Text style={styles.tagText}>{tags?.join(" • ")}</Text> */}
         <View style={styles.footerContainer}>
@@ -57,11 +63,17 @@ const RestaurantMediumCard = ({
           <View style={styles.rowAndCenter}>
             <View style={styles.timeAndDistanceContainer}>
               <Ionicons name="location-outline" color={"#yellow"} size={15} />
-              <Text style={styles.timeAndDistanceText}>2.7km</Text>
+              <Text style={styles.timeAndDistanceText}>
+                {" "}
+                {distance?.toFixed(1)} km
+              </Text>
             </View>
             <View style={styles.timeAndDistanceContainer}>
               <Ionicons name="time-outline" color="Blue" size={15} />
-              <Text style={styles.timeAndDistanceText}>12phut</Text>
+              <Text style={styles.timeAndDistanceText}>
+                {" "}
+                {Math.round(distance * 1.5)} phút
+              </Text>
             </View>
           </View>
         </View>
@@ -95,7 +107,7 @@ const styles = StyleSheet.create({
   titleText: {
     marginTop: 10,
     marginLeft: 8,
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 15 * 1.4,
     color: Colors.DEFAULT_BLACK,
   },

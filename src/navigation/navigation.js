@@ -20,6 +20,7 @@ import FeedbackScreen from "../screens/customer/FeedbackScreen";
 import { CartProvider } from "../context/CartContext";
 import OrderConfirmScreen from "../screens/customer/OrderConfirmScreen";
 import PaymentScreen from "../screens/customer/PaymentScreen";
+import CategoryScreen from "../screens/customer/CategoryScreen";
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
@@ -52,6 +53,7 @@ export default function Navigation() {
             <Stack.Screen name="SearchScreen" component={SearchScreen} />
             <Stack.Screen name="OrderDetailScreen" component={OrderDetail} />
             <Stack.Screen name="FeedbackScreen" component={FeedbackScreen} />
+            <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
             <Stack.Screen
               name="OrderConfirmScreen"
               component={OrderConfirmScreen}

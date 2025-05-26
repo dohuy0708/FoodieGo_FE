@@ -1,5 +1,5 @@
 // CartModal.js
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,47 +11,48 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Colors } from "../constants";
+import CartItem from "./CartItem";
+import { useCart } from "../context/CartContext";
 
-export default function CartModal({ visible, onClose }) {
-  const [items, setItems] = useState([
-    {
-      id: "1",
-      name: "Bún đậu đặc biệt (1 người)",
-      price: 47000,
-      quantity: 1,
-      image: "https://example.com/bundau1.jpg",
-    },
-    {
-      id: "2",
-      name: "Bún đậu đặc biệt (3 người)",
-      price: 143000,
-      quantity: 1,
-      image: "https://example.com/bundau3.jpg",
-    },
-  ]);
+export default function CartModal({
+  restaurantId,
+  visible,
+  onClose,
+  onNavigateToCart,
+}) {
+  const { getCartItems, clearCart, hasItems } = useCart();
+  const [items, setItems] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [totalItems, setTotalItems] = useState(0); // Thêm state tổng số lượng món
+  // Thêm state tổng giá
 
-  const increase = (id) => {
-    setItems(
-      items.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      )
+  useEffect(() => {
+    if (restaurantId) {
+      const cartItems = getCartItems(restaurantId);
+
+      setItems(cartItems);
+    }
+  }, [restaurantId, visible, getCartItems]);
+  // Tính tổng tiền mỗi khi items thay đổi
+  useEffect(() => {
+    const total = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
     );
-  };
 
-  const decrease = (id) => {
-    setItems(
-      items.map((item) =>
-        item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-    );
-  };
-
-  const total = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+    setTotalItems(totalQuantity);
+    setTotalPrice(total);
+  }, [items]);
+  useEffect(() => {
+    if (visible && items.length === 0) {
+      onClose();
+    }
+  }, [items, visible]);
+  // const total = items.reduce(
+  //   (sum, item) => sum + item.price * item.quantity,
+  //   0
+  // );
 
   return (
     <Modal
@@ -63,7 +64,7 @@ export default function CartModal({ visible, onClose }) {
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => clearCart(restaurantId)}>
               <Text style={styles.clearText}>Xóa tất cả</Text>
             </TouchableOpacity>
             <Text style={styles.title}>Giỏ hàng</Text>
@@ -76,32 +77,14 @@ export default function CartModal({ visible, onClose }) {
             data={items}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View style={styles.item}>
-                <Image source={{ uri: item.image }} style={styles.image} />
-                <View style={styles.details}>
-                  <Text>{item.name}</Text>
-                  <Text style={{ color: "#FF9900" }}>
-                    {item.price.toLocaleString()} đ
-                  </Text>
-                </View>
-                <View style={styles.quantity}>
-                  <TouchableOpacity onPress={() => decrease(item.id)}>
-                    <Icon name="remove-circle-outline" size={22} />
-                  </TouchableOpacity>
-                  <Text style={{ marginHorizontal: 10 }}>{item.quantity}</Text>
-                  <TouchableOpacity onPress={() => increase(item.id)}>
-                    <Icon name="add-circle-outline" size={22} />
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <CartItem item={item} restaurantId={restaurantId} />
             )}
           />
 
-          <TouchableOpacity
-            style={styles.footer}
-            onPress={() => console.log("Nút Giao hàng được nhấn!")}
-          >
-            <Text style={styles.checkoutText}>Giao hàng</Text>
+          <TouchableOpacity style={styles.footer} onPress={onNavigateToCart}>
+            <Text style={styles.checkoutText}>
+              Giao hàng ({totalItems}) - {totalPrice.toLocaleString()} đ
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -119,7 +102,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
     width: "100%",
-    height: "80%",
+    height: "70%",
     padding: 10,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -131,9 +114,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 10,
   },
   clearText: { color: "red" },
-  title: { fontSize: 20, fontWeight: "bold" },
+  title: { fontSize: 20, fontWeight: "bold", marginRight: 20 },
   item: {
     flexDirection: "row",
     padding: 10,

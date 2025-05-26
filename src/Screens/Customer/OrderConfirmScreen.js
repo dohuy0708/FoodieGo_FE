@@ -10,8 +10,20 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Header } from "../../components";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "../../constants";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+const OrderConfirmScreen = ({ navigation, route }) => {
+  const { restaurant } = route.params;
 
-const OrderConfirmScreen = ({ navigation }) => {
+  const [shippingFee, setShippingFee] = React.useState(0);
+  const [userLocation, setUserLocation] = React.useState(null);
+  const [userInfo, setUserInfo] = React.useState(null);
+
+  // get user location
+  // get user info
+  // call API calculate shipping fee
+  // Get data from CartContext
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -23,21 +35,37 @@ const OrderConfirmScreen = ({ navigation }) => {
         {/* Địa chỉ và thông tin người nhận */}
         <View style={styles.AddressSection}>
           <View style={styles.row}>
-            <Ionicons name="location-outline" size={20} color="#333" />
+            <Ionicons
+              name="location-outline"
+              size={20}
+              color={Colors.DEFAULT_GREEN}
+            />
             <Text style={styles.addressText}>
               KTX khu A, Phường Đông Hòa, Dĩ An, Bình Dương
             </Text>
             <Text style={styles.editText}>Chỉnh sửa</Text>
           </View>
           <View style={styles.row}>
-            <Ionicons name="person-outline" size={20} color="#333" />
+            <Ionicons
+              name="person-outline"
+              size={20}
+              color={Colors.DEFAULT_GREEN}
+            />
             <Text style={styles.text}>Hoàng Huy | 0654428222</Text>
           </View>
         </View>
 
         {/* Chi tiết món */}
         <View style={styles.section}>
-          <Text style={styles.shopTitle}>Bún đậu Akiso - Làng Đại học</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Ionicons
+              style={styles.icon}
+              name="storefront-outline"
+              size={22}
+              color={Colors.DEFAULT_GREEN}
+            />
+            <Text style={styles.shopTitle}>{restaurant?.name}</Text>
+          </View>
 
           <View style={styles.itemRow}>
             {/* <Image source={require("./bun1.png")} style={styles.image} /> */}
@@ -82,7 +110,8 @@ const OrderConfirmScreen = ({ navigation }) => {
           <View style={styles.row}>
             <Ionicons name="wallet-outline" size={20} color="#333" />
             <Text style={styles.text}>Phương thức thanh toán: </Text>
-            {/* <Image source={require("./paypal.png")} style={styles.paypalIcon} /> */}
+
+            <FontAwesome name="cc-paypal" size={28} color="blue" />
           </View>
           <TouchableOpacity
             style={styles.button}
@@ -125,6 +154,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginVertical: 4,
+    paddingHorizontal: 3,
   },
   addressText: {
     flex: 1,
@@ -142,7 +172,6 @@ const styles = StyleSheet.create({
   shopTitle: {
     fontWeight: "bold",
     fontSize: 16,
-    marginBottom: 10,
   },
   itemRow: {
     flexDirection: "row",

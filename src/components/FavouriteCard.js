@@ -11,8 +11,9 @@ import { Colors } from "../constants";
 const FavoriteCard = ({
   id,
   name,
-  images: { poster },
+  image,
   tags,
+  description,
   distance,
   time,
   navigate,
@@ -32,18 +33,18 @@ const FavoriteCard = ({
         <Ionicons name={"heart"} color={Colors.SECONDARY_RED} size={28} />
       </TouchableOpacity>
       <Image
-        // source={{ uri: StaticImageService.getPoster(poster) }}
         source={{
-          uri: "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
-        }} // Replace with your image URL}}
+          uri:
+            image?.length > 0
+              ? image
+              : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
+        }}
         style={styles.posterStyle}
       />
       {/* Description*/}
       <View style={styles.descriptionContainer}>
         <Text style={styles.titleText}>{name}</Text>
-        <Text style={styles.desText}>
-          Cơm gà sốt tỏi chuẩn vị, thơm ngon, giòn rụm...
-        </Text>
+        <Text style={styles.desText}>{description}</Text>
         {/* <Text style={styles.tagText}>{tags?.join(" • ")}</Text> */}
         <View style={styles.footerContainer}>
           <View style={styles.rowAndCenter}>
@@ -54,11 +55,17 @@ const FavoriteCard = ({
           <View style={styles.rowAndCenter}>
             <View style={styles.timeAndDistanceContainer}>
               <Ionicons name="location-outline" color={"#yellow"} size={15} />
-              <Text style={styles.timeAndDistanceText}>2.7km</Text>
+              <Text style={styles.timeAndDistanceText}>
+                {" "}
+                {distance?.toFixed(1)} km
+              </Text>
             </View>
             <View style={styles.timeAndDistanceContainer}>
               <Ionicons name="time-outline" color="Blue" size={15} />
-              <Text style={styles.timeAndDistanceText}>12phut</Text>
+              <Text style={styles.timeAndDistanceText}>
+                {" "}
+                {Math.round(distance * 1.5)} phút
+              </Text>
             </View>
           </View>
         </View>

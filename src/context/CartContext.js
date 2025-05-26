@@ -20,7 +20,9 @@ export const CartProvider = ({ children }) => {
         updatedCart = [...currentCart, { ...item, quantity: 1 }];
       }
 
-      return { ...prev, [restaurantId]: updatedCart };
+      const newCarts = { ...prev, [restaurantId]: updatedCart };
+      console.log("addToCart => Updated carts:", newCarts);
+      return newCarts;
     });
   };
 
@@ -31,7 +33,9 @@ export const CartProvider = ({ children }) => {
         .map((i) => (i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i))
         .filter((i) => i.quantity > 0);
 
-      return { ...prev, [restaurantId]: updatedCart };
+      const newCarts = { ...prev, [restaurantId]: updatedCart };
+      console.log("decreaseFromCart => Updated carts:", newCarts);
+      return newCarts;
     });
   };
 
@@ -41,7 +45,11 @@ export const CartProvider = ({ children }) => {
     carts[restaurantId] && carts[restaurantId].length > 0;
 
   const clearCart = (restaurantId) => {
-    setCarts((prev) => ({ ...prev, [restaurantId]: [] }));
+    setCarts((prev) => {
+      const newCarts = { ...prev, [restaurantId]: [] };
+      console.log("clearCart => Updated carts:", newCarts);
+      return newCarts;
+    });
   };
 
   return (
