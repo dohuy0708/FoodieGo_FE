@@ -19,7 +19,7 @@ import Fonts from "../../constants/Fonts";
 import { Picker } from "@react-native-picker/picker";
 
 
-import GRAPHQL_ENDPOINT from "../../../config";
+
 import { registerUser } from "../../services/authService";
 
 const SignUpScreen = ({ navigation }) => {

@@ -18,6 +18,9 @@ import { Colors } from "../../constants";
 import Display from "../../utils/Display";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ReviewItem from "../../components/ReviewItem";
+import { useCart } from "../../context/CartContext";
+import CartModal from "../../components/CartModal";
+import { useTheme } from "react-native-elements";
 
 const reviews = [
   {
@@ -55,16 +58,77 @@ const reviews = [
   },
 ];
 
-const FoodScreen = ({ navigation }) => {
-  const itemCount = 2;
+const FoodScreen = ({ navigation, route }) => {
+  const { food, restaurantId } = route.params; // lấy restaurantId ở đây
+  const { getCartItems, addToCart, hasItems, decreaseFromCart } = useCart();
+  const [items, setItems] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isCartVisible, setCartVisible] = useState(false);
+  const [itemCount, setItemCount] = useState(0);
+  console.log("restaurant", restaurantId);
+
+  useEffect(() => {
+    if (restaurantId) {
+      const cartItems = getCartItems(restaurantId);
+      setItems(cartItems);
+    }
+  }, [restaurantId, getCartItems]);
+  // Tính tổng tiền mỗi khi items thay đổi
+  useEffect(() => {
+    const total = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+    setTotalItems(totalQuantity);
+    setTotalPrice(total);
+  }, [items]);
+
+  useEffect(() => {
+    const cartItems = getCartItems(restaurantId);
+    console.log("Cart items:", cartItems); // ✅ Kiểm tra dữ liệu giỏ hàng
+    const existingItem = cartItems.find((item) => food.id === item.id);
+    setItemCount(existingItem ? existingItem.quantity : 0);
+    console.log(
+      "Existing item count:",
+      existingItem ? existingItem.quantity : 0
+    ); // ✅ Kiểm tra số lượng món ăn
+  }, [getCartItems, restaurantId, food.id]);
+
+  const handleAdd = () => {
+    addToCart(restaurantId, {
+      id: food.id,
+      name: food.name,
+      price: food.price,
+      imageUrl: food.imageUrl,
+      description: food.description,
+    });
+    setItemCount((prev) => prev + 1);
+  };
+
+  const handleRemove = () => {
+    if (itemCount <= 0) return;
+    decreaseFromCart(restaurantId, food.id);
+    setItemCount((prev) => (prev > 0 ? prev - 1 : 0));
+  };
+
+  const toggleCartModal = () => {
+    setCartVisible(!isCartVisible);
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, position: "relative" }}>
       <ScrollView>
         <View style={styles.container}>
           {/* Food image */}
           <Image
             source={{
-              uri: "https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/M6HASPARCZHYNN4XTUYT7H6PTE.jpg&w=800&h=600",
+              uri:
+                food.imageUrl?.length > 0
+                  ? food.imageUrl
+                  : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
             }}
             style={styles.backgroundImage}
           />
@@ -77,21 +141,28 @@ const FoodScreen = ({ navigation }) => {
           </TouchableOpacity>
           <Separator height={Display.setHeight(23)} />
 
-          {/* Food description */}
+          {/* Food descrip
+          tion */}
           <View style={styles.mainContainer}>
             {/* name  */}
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Cơm gà sốt bơ tỏi</Text>
+              <Text style={styles.title}>{food.name}</Text>
             </View>
             {/* Description */}
             <View style={styles.descriptionContainer}>
               <Text style={styles.desText}>
-                Gà sốt bơ tỏi ngon tuyệt cú mèo
+                {food.description?.length > 50
+                  ? food.description.substring(0, 50) + "..."
+                  : food.description}
               </Text>
             </View>
             {/* Price */}
             <View style={styles.footerContainer}>
-              <Text style={styles.priceText}> 35.000 VND</Text>
+              <Text style={styles.priceText}>
+                {" "}
+                {new Intl.NumberFormat("vi-VN").format(food.price)} VND
+              </Text>
+
               <View style={styles.itemAddContainer}>
                 {itemCount > 0 ? (
                   <>
@@ -99,7 +170,7 @@ const FoodScreen = ({ navigation }) => {
                       name="minus"
                       color={Colors.DEFAULT_YELLOW}
                       size={18}
-                      //onPress={() => removeFromCart(id)}
+                      onPress={handleRemove}
                     />
                     <Text style={styles.itemCountText}>{itemCount}</Text>
                   </>
@@ -109,7 +180,7 @@ const FoodScreen = ({ navigation }) => {
                   name="plus"
                   color={Colors.DEFAULT_YELLOW}
                   size={18}
-                  //  onPress={() => addToCart(id)}
+                  onPress={handleAdd}
                 />
               </View>
             </View>
@@ -139,11 +210,102 @@ const FoodScreen = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      {hasItems(restaurantId) && (
+        <View style={styles.cartPanelWrapper}>
+          <TouchableOpacity
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 10,
+              backgroundColor: "#f8f8f8",
+              borderTopWidth: 1,
+              borderColor: "#ddd",
+            }}
+            onPress={toggleCartModal} // Mở modal giỏ hàng khi nhấn
+          >
+            {/* Icon giỏ hàng */}
+            <View style={{ position: "relative" }}>
+              <Text style={{ fontSize: 24, color: "#000000", marginLeft: 10 }}>
+                🛒
+              </Text>
+              <View
+                style={{
+                  position: "absolute",
+                  top: -5,
+                  right: -8,
+                  backgroundColor: "red",
+                  borderRadius: 10,
+                  width: 20,
+                  height: 20,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{ color: "white", fontSize: 12, fontWeight: "bold" }}
+                >
+                  {totalItems}
+                </Text>
+              </View>
+            </View>
+
+            {/* Giá tiền */}
+            <View style={{ flex: 1, alignItems: "flex-end", marginRight: 10 }}>
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: "bold",
+                  color: Colors.DEFAULT_YELLOW,
+                }}
+              >
+                {totalPrice.toLocaleString("vi-VN")} đ
+              </Text>
+            </View>
+
+            {/* Nút Giao hàng */}
+            <TouchableOpacity
+              style={{
+                marginRight: 10,
+                backgroundColor: Colors.DEFAULT_GREEN,
+                paddingVertical: 8,
+                paddingHorizontal: 10,
+                borderRadius: 5,
+              }}
+              onPress={() => navigation.navigate("OrderConfirmScreen")}
+            >
+              <Text
+                style={{ color: "white", fontSize: 14, fontWeight: "bold" }}
+              >
+                Giao hàng ({totalItems})
+              </Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
+      )}
+      <CartModal
+        restaurantId={restaurantId}
+        visible={isCartVisible}
+        onClose={() => setCartVisible(false)}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  cartPanelWrapper: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    zIndex: 100,
+  },
   container: {
     flex: 1,
     justifyContent: "center",

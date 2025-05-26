@@ -11,28 +11,30 @@ import { Colors } from "../constants";
 const RestaurantCard = ({
   id,
   name,
-  images: { poster },
+  avatar,
+  description,
   tags,
   distance,
   time,
   navigate,
 }) => {
-  // const dispatch = useDispatch();
-  // const isBookmarked = useSelector(
-  //   (state) =>
-  //     state?.bookmarkState?.bookmarks?.filter(
-  //       (item) => item?.restaurantId === id
-  //     )?.length > 0
-  // );
-  // const addBookmark = () =>
-  //   dispatch(BookmarkAction.addBookmark({ restaurantId: id }));
-  // const removeBookmark = () =>
-  //   dispatch(BookmarkAction.removeBookmark({ restaurantId: id }));
   return (
     <TouchableOpacity
       style={styles.container}
       activeOpacity={0.8}
-      onPress={() => navigate(id)}
+      onPress={() => {
+        const restaurant = {
+          id,
+          name,
+          avatar,
+          tags,
+          distance,
+          description,
+          time,
+        };
+        console.log("Navigating with restaurant:", restaurant);
+        navigate(restaurant);
+      }}
     >
       {/* <Ionicons
         // name={isBookmarked ? "bookmark" : "bookmark-outline"}
@@ -48,7 +50,9 @@ const RestaurantCard = ({
         }} // Replace with your image URL}}
         style={styles.posterStyle}
       />
-      <Text style={styles.titleText}>{name}</Text>
+      <Text style={styles.titleText} numberOfLines={1} ellipsizeMode="tail">
+        {name}
+      </Text>
       {/* <Text style={styles.tagText}>{tags?.join(" • ")}</Text> */}
       <View style={styles.footerContainer}>
         <View style={styles.rowAndCenter}>
@@ -56,12 +60,15 @@ const RestaurantCard = ({
           <Text style={styles.ratingText}>4</Text>
           <Text style={styles.reviewsText}>({10})</Text>
         </View>
-        <View style={styles.rowAndCenter}>
+        {/* <View style={styles.rowAndCenter}>
           <View style={styles.timeAndDistanceContainer}>
             <Ionicons name="location-outline" color={"#yellow"} size={15} />
-            <Text style={styles.timeAndDistanceText}>2.7km</Text>
+            <Text style={styles.timeAndDistanceText}>
+              {" "}
+              {distance?.toFixed(1)} km
+            </Text>
           </View>
-        </View>
+        </View> */}
       </View>
     </TouchableOpacity>
   );
@@ -69,24 +76,29 @@ const RestaurantCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: "center",
+    width: 120, // hoặc 180, tùy bạn
+    height: 175,
+    justifyContent: "flex-start",
     backgroundColor: Colors.DEFAULT_WHITE,
     borderRadius: 10,
     elevation: 3,
     marginBottom: 5,
+    marginHorizontal: 5,
   },
   posterStyle: {
-    width: 800 * 0.15,
-    height: 700 * 0.15,
-    borderRadius: 10,
-    margin: 5,
+    width: "100%",
+    height: 120,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
   titleText: {
-    marginLeft: 8,
-    fontSize: 15,
-    lineHeight: 15 * 1.4,
+    marginHorizontal: 8,
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 21,
     color: Colors.DEFAULT_BLACK,
+    numberOfLines: 1, // thuộc tính JSX, không CSS
+    ellipsizeMode: "tail",
   },
   tagText: {
     marginLeft: 8,

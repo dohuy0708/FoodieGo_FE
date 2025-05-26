@@ -50,7 +50,7 @@ import {
 //   },
 // ];
 
-const ExploreScreen = ({ navigation, route }) => {
+const CategoryScreen = ({ navigation, route }) => {
   const { categoryName } = route.params;
   const [activeSortItem, setActiveSortItem] = useState("Mới nhất");
   const [restaurants, setRestaurants] = useState(restaurants);
@@ -80,9 +80,16 @@ const ExploreScreen = ({ navigation, route }) => {
         let data = [];
 
         if (categoryName === "Đề xuất") {
-          data = await searchMostOrderedRestaurants(10.8790332, 106.8107046); // có distace r thì truyền ị trí vào
+          data = await searchMostOrderedRestaurants(); // có distace r thì truyền ị trí vào
         } else if (categoryName === "Nổi bật") {
-          data = await searchTopRatedRestaurants(10.8790332, 106.8107046); // có distace r thì truyền ị trí vào
+          data = await searchTopRatedRestaurants(); // có distace r thì truyền ị trí vào
+        } else {
+          data = await findRestaurantsByCategory(
+            categoryName,
+            10.8790332,
+            106.8107046,
+            10
+          );
         }
 
         setRestaurants(data);
@@ -108,6 +115,22 @@ const ExploreScreen = ({ navigation, route }) => {
       <View style={styles.container}>
         {/* Header */}
         <Header title={categoryName} onBackPress={() => navigation.goBack()} />
+
+        {/* Sort list */}
+        <View style={styles.sortListContainer}>
+          {["Mới nhất", "Bán chạy", "Đánh giá"].map((item) => {
+            const isActive = activeSortItem === item;
+            return (
+              <TouchableOpacity
+                key={item}
+                style={sortStyle(isActive)}
+                onPress={() => setActiveSortItem(item)}
+              >
+                <Text style={textColorStyle(isActive)}>{item}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {/* List FoodCard */}
         <ScrollView style={styles.listContainer}>
@@ -162,12 +185,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   listContainer: {
-    marginTop: 55,
     paddingVertical: 5,
     zIndex: -5,
     marginBottom: 30,
   },
+  sortListContainer: {
+    backgroundColor: Colors.DEFAULT_WHITE,
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    marginTop: 8,
 
+    elevation: 1,
+    marginTop: 55,
+  },
   sortListItem: {
     flex: 1,
     justifyContent: "center",
@@ -182,4 +213,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ExploreScreen;
+export default CategoryScreen;

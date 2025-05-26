@@ -6,7 +6,7 @@ import {
   ScrollView,
   FlatList,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -17,42 +17,66 @@ import RestaurantMediumCard from "../../components/RestaurantMediumCard";
 import Separator from "../../components/Seporator";
 import Colors from "../../constants/Colors";
 import Display from "../../utils/Display";
+import { use } from "react";
+import {
+  searchMostOrderedRestaurants,
+  searchNearestRestaurants,
+  searchTopRatedRestaurants,
+} from "../../services/restaurantService";
+const categories = [
+  { id: 1, name: "Cơm", icon: "rice", iconType: "MaterialCommunityIcons" },
+  {
+    id: 2,
+    name: "Bún, Phở",
+    icon: "noodles",
+    iconType: "MaterialCommunityIcons",
+  },
+  { id: 3, name: "Pizza", icon: "pizza", iconType: "Ionicons" },
+  { id: 4, name: "Đồ uống", icon: "cup", iconType: "MaterialCommunityIcons" },
+  { id: 5, name: "Cafe", icon: "cafe", iconType: "Ionicons" },
+  { id: 8, name: "Chay", icon: "leaf", iconType: "Ionicons" },
+  {
+    id: 9,
+    name: "Gà Rán",
+    icon: "food-drumstick",
+    iconType: "MaterialCommunityIcons",
+  },
+];
+
 export default function HomeScreen({ navigation }) {
   const [activeCategory, setActiveCategory] = useState();
-  const [restaurants, setRestaurants] = useState([
-    {
-      id: "1",
-      name: "Pizza Palace",
-      images: {
-        poster: "https://example.com/images/pizza.jpg",
-      },
-      tags: ["Pizza", "Italian"],
-      distance: "1.2 km",
-      time: "25-30 min",
-    },
-    {
-      id: "2",
-      name: "Sushi World",
-      images: {
-        poster: "https://example.com/images/sushi.jpg",
-      },
-      tags: ["Sushi", "Japanese"],
-      distance: "2.5 km",
-      time: "30-40 min",
-    },
-    {
-      id: "3",
-      name: "Burger Town",
-      images: {
-        poster: "https://example.com/images/burger.jpg",
-      },
-      tags: ["Burger", "Fast Food"],
-      distance: "0.9 km",
-      time: "20-25 min",
-    },
-  ]);
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [recommendedRestaurants, setRecommendedRestaurants] = useState([]);
+  const [popularRestaurants, setPopularRestaurants] = useState([]); // dùng cho bán chạy và nổi bật
+  const [nearRestaurants, setNearRestaurants] = useState([]);
+  const [rateRestaurants, setRateRestaurants] = useState([]);
   const [activeSortItem, setActiveSortItem] = useState("Gần đây");
+  const hasFetchedRef = useRef(false); // <== dùng ref để kiểm tra
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      if (hasFetchedRef.current) return; // Đã gọi rồi thì không gọi lại
+      hasFetchedRef.current = true;
+
+      setIsLoading(true);
+      try {
+        const [near, popular, rated] = await Promise.all([
+          searchNearestRestaurants(10.8790332, 106.8107046),
+          searchMostOrderedRestaurants(10.8790332, 106.8107046),
+          searchTopRatedRestaurants(10.8790332, 106.8107046),
+        ]);
+
+        setNearRestaurants(near);
+        setPopularRestaurants(popular);
+        setRateRestaurants(rated);
+      } catch (error) {
+        console.error("Error fetching restaurants:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRestaurants();
+  }, []);
 
   /* List  restaurant info*/
 
@@ -104,54 +128,36 @@ export default function HomeScreen({ navigation }) {
 
             {/* categories container */}
             <View style={styles.categoriesContainer}>
-              <TouchableOpacity style={styles.category}>
-                <MaterialCommunityIcons
-                  style={styles.categoryIcon}
-                  name="rice"
-                  size={28}
-                  color="white"
-                />
-
-                <Text style={styles.categoryText}>Cơm</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.category}>
-                <MaterialCommunityIcons
-                  style={styles.categoryIcon}
-                  name="noodles"
-                  size={26}
-                  color="white"
-                />
-                <Text style={styles.categoryText}>Bún, Phở</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.category}>
-                <Ionicons
-                  style={styles.categoryIcon}
-                  name="pizza"
-                  size={24}
-                  color="white"
-                />
-                <Text style={styles.categoryText}>Ăn vặt</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.category}>
-                <MaterialCommunityIcons
-                  style={styles.categoryIcon}
-                  name="cup"
-                  size={24}
-                  color="white"
-                />
-
-                <Text style={styles.categoryText}>Đồ uống</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.category}>
-                <Ionicons
-                  style={styles.categoryIcon}
-                  name="cafe"
-                  size={24}
-                  color="white"
-                />
-
-                <Text style={styles.categoryText}>Cafe</Text>
-              </TouchableOpacity>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={styles.category}
+                    onPress={() =>
+                      navigation.navigate("CategoryScreen", {
+                        categoryName: category.name,
+                      })
+                    }
+                  >
+                    {category.iconType === "MaterialCommunityIcons" ? (
+                      <MaterialCommunityIcons
+                        style={styles.categoryIcon}
+                        name={category.icon}
+                        size={28}
+                        color="white"
+                      />
+                    ) : (
+                      <Ionicons
+                        style={styles.categoryIcon}
+                        name={category.icon}
+                        size={28}
+                        color="white"
+                      />
+                    )}
+                    <Text style={styles.categoryText}>{category.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           </View>
 
@@ -162,13 +168,17 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.listHeaderTitle}>Đề xuất</Text>
               <Text
                 style={styles.listHeaderSubtitle}
-                onPress={() => navigation.navigate("ExploreScreen")}
+                onPress={() =>
+                  navigation.navigate("ExploreScreen", {
+                    categoryName: "Đề xuất",
+                  })
+                }
               >
                 Xem tất cả
               </Text>
             </View>
             <FlatList
-              data={restaurants}
+              data={popularRestaurants}
               keyExtractor={(item) => item?.id}
               horizontal
               ListHeaderComponent={() => <Separator width={10} />}
@@ -178,8 +188,8 @@ export default function HomeScreen({ navigation }) {
               renderItem={({ item }) => (
                 <RestaurantCard
                   {...item}
-                  navigate={(restaurantId) =>
-                    navigation.navigate("RestaurantScreen", { restaurantId })
+                  navigate={(restaurant) =>
+                    navigation.navigate("RestaurantScreen", { restaurant })
                   }
                 />
               )}
@@ -187,16 +197,20 @@ export default function HomeScreen({ navigation }) {
           </View>
           <View style={styles.horizontalListContainer}>
             <View style={styles.listHeader}>
-              <Text style={styles.listHeaderTitle}>Xem gần đây</Text>
+              <Text style={styles.listHeaderTitle}>Nổi bật </Text>
               <Text
                 style={styles.listHeaderSubtitle}
-                onPress={() => navigation.navigate("ExploreScreen")}
+                onPress={() =>
+                  navigation.navigate("ExploreScreen", {
+                    categoryName: "Nổi bật",
+                  })
+                }
               >
                 Xem tất cả
               </Text>
             </View>
             <FlatList
-              data={restaurants}
+              data={rateRestaurants}
               keyExtractor={(item) => item?.id}
               horizontal
               ListHeaderComponent={() => <Separator width={10} />}
@@ -206,9 +220,9 @@ export default function HomeScreen({ navigation }) {
               renderItem={({ item }) => (
                 <RestaurantCard
                   {...item}
-                  navigate={(restaurantId) =>
-                    navigation.navigate("RestaurantScreen", { restaurantId })
-                  }
+                  navigate={(restaurant) => {
+                    navigation.navigate("RestaurantScreen", { restaurant });
+                  }}
                 />
               )}
             />
@@ -229,15 +243,24 @@ export default function HomeScreen({ navigation }) {
               );
             })}
           </View>
-          {restaurants?.map((item) => (
-            <RestaurantMediumCard
-              {...item}
-              key={item?.id}
-              navigate={(restaurantId) =>
-                navigation.navigate("RestaurantScreen", { restaurantId })
-              }
-            />
-          ))}
+          {/* Render restaurant list based on activeSortItem */}
+          {(activeSortItem === "Gần đây"
+            ? nearRestaurants
+            : activeSortItem === "Bán chạy"
+            ? popularRestaurants
+            : rateRestaurants
+          )?.map((item) => {
+            // console.log("Rendering item:", item); // 👈 Ghi log từng item
+            return (
+              <RestaurantMediumCard
+                {...item}
+                key={item?.id}
+                navigate={(restaurant) => {
+                  navigation.navigate("RestaurantScreen", { restaurant });
+                }}
+              />
+            );
+          })}
           <Separator height={Display.setHeight(5)} />
         </ScrollView>
       </View>
@@ -360,6 +383,8 @@ const styles = StyleSheet.create({
   },
   category: {
     alignItems: "center",
+    padding: 5,
+    marginHorizontal: 10,
   },
   categoryIcon: {
     height: 30,

@@ -1,34 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import Display from "../utils/Display";
 import { Colors } from "../constants";
+import { useCart } from "../context/CartContext";
 
-const FoodCard = ({ id, name, description, price, image, navigate }) => {
-  //   const dispatch = useDispatch();
-  //   const itemCount = useSelector(
-  //     (state) =>
-  //       state?.cartState?.cart?.cartItems?.find((item) => item?.foodId === id)
-  //         ?.count
-  //   );
-  //   const addToCart = (foodId) => dispatch(CartAction.addToCart({ foodId }));
-  //   const removeFromCart = (foodId) =>
-  //     dispatch(CartAction.removeFromCart({ foodId }));
+const FoodCard = ({
+  restaurantId,
+  id,
+  name,
+  description,
+  price,
+  imageUrl,
+  navigate,
+}) => {
+  const { addToCart, decreaseFromCart, getCartItems } = useCart();
 
-  const [itemCount, setItemCount] = useState(10);
+  const [itemCount, setItemCount] = useState(0);
+
+  // Khi component mount, lấy số lượng món hiện tại trong giỏ để sync
+  useEffect(() => {
+    const cartItems = getCartItems(restaurantId);
+    const existingItem = cartItems.find((i) => i.id === id);
+    setItemCount(existingItem ? existingItem.quantity : 0);
+  }, [getCartItems, restaurantId, id]);
+  const handleAdd = () => {
+    addToCart(restaurantId, { id, name, price, imageUrl, description });
+    setItemCount((prev) => prev + 1);
+  };
+
+  const handleRemove = () => {
+    if (itemCount <= 0) return;
+    decreaseFromCart(restaurantId, id);
+    setItemCount((prev) => (prev > 0 ? prev - 1 : 0));
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => navigate()} activeOpacity={0.8}>
         <Image
           style={styles.image}
-          //   source={{
-          //     uri: StaticImageService.getGalleryImage(
-          //       image,
-          //       ApiContants.STATIC_IMAGE.SIZE.SQUARE
-          //     ),
-          //   }}
           source={{
-            uri: "https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/M6HASPARCZHYNN4XTUYT7H6PTE.jpg&w=800&h=600",
+            uri:
+              imageUrl?.length > 0
+                ? imageUrl
+                : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
           }}
         />
       </TouchableOpacity>
@@ -42,7 +58,10 @@ const FoodCard = ({ id, name, description, price, image, navigate }) => {
           </Text>
         </TouchableOpacity>
         <View style={styles.footerContainer}>
-          <Text style={styles.priceText}> {price} VND</Text>
+          <Text style={styles.priceText}>
+            {" "}
+            {new Intl.NumberFormat("vi-VN").format(price)} VND
+          </Text>
           <View style={styles.itemAddContainer}>
             {itemCount > 0 ? (
               <>
@@ -50,7 +69,7 @@ const FoodCard = ({ id, name, description, price, image, navigate }) => {
                   name="minus"
                   color={Colors.DEFAULT_YELLOW}
                   size={18}
-                  onPress={() => removeFromCart(id)}
+                  onPress={handleRemove}
                 />
                 <Text style={styles.itemCountText}>{itemCount}</Text>
               </>
@@ -60,7 +79,7 @@ const FoodCard = ({ id, name, description, price, image, navigate }) => {
               name="plus"
               color={Colors.DEFAULT_YELLOW}
               size={18}
-              onPress={() => addToCart(id)}
+              onPress={handleAdd}
             />
           </View>
         </View>
