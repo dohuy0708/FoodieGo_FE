@@ -17,12 +17,12 @@ import Nav from "../../components/Nav";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getAllOrdersByRestaurantId } from "../../services/vendorService";
 import useSessionStore from "../../utils/store";
-
+import Display from "../../utils/Display";
 const formatPrice = (price) => {
   if (typeof price !== 'number') return "N/A";
   return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
-
+const NAV_HEIGHT = Display.setHeight(7);
 const mapStatus = (status) => {
   switch (status) {
     case 'pending': return 'Chờ xác nhận';
@@ -457,9 +457,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
+    height: NAV_HEIGHT,
     backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderTopWidth: 1,
-    borderTopColor: Colors.GRAY_BORDER || "#e0e0e0",
-    height: 60,
+    borderTopColor: "#e0e0e0",
+    zIndex: 10,
   },
 });

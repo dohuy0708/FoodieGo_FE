@@ -13,10 +13,10 @@ import OrderList from "../Screens/vendor/OrderList";
 import OrderDetail from "../Screens/vendor/OrderDetail";
 import Notification from "../Screens/vendor/Notification";
 import Statistic from "../Screens/vendor/Statistic";
-import Category from "../Screens/admin/Category";
-import ListVendor from "../Screens/admin/ListVendor";
-import Comment from "../Screens/admin/Comment";
-import StatisticAdmin from "../Screens/admin/StatisticAdmin";
+import Category from "../Screens/Admin/Category";
+import ListVendor from "../Screens/Admin/ListVendor";
+import Comment from "../Screens/Admin/Comment";
+import StatisticAdmin from "../Screens/Admin/StatisticAdmin";
 import Account from "../Screens/vendor/Account";
 import SplashScreen from "../Screens/customer/SplashScreen";
 import LoginScreen from "../Screens/auth/LoginScreen";
@@ -33,7 +33,10 @@ import RestaurantScreen from "../Screens/customer/RestaurantScreen";
 import FoodScreen from "../Screens/customer/FoodScreen";
 import ExploreScreen from "../Screens/customer/ExploreScreen";
 import SearchScreen from "../Screens/customer/SearchScreen";
-
+import ChatListScreen from "../Screens/vendor/ChatListScreen";
+import IndividualChat from "../Screens/vendor/IndividualChatScreen";
+import ChatCustomer from "../Screens/customer/ChatCustomer";
+import IndividualChatCustomer from "../Screens/customer/InvidualChatCustomer";
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
@@ -73,6 +76,11 @@ export default function Navigation() {
           <Stack.Screen name="AddDish" component={AddDish} />
           <Stack.Screen name="EditDish" component={EditDish} />
           <Stack.Screen name="OrderDetail" component={OrderDetail} />
+          <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
+          <Stack.Screen name="IndividualChat" component={IndividualChat} />
+          <Stack.Screen name="ChatCustomer" component={ChatCustomer} />
+          <Stack.Screen name="IndividualChatCustomer" component={IndividualChatCustomer} />
+        
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>

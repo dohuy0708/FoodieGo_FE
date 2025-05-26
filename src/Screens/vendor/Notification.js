@@ -6,15 +6,16 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import  Colors  from "../../constants/Colors";
+import Colors from "../../constants/Colors";
 import { useState } from "react";
 import Nav from "../../components/Nav";
-import Display from "../../utils/Display"; 
+import Display from "../../utils/Display";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-
-const NAV_COMPONENT_HEIGHT = Display.setHeight(7); 
+const NAV_COMPONENT_HEIGHT = Display.setHeight(7);
 
 export default function Notification({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState([
     {
       id: "DH1",
@@ -81,7 +82,6 @@ export default function Notification({ navigation }) {
     },
   ]);
 
-  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, "0");
@@ -93,10 +93,8 @@ export default function Notification({ navigation }) {
   const renderItem = ({ item }) => {
     return (
       <View style={styles.orderItem}>
-       
         <View style={styles.divider} />
         <View>
-         
           <Text style={{ fontWeight: "bold", fontSize: 16 }}>{item.id}</Text>
         </View>
         <View style={styles.viewText}>
@@ -132,15 +130,14 @@ export default function Notification({ navigation }) {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        style={styles.flatListStyle} 
-       
+        style={styles.flatListStyle}
         contentContainerStyle={[
-            styles.listContentContainer,
-            { paddingBottom: NAV_COMPONENT_HEIGHT + Display.setHeight(2) } 
+          styles.listContentContainer,
+          { paddingBottom: NAV_COMPONENT_HEIGHT + Display.setHeight(2) },
         ]}
       />
-    
-      <View style={styles.navContainer}>
+
+      <View style={[styles.navContainer, { bottom: insets.bottom }]}>
         <Nav nav={navigation} />
       </View>
     </View>
@@ -148,52 +145,51 @@ export default function Notification({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  navContainer: {
+   navContainer: {
     position: "absolute",
-    bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Colors.DEFAULT_WHITE,
-    borderTopWidth: 1, 
-    borderTopColor: Colors.LIGHT_GREY2,
-   
+    height: NAV_COMPONENT_HEIGHT,
+    backgroundColor: Colors.DEFAULT_WHITE || "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    zIndex: 10,
   },
   divider: {
     width: "100%",
-    height: 1, 
-    backgroundColor: Colors.LIGHT_GREY2, 
+    height: 1,
+    backgroundColor: Colors.LIGHT_GREY2,
   },
   container: {
-    paddingHorizontal: Display.setWidth(3), 
-    paddingTop: Display.setHeight(5), 
-    paddingBottom: NAV_COMPONENT_HEIGHT, 
+    paddingHorizontal: Display.setWidth(3),
+    paddingTop: Display.setHeight(5),
+    paddingBottom: NAV_COMPONENT_HEIGHT,
     flex: 1,
     width: "100%",
     backgroundColor: "#fff",
     alignItems: "center",
-    gap: Display.setHeight(2.5), 
+    gap: Display.setHeight(2.5),
   },
   header: {
     textAlign: "center",
     color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
-    fontSize: 28, 
-    width: '100%', 
+    fontSize: 28,
+    width: "100%",
   },
   flatListStyle: {
-      width: "100%",
+    width: "100%",
   },
   listContentContainer: {
-    
-     gap: Display.setHeight(1.2), 
+    gap: Display.setHeight(1.2),
   },
   orderItem: {
     width: "100%",
-    paddingVertical: Display.setHeight(1.2), 
+    paddingVertical: Display.setHeight(1.2),
     paddingHorizontal: Display.setWidth(5),
-    backgroundColor: "#fff", 
-   
-    gap: Display.setHeight(1.2), 
+    backgroundColor: "#fff",
+
+    gap: Display.setHeight(1.2),
   },
   viewText: {
     flexDirection: "row",
@@ -201,20 +197,20 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   textStyle: {
-      fontSize: 15, 
-      color: Colors.DEFAULT_BLACK,
+    fontSize: 15,
+    color: Colors.DEFAULT_BLACK,
   },
   button: {
     backgroundColor: Colors.DEFAULT_GREEN,
-    paddingVertical: Display.setHeight(1.2), 
-    paddingHorizontal: Display.setWidth(5), 
+    paddingVertical: Display.setHeight(1.2),
+    paddingHorizontal: Display.setWidth(5),
     borderRadius: 5,
     alignSelf: "flex-end",
     marginTop: Display.setHeight(0.5),
   },
   buttonText: {
     color: "#fff",
-    fontSize: 15, 
-    fontWeight: '500',
-  }
+    fontSize: 15,
+    fontWeight: "500",
+  },
 });

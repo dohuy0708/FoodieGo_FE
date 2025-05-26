@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getTop10MenuByRestaurantId,getTotalOrderByRestaurantId,getTotalRevenueByRestaurantId, getTotalRevenueByRestaurantIdByYear } from "../../services/vendorService";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
-const NAV_HEIGHT = Display.setHeight(8);
+const NAV_HEIGHT = Display.setHeight(7);
 
 export default function Statistic({ navigation }) {
   const [isOpen, setIsOpen] = useState(false);
