@@ -53,10 +53,19 @@ const LoginScreen = ({ navigation }) => {
           // Lấy thông tin user
           const userInfo = await GetUserById(userId, token);
           const userData = userInfo.data.findUserById;
-          console.log("userData", userData);
+          // Gộp thêm roleId vào userData
+          const userWithRoleId = {
+            ...userData,
+            roleId: userData.role.id,
+          };
+          console.log("userData", userWithRoleId);
 
           // Lưu AsyncStorage
-          await AsyncStorage.setItem("userInfo", JSON.stringify(userData));
+          await AsyncStorage.setItem(
+            "userInfo",
+            JSON.stringify(userWithRoleId)
+          );
+
           await AsyncStorage.setItem("token", token);
 
           // Update Context

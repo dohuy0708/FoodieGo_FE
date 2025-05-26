@@ -109,6 +109,9 @@ const GetUserById = async (userId, token) => {
         gender
         avatar
         phone
+        role {
+          id
+        }
       
       }
     }
