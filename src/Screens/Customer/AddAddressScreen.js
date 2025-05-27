@@ -7,31 +7,87 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
-  SafeAreaView,
+  ActivityIndicator, // Thêm ActivityIndicator cho trạng thái loading khi lưu
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
+import { Header } from "../../components";
+
+// --- BẮT ĐẦU PHẦN BẠN SẼ TỰ TRIỂN KHAI API ---
+// Giả lập hàm gọi API để lưu địa chỉ
+// Bạn sẽ thay thế hàm này bằng logic gọi API thực tế của mình
+const callApiToSaveAddress = async (addressData) => {
+  console.log("Đang gọi API để lưu địa chỉ:", addressData);
+  // addressData sẽ bao gồm:
+  // {
+  //   name: String,
+  //   phone: String,
+  //   address: String, // Địa chỉ dạng text
+  //   latitude: Number,
+  //   longitude: Number
+  // }
+
+  // Ví dụ:
+  // const response = await fetch('YOUR_API_ENDPOINT/addresses', {
+  //   method: 'POST',
+  //   headers: {
+  //     'Content-Type': 'application/json',
+  //     // 'Authorization': 'Bearer YOUR_AUTH_TOKEN', // Nếu cần xác thực
+  //   },
+  //   body: JSON.stringify(addressData),
+  // });
+  // if (!response.ok) {
+  //   const errorData = await response.json();
+  //   throw new Error(errorData.message || "Lỗi khi lưu địa chỉ từ server");
+  // }
+  // return await response.json(); // Hoặc response.text() tùy vào API của bạn
+
+  // Giả lập độ trễ mạng
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // Giả lập thành công
+      resolve({
+        success: true,
+        message: "Địa chỉ đã được lưu thành công trên server.",
+      });
+      // Hoặc giả lập lỗi
+      // reject(new Error("Lỗi giả lập từ server."));
+    }, 1500);
+  });
+};
+// --- KẾT THÚC PHẦN BẠN SẼ TỰ TRIỂN KHAI API ---
 
 const AddAddressScreen = ({ navigation, route }) => {
   const [formData, setFormData] = useState({
-    name: "Hoàng Huy",
-    phone: "0365553121",
+    name: "", // Bỏ giá trị mặc định để người dùng tự nhập
+    phone: "", // Bỏ giá trị mặc định
     address: "",
   });
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  // selectedLocation sẽ lưu trữ { address: string, latitude: number, longitude: number }
+  const [selectedLocationData, setSelectedLocationData] = useState(null);
+  const [isSaving, setIsSaving] = useState(false); // State cho trạng thái loading khi lưu
 
-  // Handle data from SelectAddressScreen
+  // Xử lý dữ liệu từ SelectAddressScreen
   useEffect(() => {
-    if (route?.params?.selectedLocation) {
-      const location = route.params.selectedLocation;
-      setSelectedLocation(location);
+    // Đổi 'selectedLocation' thành 'pickedLocation' cho khớp với SelectAddressScreen
+    if (route.params?.pickedLocation) {
+      const location = route.params.pickedLocation;
+      setSelectedLocationData(location); // Lưu toàn bộ object { address, latitude, longitude }
       setFormData((prev) => ({
         ...prev,
-        address: location.address,
+        address: location.address, // Chỉ cập nhật address vào formData
       }));
+      // (Tùy chọn) Xóa param để không xử lý lại khi quay lại màn hình này
+      // mà không chọn lại địa chỉ
+      navigation.setParams({ pickedLocation: undefined });
     }
-  }, [route?.params?.selectedLocation]);
+  }, [route.params?.pickedLocation, navigation]);
 
-  const handleSelectAddress = () => {
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSelectAddressOnMap = () => {
     navigation.navigate("SelectAddressScreen");
   };
 
@@ -39,443 +95,312 @@ const AddAddressScreen = ({ navigation, route }) => {
     if (
       !formData.name.trim() ||
       !formData.phone.trim() ||
-      !formData.address.trim()
+      !formData.address.trim() // Kiểm tra address từ formData (đã được set từ bản đồ)
     ) {
-      Alert.alert("Thông báo", "Vui lòng điền đầy đủ thông tin");
+      Alert.alert(
+        "Thông báo",
+        "Vui lòng điền đầy đủ thông tin họ tên, số điện thoại và chọn địa chỉ."
+      );
       return;
     }
 
-    const phoneRegex = /^[0-9]{10,11}$/;
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})\b$/; // Regex chuẩn hơn cho SĐT Việt Nam
     if (!phoneRegex.test(formData.phone)) {
-      Alert.alert("Thông báo", "Số điện thoại không hợp lệ");
+      Alert.alert(
+        "Thông báo",
+        "Số điện thoại không hợp lệ. Số điện thoại Việt Nam thường bắt đầu bằng 0 và có 10 chữ số."
+      );
       return;
     }
 
+    if (
+      !selectedLocationData ||
+      !selectedLocationData.latitude ||
+      !selectedLocationData.longitude
+    ) {
+      Alert.alert("Thông báo", "Vui lòng chọn địa chỉ cụ thể trên bản đồ.");
+      return;
+    }
+
+    setIsSaving(true);
     try {
-      // TODO: Call your API here
-      console.log("Saving address:", {
-        ...formData,
-        location: selectedLocation,
-      });
+      const addressPayload = {
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        address: selectedLocationData.address, // Lấy địa chỉ từ selectedLocationData để đảm bảo là địa chỉ từ bản đồ
+        latitude: selectedLocationData.latitude,
+        longitude: selectedLocationData.longitude,
+        // Bạn có thể thêm các trường khác nếu cần, ví dụ:
+        // address_detail: "Tầng 5, tòa nhà ABC" // Nếu có ô nhập chi tiết địa chỉ
+        // type: "Nhà riêng" / "Công ty" // Nếu có lựa chọn loại địa chỉ
+      };
+
+      // Gọi hàm API của bạn
+      const apiResponse = await callApiToSaveAddress(addressPayload);
+
+      // console.log("API Response:", apiResponse); // Log kết quả từ API (nếu có)
 
       Alert.alert("Thành công", "Lưu địa chỉ thành công!", [
         {
           text: "OK",
           onPress: () => {
             setFormData({ name: "", phone: "", address: "" });
-            setSelectedLocation(null);
+            setSelectedLocationData(null);
+            // TODO: Cân nhắc việc có nên goBack hay navigate đến một màn hình danh sách địa chỉ
+            // Nếu goBack, người dùng có thể quay lại màn hình trước đó (ví dụ: Checkout)
+            // với địa chỉ mới đã được chọn (cần cơ chế cập nhật lại)
             navigation.goBack();
           },
         },
       ]);
     } catch (error) {
-      Alert.alert("Lỗi", "Có lỗi xảy ra khi lưu địa chỉ");
+      console.error("Lỗi khi lưu địa chỉ:", error);
+      Alert.alert(
+        "Lỗi",
+        error.message || "Có lỗi xảy ra khi lưu địa chỉ. Vui lòng thử lại."
+      );
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Header */}
+        <Header
+          title="Thêm địa chỉ mới"
+          onBackPress={() => navigation.goBack()}
+        />
+
+        <View
+          style={styles.content}
+          keyboardShouldPersistTaps="handled" // Để đóng bàn phím khi chạm ra ngoài input
         >
-          <Icon name="arrow-back" size={24} color="#666" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thêm địa chỉ mới</Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        {/* Name Input */}
-        <View style={styles.inputContainer}>
-          <View style={styles.inputRow}>
-            <View style={styles.iconPlaceholder} />
-            <TextInput
-              style={styles.textInput}
-              placeholder="Họ và tên"
-              value={formData.name}
-              onChangeText={(text) =>
-                setFormData((prev) => ({ ...prev, name: text }))
-              }
-              placeholderTextColor="#999"
-            />
-          </View>
-        </View>
-
-        {/* Phone Input */}
-        <View style={styles.inputContainer}>
-          <View style={styles.inputRow}>
-            <View style={styles.phoneIconPlaceholder} />
-            <TextInput
-              style={styles.textInput}
-              placeholder="Số điện thoại"
-              value={formData.phone}
-              onChangeText={(text) =>
-                setFormData((prev) => ({ ...prev, phone: text }))
-              }
-              keyboardType="phone-pad"
-              placeholderTextColor="#999"
-            />
-          </View>
-        </View>
-
-        {/* Address Selection */}
-        <TouchableOpacity
-          style={styles.addressContainer}
-          onPress={handleSelectAddress}
-        >
-          <View style={styles.addressRow}>
-            <View style={styles.addressLeft}>
-              <Icon name="location-outline" size={20} color="#999" />
-              <View style={styles.addressTextContainer}>
-                <Text style={styles.addressText}>
-                  {formData.address || "Chọn địa chỉ"}
-                </Text>
-                {selectedLocation && (
-                  <Text style={styles.locationName}>
-                    {selectedLocation.name}
-                  </Text>
-                )}
-              </View>
+          {/* Name Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Người liên hệ</Text>
+            <View style={styles.inputContainer}>
+              <Icon
+                name="person-outline"
+                size={20}
+                color="#999"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Họ và tên"
+                value={formData.name}
+                onChangeText={(text) => handleInputChange("name", text)}
+                placeholderTextColor="#999"
+                autoCapitalize="words"
+              />
             </View>
-            <Icon name="chevron-forward" size={16} color="#999" />
           </View>
-        </TouchableOpacity>
-      </ScrollView>
 
-      {/* Save Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (!formData.name.trim() ||
+          {/* Phone Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Số điện thoại</Text>
+            <View style={styles.inputContainer}>
+              <Icon
+                name="call-outline"
+                size={20}
+                color="#999"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Số điện thoại"
+                value={formData.phone}
+                onChangeText={(text) => handleInputChange("phone", text)}
+                keyboardType="phone-pad"
+                placeholderTextColor="#999"
+                maxLength={10}
+              />
+            </View>
+          </View>
+
+          {/* Address Selection */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Địa chỉ</Text>
+            <TouchableOpacity
+              style={styles.addressSelectionContainer}
+              onPress={handleSelectAddressOnMap}
+            >
+              <View style={styles.addressRow}>
+                <Icon
+                  name="location-outline"
+                  size={20}
+                  color="#14b8a6"
+                  style={styles.inputIcon}
+                />
+                <View style={styles.addressTextContainer}>
+                  <Text
+                    style={
+                      formData.address
+                        ? styles.addressText
+                        : styles.addressPlaceholderText
+                    }
+                    numberOfLines={2}
+                  >
+                    {formData.address || "Chạm để chọn địa chỉ trên bản đồ"}
+                  </Text>
+                  {/* Không cần hiển thị selectedLocation.name vì formData.address đã đủ */}
+                </View>
+                <Icon name="chevron-forward" size={20} color="#999" />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Save Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              (isSaving || // Disable khi đang lưu
+                !formData.name.trim() ||
+                !formData.phone.trim() ||
+                !formData.address.trim() ||
+                !selectedLocationData) && // Disable nếu chưa chọn địa chỉ trên map
+                styles.saveButtonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={
+              isSaving ||
+              !formData.name.trim() ||
               !formData.phone.trim() ||
-              !formData.address.trim()) &&
-              styles.saveButtonDisabled,
-          ]}
-          onPress={handleSave}
-          disabled={
-            !formData.name.trim() ||
-            !formData.phone.trim() ||
-            !formData.address.trim()
-          }
-        >
-          <Text style={styles.saveButtonText}>Lưu</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-};
-
-const SelectAddressScreen = ({ navigation }) => {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSelectLocation = (location) => {
-    navigation.navigate("AddAddressScreen", { selectedLocation: location });
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-back" size={24} color="#666" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chọn địa chỉ</Text>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Icon
-            name="search"
-            size={20}
-            color="#999"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Tìm vị trí"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#999"
-          />
+              !formData.address.trim() ||
+              !selectedLocationData
+            }
+          >
+            {isSaving ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.saveButtonText}>Lưu địa chỉ</Text>
+            )}
+          </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Map Placeholder */}
-      <View style={styles.mapContainer}>
-        <View style={styles.mapCenter}>
-          <View style={styles.mapPin}>
-            <Icon name="location" size={24} color="#14b8a6" />
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.navigationButton}>
-          <Icon name="navigate" size={16} color="#666" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Simple Address List */}
-      <View style={styles.listContainer}>
-        <ScrollView>
-          <View style={styles.listContent}>
-            <Text style={styles.suggestionTitle}>Địa chỉ gợi ý</Text>
-
-            <TouchableOpacity
-              style={styles.suggestionItem}
-              onPress={() =>
-                handleSelectLocation({
-                  id: 1,
-                  name: "Chung cư C7 Man Thiện",
-                  address: "Đường Man Thiện, Phường Tân Phú, Quận 9, TP. HCM",
-                })
-              }
-            >
-              <View style={styles.suggestionRow}>
-                <Icon name="location-outline" size={16} color="#999" />
-                <View style={styles.suggestionTextContainer}>
-                  <Text style={styles.suggestionName}>
-                    Chung cư C7 Man Thiện
-                  </Text>
-                  <Text style={styles.suggestionAddress}>
-                    Đường Man Thiện, Phường Tân Phú, Quận 9, TP. HCM
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.suggestionItem}
-              onPress={() =>
-                handleSelectLocation({
-                  id: 2,
-                  name: "SCS Building",
-                  address:
-                    "Lô T2-4 đường D1, Khu Công Nghệ Cao, Phường Tân Phú, Quận 9, TP. HCM",
-                })
-              }
-            >
-              <View style={styles.suggestionRow}>
-                <Icon name="location-outline" size={16} color="#999" />
-                <View style={styles.suggestionTextContainer}>
-                  <Text style={styles.suggestionName}>SCS Building</Text>
-                  <Text style={styles.suggestionAddress}>
-                    Lô T2-4 đường D1, Khu Công Nghệ Cao, Phường Tân Phú, Quận 9,
-                    TP. HCM
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#f9fafb", // Màu nền chung
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#e5e7eb", // Màu border nhạt hơn
   },
   backButton: {
     padding: 8,
-    marginRight: 8,
+    marginRight: 12, // Tăng khoảng cách
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#111827",
+    color: "#1f2937", // Màu text đậm hơn
   },
   content: {
     flex: 1,
+    marginTop: 30,
     paddingHorizontal: 16,
     paddingTop: 16,
   },
-  inputContainer: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    marginBottom: 16,
-    padding: 16,
-    elevation: 2,
+  inputGroup: {
+    marginHorizontal: 16,
+    marginTop: 20,
   },
-  inputRow: {
+  label: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151", // Màu label
+    marginBottom: 8,
+  },
+  inputContainer: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 8, // Bo góc ít hơn
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#d1d5db", // Border cho input
   },
-  iconPlaceholder: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#9ca3af",
-    marginRight: 12,
-  },
-  phoneIconPlaceholder: {
-    width: 16,
-    height: 12,
-    borderRadius: 3,
-    backgroundColor: "#9ca3af",
-    marginRight: 12,
+  inputIcon: {
+    marginRight: 2,
   },
   textInput: {
     flex: 1,
     fontSize: 16,
     color: "#111827",
-    padding: 0,
+    padding: 8,
   },
-  addressContainer: {
+  addressSelectionContainer: {
     backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 2,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
   },
   addressRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  addressLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
   addressTextContainer: {
-    marginLeft: 12,
     flex: 1,
+    marginLeft: 10, // Khoảng cách từ icon tới text
   },
   addressText: {
     fontSize: 16,
     color: "#111827",
+    lineHeight: 22, // Cải thiện đọc cho nhiều dòng
   },
-  locationName: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 4,
+  addressPlaceholderText: {
+    fontSize: 16,
+    color: "#9ca3af", // Màu placeholder
+    lineHeight: 22,
   },
+  // locationName: { // Không cần nữa vì formData.address đã đủ
+  //   fontSize: 14,
+  //   color: "#6b7280",
+  //   marginTop: 4,
+  // },
   buttonContainer: {
     padding: 16,
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
+    borderTopColor: "#e5e7eb",
   },
   saveButton: {
-    backgroundColor: "#14b8a6",
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: "#14b8a6", // Màu teal quen thuộc
+    paddingVertical: 14,
+    borderRadius: 8,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 48, // Chiều cao tối thiểu cho nút
   },
   saveButtonDisabled: {
-    backgroundColor: "#d1d5db",
+    backgroundColor: "#9ca3af", // Màu xám khi disabled
   },
   saveButtonText: {
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
   },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#ffffff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
-  },
-  searchInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f3f4f6",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#111827",
-    padding: 0,
-  },
-  mapContainer: {
-    height: 200,
-    backgroundColor: "#dbeafe",
-    position: "relative",
-  },
-  mapCenter: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: [{ translateX: -20 }, { translateY: -20 }],
-  },
-  mapPin: {
-    backgroundColor: "#ffffff",
-    padding: 12,
-    borderRadius: 20,
-    elevation: 4,
-  },
-  navigationButton: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    backgroundColor: "#ffffff",
-    padding: 8,
-    borderRadius: 20,
-    elevation: 4,
-  },
-  listContainer: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
-  listContent: {
-    padding: 16,
-  },
-  suggestionTitle: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#6b7280",
-    marginBottom: 12,
-  },
-  suggestionItem: {
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#f3f4f6",
-    marginBottom: 8,
-  },
-  suggestionRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  suggestionTextContainer: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  suggestionName: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#111827",
-  },
-  suggestionAddress: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 4,
-  },
 });
 
 export default AddAddressScreen;
-export { SelectAddressScreen };
