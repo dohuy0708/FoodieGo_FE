@@ -22,15 +22,29 @@ export default function SplashScreen() {
           const userInfo = JSON.parse(userInfoString);
           console.log("LoginuserInfo", userInfo);
           console.log("Logintoken", token);
-          setUserInfo({ ...userInfo, token }); // Lưu vào Context nếu đã đăng nhập
-        }
 
-        // Chuyển đến MainApp luôn, dù có đăng nhập hay không
-        navigation.replace("MainApp");
+          setUserInfo({ ...userInfo, token }); // Cập nhật vào context
+
+          // Điều hướng theo roleId
+          const roleId = userInfo.roleId;
+
+          if (roleId === 1) {
+            navigation.replace("MainApp");
+          } else if (roleId === 2) {
+            navigation.replace("HomeVendor"); // Có thể thay đổi thành "CustomerApp"
+          } else if (roleId === 3) {
+            navigation.replace("StatisticAdmin"); // Có thể thay đổi thành "RestaurantApp"
+          } else {
+            // Trường hợp role không hợp lệ hoặc thiếu => về MainApp
+            navigation.replace("MainApp");
+          }
+        } else {
+          // Chưa đăng nhập => về MainApp mặc định
+          navigation.replace("MainApp");
+        }
       } catch (error) {
-        console.error("Error checking login status", error);
-        // Nếu có lỗi vẫn chuyển đến MainApp
-        navigation.replace("LoginScreen");
+        console.error("Lỗi khi kiểm tra đăng nhập:", error);
+        navigation.replace("MainApp"); // Fallback an toàn
       }
     };
 

@@ -13,7 +13,7 @@ export default function Dish({ data, navigation }) {
       <View style={{ gap: Display.setWidth(2.5) }}>
         <Text>{data.name}</Text>
         <View style={{ flexDirection: "row",gap: Display.setWidth(12) }}>
-          <Text style={{ color: Color.DEFAULT_YELLOW }}>{data.price}</Text>
+          <Text style={{ color: Colors.DEFAULT_YELLOW }}>{data.price}</Text>
           <Text>Còn lại: {data.quantity}</Text>
         </View>
         <Text

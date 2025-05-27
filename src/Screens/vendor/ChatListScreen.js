@@ -78,7 +78,7 @@ export default function ChatListScreen({ navigation }) {
       <TouchableOpacity
         style={styles.chatItemContainer}
         onPress={() =>
-          navigation.navigate("IndividualChatVendor", {
+          navigation.navigate("IndividualChat", {
             chatId: item.id,
             userId: vendorId.toString(),
             contactName: item.contactName || '',

@@ -50,11 +50,11 @@ export default function Nav({ nav }) {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => nav.navigate("Account")}>
+      <TouchableOpacity onPress={() => nav.navigate("AccountScreen")}>
         <MaterialCommunityIcons 
           name="account-outline" 
           size={24} 
-          color={currentRoute === "Account" ? Colors.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "AccountScreen" ? Colors.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
        <TouchableOpacity onPress={() => nav.navigate("ChatListScreen")}>

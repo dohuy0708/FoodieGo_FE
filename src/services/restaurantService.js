@@ -167,7 +167,7 @@ export const searchMostOrderedRestaurants = async (
     });
 
     const result = await response.json();
-
+   
     return result.data.findMostOrderedRestaurants.map((item) => ({
       ...item.restaurant,
       totalOrders: item.totalOrders,

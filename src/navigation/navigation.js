@@ -35,12 +35,12 @@ import ChatListScreen from "../Screens/vendor/ChatListScreen";
 import IndividualChat from "../Screens/vendor/IndividualChatScreen";
 import ChatCustomer from "../Screens/customer/ChatCustomer";
 import IndividualChatCustomer from "../Screens/customer/InvidualChatCustomer";
-import OrderDetail from "../screens/customer/OrderDetailScreen";
-import FeedbackScreen from "../screens/customer/FeedbackScreen";
+import AccountScreen from "../Screens/customer/AccountScreen";
+import FeedbackScreen from "../Screens/customer/FeedbackScreen";
 import { CartProvider } from "../context/CartContext";
-import OrderConfirmScreen from "../screens/customer/OrderConfirmScreen";
-import PaymentScreen from "../screens/customer/PaymentScreen";
-import CategoryScreen from "../screens/customer/CategoryScreen";
+import OrderConfirmScreen from "../Screens/customer/OrderConfirmScreen";
+import PaymentScreen from "../Screens/customer/PaymentScreen";
+import CategoryScreen from "../Screens/customer/CategoryScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -58,17 +58,8 @@ export default function Navigation() {
           <Stack.Screen name="MainApp" component={CustomerBottomTab} />        
           <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
           <Stack.Screen name="VerifyScreen" component={VerifyScreen} />
-          <Stack.Screen name="ForgotPassScreen" component={ForgotPassScreen} />
-          <Stack.Screen name="ChangePassScreen" component={ChangePassScreen} />
            {/* Vendor */}
           <Stack.Screen name="HomeVendor" component={HomeVendor} />
-         
-          <Stack.Screen name="AboutUsScreen" component={AboutUsScreen} />
-          <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-          <Stack.Screen name="RestaurantScreen" component={RestaurantScreen} />
-          <Stack.Screen name="FoodScreen" component={FoodScreen} />
-          <Stack.Screen name="ExploreScreen" component={ExploreScreen} />
-          <Stack.Screen name="SearchScreen" component={SearchScreen} />  
           <Stack.Screen name="Register" component={Register} />
           <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
           <Stack.Screen name="Category" component={Category} />
@@ -88,11 +79,11 @@ export default function Navigation() {
           <Stack.Screen name="IndividualChat" component={IndividualChat} />
           <Stack.Screen name="ChatCustomer" component={ChatCustomer} />
           <Stack.Screen name="IndividualChatCustomer" component={IndividualChatCustomer} />
-          <Stack.Screen name="SplashScreen" component={SplashScreen} />
-          <Stack.Screen name="MainApp" component={CustomerBottomTab} />
-          <Stack.Screen name="LoginScreen" component={LoginScreen} />
-          <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
-          <Stack.Screen name="VerifyScreen" component={VerifyScreen} />
+          <Stack.Screen name="AccountScreen" component={AccountScreen} />
+         
+         
+         
+         
           <Stack.Screen
               name="ForgotPassScreen"
               component={ForgotPassScreen}

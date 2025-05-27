@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import { useFocusEffect } from '@react-navigation/native';
 import Colors from "../../constants/Colors";
 import {
@@ -23,6 +23,7 @@ import Dish from "../../components/Dish";
 import Nav from "../../components/Nav";
 import Display from "../../utils/Display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { UserContext } from "../../context/UserContext";
 
 const NAV_HEIGHT = Display.setHeight(7);
 const IMAGE_ASPECT_RATIO = 16 / 9;
@@ -31,8 +32,9 @@ const IMAGE_HEIGHT = IMAGE_WIDTH / IMAGE_ASPECT_RATIO;
 const VIEW_INFO_OVERLAP = Display.setHeight(2.5);
 
 export default function HomeVendor({ navigation, route }) {
+  const { userInfo } = useContext(UserContext);
+  const ownerId = userInfo?.id || 155;
   const insets = useSafeAreaInsets();
-  const ownerId = 155;
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
