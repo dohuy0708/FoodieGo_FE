@@ -18,6 +18,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Fonts";
 import { Picker } from "@react-native-picker/picker";
 
+
+
 import { registerUser } from "../../services/authService";
 
 const SignUpScreen = ({ navigation }) => {
