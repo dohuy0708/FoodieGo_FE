@@ -34,7 +34,6 @@ const RestaurantScreen = ({ navigation, route }) => {
   const { restaurant } = route.params || {}; // Thêm fallback để tránh lỗi
 
   const restaurantId = restaurant?.id; // Lấy restaurantId từ restaurant
-  console.log("RestaurantScreen restaurantId", restaurantId);
 
   const [isCartVisible, setCartVisible] = useState(false);
   const { getCartItems, clearCart, hasItems } = useCart();
@@ -42,7 +41,7 @@ const RestaurantScreen = ({ navigation, route }) => {
   const [totalPrice, setTotalPrice] = useState(0);
   const [totalItems, setTotalItems] = useState(0); // Thêm state tổng số lượng món
   // Thêm state tổng giá
-  console.log("CartModal => restaurantId:", restaurantId);
+
   useEffect(() => {
     if (restaurantId) {
       const cartItems = getCartItems(restaurantId);
@@ -67,7 +66,12 @@ const RestaurantScreen = ({ navigation, route }) => {
   const handleNavigateToCart = () => {
     setCartVisible(false);
     // Điều hướng đến OrderConfirmScreen với restaurantId
-    navigation.navigate("OrderConfirmScreen", { restaurant: restaurant });
+    navigation.navigate("OrderConfirmScreen", {
+      restaurant: restaurant,
+      items: items,
+      totalPrice: totalPrice,
+      totalItems: totalItems,
+    });
   };
 
   const [isLoadingFoods, setIsLoadingFoods] = useState(false); // 👈 Thêm state loading
@@ -83,7 +87,7 @@ const RestaurantScreen = ({ navigation, route }) => {
     const loadCategories = async () => {
       try {
         const data = await fetchCategoriesByRestaurantId(restaurant.id);
-        console.log("Fetched categories:", data);
+
         setCategories(data);
 
         // Gán category đầu tiên vào selectedCategory nếu có
@@ -107,7 +111,7 @@ const RestaurantScreen = ({ navigation, route }) => {
       try {
         if (selectedCategory.id) {
           const foods = await fetchFoodsByCategoryId(selectedCategory.id);
-          console.log("Fetched foods:", foods);
+
           setListFoods(foods);
         }
       } catch (error) {
@@ -245,6 +249,7 @@ const RestaurantScreen = ({ navigation, route }) => {
                         restaurantId: restaurantId,
                       })
                     }
+                    navigateLogin={() => navigation.navigate("LoginScreen")}
                   />
                 ))}
                 <Separator height={Display.setHeight(2)} />
@@ -318,11 +323,14 @@ const RestaurantScreen = ({ navigation, route }) => {
                   paddingHorizontal: 10,
                   borderRadius: 5,
                 }}
-                onPress={() =>
+                onPress={() => {
                   navigation.navigate("OrderConfirmScreen", {
                     restaurant: restaurant,
-                  })
-                }
+                    items: items,
+                    totalPrice: totalPrice,
+                    totalItems: totalItems,
+                  });
+                }}
               >
                 <Text
                   style={{ color: "white", fontSize: 14, fontWeight: "bold" }}
@@ -356,8 +364,6 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
     zIndex: 100,
   },
 

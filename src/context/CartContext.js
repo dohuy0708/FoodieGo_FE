@@ -51,6 +51,10 @@ export const CartProvider = ({ children }) => {
       return newCarts;
     });
   };
+  const clearAllCarts = () => {
+    console.log("clearAllCarts => Reset all carts");
+    setCarts({});
+  };
 
   return (
     <CartContext.Provider
@@ -61,6 +65,7 @@ export const CartProvider = ({ children }) => {
         getCartItems,
         hasItems,
         clearCart,
+        clearAllCarts,
       }}
     >
       {children}

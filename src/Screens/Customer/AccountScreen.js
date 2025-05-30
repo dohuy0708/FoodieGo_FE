@@ -16,6 +16,7 @@ import { Color } from "../../constants";
 import { UserContext } from "../../context/UserContext";
 import ConfirmModal from "../../components/ConfirmModal";
 import AlertModal from "../../components/AlertModal";
+import { useCart } from "../../context/CartContext";
 
 const AccountScreen = ({ navigation }) => {
   const [username, setUsername] = useState("---");
@@ -25,7 +26,7 @@ const AccountScreen = ({ navigation }) => {
   const { userInfo } = useContext(UserContext); // Lấy thông tin user từ context
   const { setUserInfo } = useContext(UserContext); // Lấy hàm setUserInfo từ context
   const [isAlertModalVisible, setIsAlertModalVisible] = useState(false); // Trạng thái hiển thị modal
-
+  const { clearAllCarts } = useCart();
   useEffect(() => {
     if (userInfo) {
       setIsLoggedIn(true);
@@ -43,6 +44,8 @@ const AccountScreen = ({ navigation }) => {
 
       // 2. Reset context
       setUserInfo(null); // hoặc setUserInfo({}) tùy theo bạn setup
+      // 3. Reset context giỏ hàng
+      clearAllCarts(); // gọi hàm clearAllCarts từ context
       // 3. Reset stack và điều hướng về màn hình chính (hoặc Login)
       navigation.reset({
         index: 0,

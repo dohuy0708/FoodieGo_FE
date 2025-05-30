@@ -6,6 +6,7 @@ export const findRestaurantsByCategory = async (
   longitude,
   limit = 10
 ) => {
+  const token = await AsyncStorage.getItem("token");
   const query = `
     query {
       findRestaurantsByCategory(
@@ -30,7 +31,7 @@ export const findRestaurantsByCategory = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // "Authorization": `Bearer ${token}` // nếu cần
+        Authorization: `Bearer ${token}`, // nếu cần
       },
       body: JSON.stringify({ query }),
     });
@@ -54,6 +55,7 @@ export const searchNearestRestaurants = async (
   page = 1,
   limit = 10
 ) => {
+  const token = await AsyncStorage.getItem("token");
   const query = `
     query {
       searchNearestRestaurants(
@@ -78,7 +80,10 @@ export const searchNearestRestaurants = async (
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // nếu cần
+      },
       body: JSON.stringify({ query }),
     });
 
@@ -111,6 +116,7 @@ export const searchTopRatedRestaurants = async (
   page = 1,
   limit = 5
 ) => {
+  const token = await AsyncStorage.getItem("token");
   const query = `
     query {
       findTopRatedRestaurants(
@@ -136,7 +142,10 @@ export const searchTopRatedRestaurants = async (
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ query }),
     });
 
@@ -160,6 +169,7 @@ export const searchMostOrderedRestaurants = async (
   page = 1,
   limit = 5
 ) => {
+  const token = await AsyncStorage.getItem("token");
   const query = `
     query {
       findMostOrderedRestaurants(
@@ -187,7 +197,10 @@ export const searchMostOrderedRestaurants = async (
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ query }),
     });
 
@@ -209,7 +222,6 @@ export const searchMostOrderedRestaurants = async (
 
 export const fetchCategoriesByRestaurantId = async (restaurantId) => {
   const token = await AsyncStorage.getItem("token");
-  console.log("token", token);
   const query = `
     query {
       findCategoriesByRestaurantId(restaurantId: ${restaurantId}) {
@@ -229,7 +241,7 @@ export const fetchCategoriesByRestaurantId = async (restaurantId) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, // nếu cần
       },
       body: JSON.stringify({ query }),
     });
@@ -263,7 +275,7 @@ export const fetchFoodsByCategoryId = async (categoryId) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-      
+        // Nếu có token:
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ query }),

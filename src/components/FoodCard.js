@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import Display from "../utils/Display";
 import { Colors } from "../constants";
 import { useCart } from "../context/CartContext";
+import { UserContext } from "../context/UserContext";
+import ConfirmModal from "./ConfirmModal";
 
 const FoodCard = ({
   restaurantId,
@@ -13,10 +15,12 @@ const FoodCard = ({
   price,
   imageUrl,
   navigate,
+  navigateLogin,
 }) => {
   const { addToCart, decreaseFromCart, getCartItems } = useCart();
-
+  const { userInfo } = useContext(UserContext);
   const [itemCount, setItemCount] = useState(0);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Khi component mount, lấy số lượng món hiện tại trong giỏ để sync
   useEffect(() => {
@@ -24,7 +28,12 @@ const FoodCard = ({
     const existingItem = cartItems.find((i) => i.id === id);
     setItemCount(existingItem ? existingItem.quantity : 0);
   }, [getCartItems, restaurantId, id]);
+
   const handleAdd = () => {
+    if (!userInfo) {
+      setShowLoginModal(true);
+      return;
+    }
     addToCart(restaurantId, { id, name, price, imageUrl, description });
     setItemCount((prev) => prev + 1);
   };
@@ -36,55 +45,64 @@ const FoodCard = ({
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigate()} activeOpacity={0.8}>
-        <Image
-          style={styles.image}
-          source={{
-            uri:
-              imageUrl?.length > 0
-                ? imageUrl
-                : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
-          }}
-        />
-      </TouchableOpacity>
-      <View style={styles.detailsContainer}>
+    <>
+      <View style={styles.container}>
         <TouchableOpacity onPress={() => navigate()} activeOpacity={0.8}>
-          <Text numberOfLines={1} style={styles.titleText}>
-            {name}
-          </Text>
-          <Text numberOfLines={2} style={styles.descriptionText}>
-            {description}
-          </Text>
+          <Image
+            style={styles.image}
+            source={{
+              uri:
+                imageUrl?.length > 0
+                  ? imageUrl
+                  : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
+            }}
+          />
         </TouchableOpacity>
-        <View style={styles.footerContainer}>
-          <Text style={styles.priceText}>
-            {" "}
-            {new Intl.NumberFormat("vi-VN").format(price)} VND
-          </Text>
-          <View style={styles.itemAddContainer}>
-            {itemCount > 0 ? (
-              <>
-                <AntDesign
-                  name="minus"
-                  color={Colors.DEFAULT_YELLOW}
-                  size={18}
-                  onPress={handleRemove}
-                />
-                <Text style={styles.itemCountText}>{itemCount}</Text>
-              </>
-            ) : null}
+        <View style={styles.detailsContainer}>
+          <TouchableOpacity onPress={() => navigate()} activeOpacity={0.8}>
+            <Text numberOfLines={1} style={styles.titleText}>
+              {name}
+            </Text>
+            <Text numberOfLines={2} style={styles.descriptionText}>
+              {description}
+            </Text>
+          </TouchableOpacity>
+          <View style={styles.footerContainer}>
+            <Text style={styles.priceText}>
+              {" "}
+              {new Intl.NumberFormat("vi-VN").format(price)} VND
+            </Text>
+            <View style={styles.itemAddContainer}>
+              {itemCount > 0 ? (
+                <>
+                  <AntDesign
+                    name="minus"
+                    color={Colors.DEFAULT_YELLOW}
+                    size={18}
+                    onPress={handleRemove}
+                  />
+                  <Text style={styles.itemCountText}>{itemCount}</Text>
+                </>
+              ) : null}
 
-            <AntDesign
-              name="plus"
-              color={Colors.DEFAULT_YELLOW}
-              size={18}
-              onPress={handleAdd}
-            />
+              <AntDesign
+                name="plus"
+                color={Colors.DEFAULT_YELLOW}
+                size={18}
+                onPress={handleAdd}
+              />
+            </View>
           </View>
         </View>
       </View>
-    </View>
+      <ConfirmModal
+        visible={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onAction={navigateLogin}
+        info={"Bạn cần đăng nhập để thêm món vào giỏ hàng."}
+        actionText={"Đăng nhập"}
+      />
+    </>
   );
 };
 
