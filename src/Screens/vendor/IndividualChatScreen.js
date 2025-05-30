@@ -236,6 +236,8 @@ export default function IndividualChatScreen({ route, navigation }) {
             { paddingTop: Display.setHeight(5) },
           ]}
         >
+        <Text style={{fontSize: Display.setWidth(5), fontWeight: "bold", marginBottom: Display.setHeight(2),alignSelf: "center"}}>{contactName}</Text>
+
           <FlatList
             ref={flatListRef}
             data={messages}

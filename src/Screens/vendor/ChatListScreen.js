@@ -15,9 +15,9 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Nav from "../../components/Nav"; // Đường dẫn này giả định file nằm trong /screens
 import { listenUserChats } from '../../services/chatService';
+import { GetUserById } from '../../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Giả lập Display và Colors nếu bạn chưa có các file này
-// (Trong dự án thực, bạn nên có các file này và xóa phần mock)
 if (typeof Display === 'undefined') {
   global.Display = {
     setHeight: val => val * 8,
@@ -51,29 +51,39 @@ const MockNav = ({ nav }) => (
 export default function ChatListScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [chatList, setChatList] = useState([]);
-  const vendorId = 1; // Giả định id nhà hàng là 1
-
+  const vendorId = 1;
+  const [isLoading, setIsLoading] = useState(true);
+ 
   // Lắng nghe danh sách chat realtime
   useEffect(() => {
-    const unsubscribe = listenUserChats(vendorId.toString(), setChatList);
+    const unsubscribe = listenUserChats(vendorId.toString(), async (rawList) => {
+      const token = await AsyncStorage.getItem("token");
+      const newList = await Promise.all(rawList.map(async (item) => {
+        // Lấy customerId từ members (id khác với vendorId)
+        const memberIds = Object.keys(item.members);
+        const customerId = memberIds.find(id => id !== vendorId.toString());
+        let userInfo = null;
+        if (customerId) {
+          try {
+            // Nếu cần token, truyền vào hàm GetUserById
+            const userData = await GetUserById(Number(customerId), token);
+            console.log("userData",userData);
+            // userData có thể là { data: { findUserById: ... } }
+            userInfo = userData?.data?.findUserById || null;
+          } catch (e) {
+            userInfo = null;
+          }
+        }
+        return { ...item, userInfo, customerId };
+      }));
+      setChatList(newList);
+      setIsLoading(false);
+    });
     return unsubscribe;
   }, [vendorId]);
 
   const renderChatItem = ({ item }) => {
-    const getAvatarContent = () => {
-      if (item.contactAvatar) {
-        return <Image source={{ uri: item.contactAvatar }} style={styles.avatar} />;
-      } else if (item.contactInitials) {
-        return <Text style={styles.avatarText}>{item.contactInitials}</Text>;
-      }
-      return <View style={[styles.avatar, {backgroundColor: Colors.PLACEHOLDER_AVATAR_BG }]} />;
-    };
-
-    // Lấy thông tin hiển thị từ lastMessage
-    const lastMsg = item.lastMessage;
-    let lastMessageText = lastMsg ? lastMsg.text : '';
-    let lastMessageTime = lastMsg ? new Date(lastMsg.timestamp).toLocaleDateString() : '';
-
+    const user = item.userInfo;
     return (
       <TouchableOpacity
         style={styles.chatItemContainer}
@@ -81,21 +91,25 @@ export default function ChatListScreen({ navigation }) {
           navigation.navigate("IndividualChat", {
             chatId: item.id,
             userId: vendorId.toString(),
-            contactName: item.contactName || '',
-            contactAvatar: item.contactAvatar || '',
-            contactInitials: item.contactInitials || '',
+            contactName: user ? user.name : "Đang tải...",
+            contactAvatar: user?.avatar || null,
+            contactInitials: user?.name ? user.name[0] : "U",
+            customerId: item.customerId,
           })
         }
       >
-        <View style={[styles.avatarContainer, item.contactAvatar ? {} : {backgroundColor: Colors.PLACEHOLDER_AVATAR_BG}]}> 
-          {getAvatarContent()}
+        <View style={styles.avatarContainer}>
+          {user?.avatar
+            ? <Image source={{ uri: user.avatar }} style={styles.avatar} />
+            : <Text style={styles.avatarText}>{user?.name ? user.name[0] : "U"}</Text>
+          }
         </View>
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
-            <Text style={styles.contactName}>{item.contactName || 'Đối tác'}</Text>
-            <Text style={styles.timestamp}>{lastMessageTime}</Text>
+            <Text style={styles.contactName}>{user ? user.name : `Khách hàng ${item.customerId}`}</Text>
+            <Text style={styles.timestamp}>{item.lastMessage ? new Date(item.lastMessage.timestamp).toLocaleDateString() : ''}</Text>
           </View>
-          <Text style={styles.lastMessage} numberOfLines={1}>{lastMessageText}</Text>
+          <Text style={styles.lastMessage} numberOfLines={1}>{item.lastMessage ? item.lastMessage.text : ''}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -104,15 +118,20 @@ export default function ChatListScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.screenTitle}>Tin nhắn</Text>
-      <FlatList
-        data={chatList}
-        renderItem={renderChatItem}
+      {isLoading ? (<Text style={{fontSize: 20, fontWeight: "bold", alignSelf: "center", marginTop: Display.setHeight(10),flex:1}}>Đang tải...</Text>) :
+      chatList.length > 0 ? (
+        <FlatList
+          data={chatList}
+          renderItem={renderChatItem}
         keyExtractor={(item) => item.id}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         // Thêm paddingBottom cho FlatList để nội dung cuối không bị che bởi Nav
         contentContainerStyle={{ paddingBottom: NAV_HEIGHT + Display.setHeight(1) }}
         style={{flex: 1}} // Đảm bảo FlatList chiếm không gian
       />
+      ) : (
+        <Text style={{fontSize: 20, fontWeight: "bold", alignSelf: "center", marginTop: Display.setHeight(10)}}>Không có tin nhắn</Text>
+      )}
       {/* Navigation Bar cố định ở dưới cùng */}
       <View style={[styles.navContainerFixed, { paddingBottom: insets.bottom, height: NAV_HEIGHT + insets.bottom }]}>
         {Nav ? <Nav nav={navigation} /> : <MockNav nav={navigation}/>}

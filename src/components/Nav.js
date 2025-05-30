@@ -42,7 +42,7 @@ export default function Nav({ nav }) {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => nav.navigate("Notification")}>
+      <TouchableOpacity onPress={() => nav.navigate("Register")}>
         <FontAwesome5 
           name="bell" 
           size={24} 
@@ -50,11 +50,11 @@ export default function Nav({ nav }) {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => nav.navigate("AccountScreen")}>
+      <TouchableOpacity onPress={() => nav.navigate("Account")}>
         <MaterialCommunityIcons 
           name="account-outline" 
           size={24} 
-          color={currentRoute === "AccountScreen" ? Colors.DEFAULT_YELLOW : "black"} 
+          color={currentRoute === "Account" ? Colors.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
        <TouchableOpacity onPress={() => nav.navigate("ChatListScreen")}>

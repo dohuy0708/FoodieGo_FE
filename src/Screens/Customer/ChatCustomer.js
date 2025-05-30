@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserContext } from "../../context/UserContext";
 import { listenUserChats } from '../../services/chatService';
 import { getDatabase, ref, set, push, get } from "firebase/database";
+import {getRestaurantById} from '../../services/vendorService';
 // Giả lập Display và Colors nếu bạn chưa có các file này
 // (Trong dự án thực, bạn nên có các file này và xóa phần mock)
 if (typeof Display === 'undefined') {
@@ -59,22 +60,32 @@ export default function ChatCustomer({ navigation }) {
   const [chatList, setChatList] = useState([]);
   const insets = useSafeAreaInsets();
 
+  // Lắng nghe danh sách chat
   useEffect(() => {
-    const unsubscribe = listenUserChats(customerId.toString(), setChatList);
+    const unsubscribe = listenUserChats(customerId.toString(), async (rawList) => {
+      const newList = await Promise.all(rawList.map(async (item) => {
+        // Lấy vendorId từ members (id khác với customerId)
+        const memberIds = Object.keys(item.members);
+
+        const vendorId = memberIds.find(id => id !== customerId.toString());
+        console.log("vendorId",vendorId);
+        let restaurantInfo = null;
+        if (vendorId) {
+          const info = await getRestaurantById(Number(vendorId));
+          console.log("info",info);
+          restaurantInfo = Array.isArray(info) ? info[0] : info;
+        }
+        return { ...item, restaurantInfo, vendorId };
+      }));
+      setChatList(newList);
+    });
     return unsubscribe;
   }, [customerId]);
 
-  // Hàm lấy thông tin vendor từ contactId (tạm thời mock)
-  const getVendorInfo = (vendorId) => {
-    // TODO: Lấy thông tin vendor từ API hoặc local, ví dụ:
-    // return { name: "Tên nhà hàng", avatar: "url" }
-    return { name: `Nhà hàng ${vendorId}`, avatar: null, initials: "V" };
-  };
-
-  // Hàm tạo node chat mẫu với vendorId = 1
+  // Hàm tạo node chat mẫu với vendorId = 4
   const createSampleChat = async () => {
     try {
-      const vendorId = 1;
+      const vendorId = 4;
       const database = getDatabase();
       const chatId = `customer_${customerId}_vendor_${vendorId}`;
       const chatRef = ref(database, `chats/${chatId}`);
@@ -95,14 +106,14 @@ export default function ChatCustomer({ navigation }) {
         text: "Xin chào, đây là tin nhắn mẫu!",
         timestamp: Date.now()
       });
-      Alert.alert("Thành công", "Đã tạo chat mẫu với vendor 1!");
+      Alert.alert("Thành công", "Đã tạo chat mẫu với vendor 4!");
     } catch (error) {
       Alert.alert("Lỗi", error.message || "Không thể tạo chat mẫu");
     }
   };
 
   const renderChatItem = ({ item }) => {
-    const vendor = getVendorInfo(item.contactId);
+    const vendor = item.restaurantInfo;
     return (
       <TouchableOpacity
         style={styles.chatItemContainer}
@@ -110,21 +121,21 @@ export default function ChatCustomer({ navigation }) {
           navigation.navigate("IndividualChatCustomer", {
             chatId: item.id,
             userId: customerId.toString(),
-            contactName: vendor.name,
-            contactAvatar: vendor.avatar,
-            contactInitials: vendor.initials,
-            vendorId: item.contactId,
+            contactName: vendor ? vendor.name : "Đang tải...",
+            contactAvatar: vendor?.avatar || null,
+            contactInitials: vendor?.name ? vendor.name[0] : "V",
+            vendorId: item.vendorId,
           })
         }
       >
         <View style={styles.avatarContainer}>
-          {vendor.avatar
+          {vendor?.avatar
             ? <Image source={{ uri: vendor.avatar }} style={styles.avatar} />
-            : <Text style={styles.avatarText}>{vendor.initials}</Text>
+            : <Text style={styles.avatarText}>{vendor?.name ? vendor.name[0] : "V"}</Text>
           }
         </View>
         <View style={styles.chatInfo}>
-          <Text style={styles.contactName}>{vendor.name}</Text>
+          <Text style={styles.contactName}>{vendor ? vendor.name : `Nhà hàng ${item.vendorId}`}</Text>
           <Text style={styles.lastMessage} numberOfLines={1}>
             {item.lastMessage ? item.lastMessage.text : ""}
           </Text>
@@ -139,7 +150,7 @@ export default function ChatCustomer({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.screenTitle}>Tin nhắn với nhà hàng</Text>
-      <Button title="Tạo chat mẫu với vendor 1" onPress={createSampleChat} />
+      <Button title="Tạo chat mẫu với vendor 4" onPress={createSampleChat} />
       <FlatList
         data={chatList}
         renderItem={renderChatItem}

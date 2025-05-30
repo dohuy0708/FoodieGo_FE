@@ -1,5 +1,13 @@
 import GRAPHQL_ENDPOINT from "../../config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export const uploadImageToServer = async (selectedImage) => {
+  const token = await AsyncStorage.getItem("token");
+  const uploadHeaders = {
+    // KHÔNG ĐẶT 'Content-Type' ở đây, fetch sẽ tự làm
+    'Accept': 'application/json', // Server có thể vẫn cần cái này để biết client chấp nhận kiểu response nào
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  };
   if (!selectedImage || !selectedImage.uri) {
     Alert.alert("Lỗi", "Không có ảnh nào được chọn hoặc ảnh không hợp lệ.");
     return null;
@@ -63,12 +71,11 @@ export const uploadImageToServer = async (selectedImage) => {
   });
   console.log("3");
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       body: formData,
-      headers: {
-        Accept: "application/json",
-      },
+      headers: uploadHeaders,
     });
 
     const responseText = await response.text();
@@ -120,6 +127,17 @@ export const uploadImageToServer = async (selectedImage) => {
     return null;
   }
 };
+
+// Hàm tiện ích lấy token
+async function getAuthHeaders() {
+  const token = await AsyncStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export const getCoordinatesOfLocation = async (address) => {
   if (!address || typeof address !== "string" || address.trim() === "") {
     console.error(
@@ -145,12 +163,10 @@ export const getCoordinatesOfLocation = async (address) => {
   console.log("Searching coordinates for address:", address);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -199,6 +215,7 @@ export const getCoordinatesOfLocation = async (address) => {
     return null;
   }
 };
+
 export const createNewAddress = async (addressData) => {
   if (!addressData || typeof addressData !== "object" || !addressData.street) {
     console.error(
@@ -226,12 +243,10 @@ export const createNewAddress = async (addressData) => {
   console.log("Creating new address with data (variables):", variables);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -272,6 +287,7 @@ export const createNewAddress = async (addressData) => {
     return null;
   }
 };
+
 export const createNewRestaurant = async (restaurantData) => {
   if (
     !restaurantData ||
@@ -302,12 +318,10 @@ export const createNewRestaurant = async (restaurantData) => {
   console.log("Creating new restaurant with data:", restaurantData);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -348,6 +362,7 @@ export const createNewRestaurant = async (restaurantData) => {
     return null;
   }
 };
+
 export const getRestaurantByOwnerId = async (ownerId) => {
   if (
     ownerId === null ||
@@ -387,12 +402,10 @@ export const getRestaurantByOwnerId = async (ownerId) => {
 
   console.log("Fetching restaurant by ownerId:", ownerId);
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -449,6 +462,49 @@ export const getRestaurantByOwnerId = async (ownerId) => {
     return null;
   }
 };
+
+export const getRestaurantById = async (restaurantId) => {
+  if (
+    restaurantId === null ||
+    restaurantId === undefined ||
+    typeof restaurantId !== "number" ||
+    !Number.isInteger(restaurantId)
+  ) {
+    console.error("getRestaurantById requires a valid integer restaurantId.");
+    return null;
+  }
+
+  const query = `
+    query FindRestaurantById($restaurantId: Int!) {
+      findRestaurantById(id: $restaurantId) {
+        id
+        name
+        
+      }
+    }
+  `;
+  const variables = {
+    restaurantId: restaurantId,
+  };
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+    const result = await response.json();
+    console.log("result",result);
+    return result.data.findRestaurantById;
+  } catch (error) {
+    console.error("Get restaurant by id Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
 export const getAddressById = async (addressId) => {
   if (!addressId) {
     console.error("getAddressById requires a valid addressId.");
@@ -468,12 +524,10 @@ export const getAddressById = async (addressId) => {
     addressId: addressId,
   };
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -511,6 +565,7 @@ export const getAddressById = async (addressId) => {
     return null;
   }
 };
+
 export const getCategoriesByRestaurantId = async (restaurantId) => {
   if (
     restaurantId === null ||
@@ -541,12 +596,10 @@ export const getCategoriesByRestaurantId = async (restaurantId) => {
   console.log("Fetching categories by restaurantId:", restaurantId);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -606,6 +659,7 @@ export const getCategoriesByRestaurantId = async (restaurantId) => {
     return null;
   }
 };
+
 export const getMenusByCategoryId = async (categoryId) => {
   if (
     categoryId === null ||
@@ -638,12 +692,10 @@ export const getMenusByCategoryId = async (categoryId) => {
   console.log("Fetching menus by categoryId:", categoryId);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -700,6 +752,7 @@ export const getMenusByCategoryId = async (categoryId) => {
     return null;
   }
 };
+
 export const updateCategory = async (categoryId, newName) => {
   if (
     categoryId === null ||
@@ -742,14 +795,10 @@ export const updateCategory = async (categoryId, newName) => {
   console.log("Updating category:", categoryId, "to name:", newName.trim());
 
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: headers,
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -801,6 +850,7 @@ export const updateCategory = async (categoryId, newName) => {
     return null;
   }
 };
+
 export const updateCategoryStatus = async (categoryId, status) => {
   if (
     categoryId === null ||
@@ -832,14 +882,10 @@ export const updateCategoryStatus = async (categoryId, status) => {
   };
   console.log("variables", variables);
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: headers,
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -891,6 +937,7 @@ export const updateCategoryStatus = async (categoryId, status) => {
     return null;
   }
 };
+
 export const createCategory = async (categoryName, restaurantId) => {
   if (
     categoryName === null ||
@@ -939,14 +986,10 @@ export const createCategory = async (categoryName, restaurantId) => {
   );
 
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: headers,
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1036,12 +1079,10 @@ export const updateRestaurantAPI = async (updateData) => {
   console.log("Updating restaurant with data:", updateData);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -1090,6 +1131,7 @@ export const updateRestaurantAPI = async (updateData) => {
     return null;
   }
 };
+
 export const updateAddressAPI = async (addressUpdateData) => {
   if (
     !addressUpdateData ||
@@ -1124,12 +1166,10 @@ export const updateAddressAPI = async (addressUpdateData) => {
   console.log("Updating address with data:", addressUpdateData);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -1211,12 +1251,10 @@ export const createMenu = async (menuData) => {
   console.log("Sending Create Menu Request:", { query: mutation, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: mutation,
         variables: variables,
@@ -1303,12 +1341,10 @@ export const updateMenu = async (menuUpdateData) => {
   console.log("Sending Update Menu Request:", { query: mutation, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: mutation,
         variables: variables,
@@ -1356,6 +1392,7 @@ export const updateMenu = async (menuUpdateData) => {
     return null;
   }
 };
+
 export const getMenuById = async (menuId) => {
   if (
     menuId === null ||
@@ -1387,12 +1424,10 @@ export const getMenuById = async (menuId) => {
   console.log("Sending Get Menu Request:", { query, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1444,6 +1479,7 @@ export const getMenuById = async (menuId) => {
 };
 
 export const getAllOrdersByRestaurantId = async (restaurantId) => {
+  const token = await AsyncStorage.getItem("token");
   if (
     restaurantId === null ||
     restaurantId === undefined ||
@@ -1504,12 +1540,10 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
     console.log(`Đang lấy trang ${currentPage} (limit: ${limitPerPage})...`);
 
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(GRAPHQL_ENDPOINT, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers,
         body: JSON.stringify({
           query: query,
           variables: variables,
@@ -1610,12 +1644,10 @@ export const findUserById = async (userId) => {
   console.log("Gửi yêu cầu lấy thông tin người dùng:", { query, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1678,6 +1710,7 @@ export const findUserById = async (userId) => {
     return null;
   }
 };
+
 export const findOrderDetailByOrderId = async (orderId) => {
   if (
     orderId === null ||
@@ -1712,12 +1745,10 @@ export const findOrderDetailByOrderId = async (orderId) => {
   console.log("Gửi yêu cầu lấy chi tiết đơn hàng:", { query, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1777,6 +1808,7 @@ export const findOrderDetailByOrderId = async (orderId) => {
     return null;
   }
 };
+
 export const updateOrderStatus = async (orderId, newStatus) => {
   if (
     orderId === null ||
@@ -1810,12 +1842,10 @@ export const updateOrderStatus = async (orderId, newStatus) => {
   });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: mutation,
         variables: variables,
@@ -1894,6 +1924,7 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     };
   }
 };
+
 export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
   if (
     restaurantId === null ||
@@ -1930,12 +1961,10 @@ export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
   };
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1998,6 +2027,7 @@ export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
     return null;
   }
 };
+
 export const getTotalOrderByRestaurantId = async (
   restaurantId,
   year,
@@ -2028,12 +2058,10 @@ export const getTotalOrderByRestaurantId = async (
   };
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -2093,6 +2121,7 @@ export const getTotalOrderByRestaurantId = async (
     return null;
   }
 };
+
 export const getTotalRevenueByRestaurantId = async (
   restaurantId,
   year,
@@ -2123,12 +2152,10 @@ export const getTotalRevenueByRestaurantId = async (
   };
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -2188,6 +2215,7 @@ export const getTotalRevenueByRestaurantId = async (
     return null;
   }
 };
+
 export const getTotalRevenueByRestaurantIdByYear = async (
   restaurantId,
   year
@@ -2219,12 +2247,10 @@ export const getTotalRevenueByRestaurantIdByYear = async (
   };
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,

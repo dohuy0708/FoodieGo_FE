@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import  Colors  from "../../constants/Colors";
 import React, { useState, useEffect } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -27,6 +28,7 @@ import {
   createNewRestaurant,
 } from "../../services/vendorService";
 export default function Register({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [openTime, setOpenTime] = useState("");
@@ -43,6 +45,7 @@ export default function Register({ navigation }) {
   const [selectedWard, setSelectedWard] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  let url=null;
   const ownerId = 193; 
   let location=null;
   let addressId=null;
@@ -80,6 +83,7 @@ export default function Register({ navigation }) {
     try {
       const resultUrl = await uploadImageToServer(selectedImage);
       if (resultUrl) {
+        
         console.log("Image uploaded successfully:", resultUrl);
         setUploadedImageUrl(resultUrl);
         console.log("Returned URL from server:", resultUrl);
@@ -87,8 +91,10 @@ export default function Register({ navigation }) {
         const parts = resultUrl.split(" ");
         const secureUrl = parts[0];
         const publicId = parts[1];
+        url=secureUrl;
         console.log("Secure URL:", secureUrl);
         console.log("Public ID:", publicId);
+        
       }
     } finally {
     }
@@ -141,7 +147,45 @@ export default function Register({ navigation }) {
       return null;
     }
   };
+  const isValidPhoneNumber = (phone) => {
+    const phoneRegex = /^0\d{9,10}$/;
+    return phoneRegex.test(phone);
+  };
   const createRestaurant = async () => {
+    if (
+      !name.trim() ||
+      !description.trim() ||
+      !phone.trim() ||
+      !selectedProvince ||
+      !selectedDistrict ||
+      !selectedWard ||
+      !detailAddress.trim() ||
+      !openTime.trim() ||
+      !minuteOpenTime.trim() ||
+      !closeTime.trim() ||
+      !minuteCloseTime.trim() ||
+      !selectedImage
+    ) {
+      Alert.alert("Thông báo", "Vui lòng điền đầy đủ tất cả các thông tin bắt buộc.");
+      return;
+    }
+
+    if (!isValidPhoneNumber(phone)) {
+      Alert.alert("Thông báo", "Số điện thoại phải từ 10 đến 11 số và bắt đầu bằng số 0.");
+      return;
+    }
+    if(openTime>closeTime){
+      Alert.alert("Thông báo", "Giờ mở cửa phải trước giờ đóng cửa.");
+      return;
+    }
+    if(openTime>24 || closeTime>24){
+      Alert.alert("Thông báo", "Giờ mở cửa và đóng cửa phải nhỏ hơn 24.");
+      return;
+    }
+    if(minuteOpenTime>59 || minuteCloseTime>59){
+      Alert.alert("Thông báo", "Phút mở cửa và đóng cửa phải nhỏ hơn 59.");
+      return;
+    }
     await handleUpload();
     await createAddress();
     console.log("Creating new restaurant...");
@@ -151,7 +195,7 @@ export default function Register({ navigation }) {
       phone,
       openTime: `${openTime}:${minuteOpenTime}`,
       closeTime: `${closeTime}:${minuteCloseTime}`,
-      avatar: uploadedImageUrl,
+      avatar: url,
       status:"open",
       addressId:addressId,
       ownerId: ownerId,
@@ -258,6 +302,7 @@ export default function Register({ navigation }) {
       closeTime: `${closeTime}:${minuteCloseTime}`,
       imageUrl: selectedImage.uri,
       location: selectedLocation,
+      avatar: uploadedImageUrl,
     });
   };
 
@@ -470,6 +515,7 @@ export default function Register({ navigation }) {
         >
           <Text style={styles.buttonText}>Đăng ký</Text>
         </TouchableOpacity>
+       
       </ScrollView>
     </SafeAreaView>
   );
@@ -620,7 +666,7 @@ const styles = StyleSheet.create({
 
   submitButton: {
     backgroundColor: Colors.DEFAULT_GREEN,
-
+    marginBottom: Display.setHeight(3),
     width: "100%",
   },
 });
