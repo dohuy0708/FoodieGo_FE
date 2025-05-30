@@ -8,11 +8,15 @@ import {
   NotificationScreen,
   OrderScreen,
   ProfileScreen,
+ 
 } from "../Screens/customer";
 import Display from "../utils/Display";
+
+import ChatCustomer from "../Screens/customer/ChatCustomer";
 import AccountScreen from "../Screens/customer/AccountScreen";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import ChatCustomer from "../Screens/customer/ChatCustomer";
+
+
 const CustomerBottomTabs = createBottomTabNavigator();
 
 export default () => (

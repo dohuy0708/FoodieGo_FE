@@ -31,9 +31,11 @@ export default function SplashScreen() {
           if (roleId === 1) {
             navigation.replace("MainApp");
           } else if (roleId === 2) {
+
             navigation.replace("HomeVendor"); // Có thể thay đổi thành "CustomerApp"
           } else if (roleId === 3) {
             navigation.replace("StatisticAdmin"); // Có thể thay đổi thành "RestaurantApp"
+
           } else {
             // Trường hợp role không hợp lệ hoặc thiếu => về MainApp
             navigation.replace("MainApp");

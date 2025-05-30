@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -47,28 +48,39 @@ export default function HomeScreen({ navigation }) {
   const [activeCategory, setActiveCategory] = useState();
   const [isLoading, setIsLoading] = useState(false);
   const [recommendedRestaurants, setRecommendedRestaurants] = useState([]);
-  const [popularRestaurants, setPopularRestaurants] = useState([]); // dùng cho bán chạy và nổi bật
-  const [nearRestaurants, setNearRestaurants] = useState([]);
-  const [rateRestaurants, setRateRestaurants] = useState([]);
+
   const [activeSortItem, setActiveSortItem] = useState("Gần đây");
   const hasFetchedRef = useRef(false); // <== dùng ref để kiểm tra
 
+  const [nearRestaurants, setNearRestaurants] = useState([]);
+  const [nearPage, setNearPage] = useState(1);
+  const [nearTotal, setNearTotal] = useState(0);
+
+  const [popularRestaurants, setPopularRestaurants] = useState([]);
+  const [popularPage, setPopularPage] = useState(1);
+  const [popularTotal, setPopularTotal] = useState(0);
+
+  const [rateRestaurants, setRateRestaurants] = useState([]);
+  const [ratePage, setRatePage] = useState(1);
+  const [rateTotal, setRateTotal] = useState(0);
+
   useEffect(() => {
     const fetchRestaurants = async () => {
-      if (hasFetchedRef.current) return; // Đã gọi rồi thì không gọi lại
-      hasFetchedRef.current = true;
-
       setIsLoading(true);
       try {
         const [near, popular, rated] = await Promise.all([
-          searchNearestRestaurants(10.8790332, 106.8107046),
-          searchMostOrderedRestaurants(10.8790332, 106.8107046),
-          searchTopRatedRestaurants(10.8790332, 106.8107046),
+          searchNearestRestaurants(10.8790332, 106.8107046, 1, 6),
+          searchMostOrderedRestaurants(10.8790332, 106.8107046, 1, 6),
+          searchTopRatedRestaurants(10.8790332, 106.8107046, 1, 6),
         ]);
 
-        setNearRestaurants(near);
-        setPopularRestaurants(popular);
-        setRateRestaurants(rated);
+        setNearRestaurants(near.data);
+        setNearTotal(near.total);
+        console.log("Near Restaurants:", near.total);
+        setPopularRestaurants(popular.data);
+        setPopularTotal(popular.total);
+        setRateRestaurants(rated.data);
+        setRateTotal(rated.total);
       } catch (error) {
         console.error("Error fetching restaurants:", error);
       } finally {
@@ -78,6 +90,45 @@ export default function HomeScreen({ navigation }) {
     fetchRestaurants();
   }, []);
 
+  /* Load more*/
+  const loadMoreNear = async () => {
+    if (nearRestaurants.length >= nearTotal) return;
+    const nextPage = nearPage + 1;
+    const result = await searchNearestRestaurants(
+      10.8790332,
+      106.8107046,
+      nextPage,
+      6
+    );
+    setNearRestaurants([...nearRestaurants, ...result.data]);
+    setNearPage(nextPage);
+  };
+
+  const loadMorePopular = async () => {
+    if (popularRestaurants.length >= popularTotal) return;
+    const nextPage = popularPage + 1;
+    const result = await searchMostOrderedRestaurants(
+      10.8790332,
+      106.8107046,
+      nextPage,
+      6
+    );
+    setPopularRestaurants([...popularRestaurants, ...result.data]);
+    setPopularPage(nextPage);
+  };
+
+  const loadMoreRated = async () => {
+    if (rateRestaurants.length >= rateTotal) return;
+    const nextPage = ratePage + 1;
+    const result = await searchTopRatedRestaurants(
+      10.8790332,
+      106.8107046,
+      nextPage,
+      6
+    );
+    setRateRestaurants([...rateRestaurants, ...result.data]);
+    setRatePage(nextPage);
+  };
   /* List  restaurant info*/
 
   const sortStyle = (isActive) =>
@@ -181,6 +232,8 @@ export default function HomeScreen({ navigation }) {
               data={popularRestaurants}
               keyExtractor={(item) => item?.id}
               horizontal
+              onEndReached={loadMorePopular}
+              onEndReachedThreshold={0.5}
               ListHeaderComponent={() => <Separator width={10} />}
               ListFooterComponent={() => <Separator width={10} />}
               ItemSeparatorComponent={() => <Separator width={10} />}
@@ -213,8 +266,14 @@ export default function HomeScreen({ navigation }) {
               data={rateRestaurants}
               keyExtractor={(item) => item?.id}
               horizontal
+              onEndReached={loadMoreRated}
+              onEndReachedThreshold={0.5}
               ListHeaderComponent={() => <Separator width={10} />}
-              ListFooterComponent={() => <Separator width={10} />}
+              ListFooterComponent={() =>
+                isLoading ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : null
+              }
               ItemSeparatorComponent={() => <Separator width={10} />}
               showsHorizontalScrollIndicator={false} // ẩn thanh scroll ngang (nếu dùng horizontal)
               renderItem={({ item }) => (

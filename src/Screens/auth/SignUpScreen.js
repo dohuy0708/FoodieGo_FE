@@ -17,8 +17,7 @@ import Logo from "../../assets/images/Logo.png";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../constants/Fonts";
 import { Picker } from "@react-native-picker/picker";
-
-
+import CheckBox from "@react-native-community/checkbox";
 
 import { registerUser } from "../../services/authService";
 
@@ -36,6 +35,7 @@ const SignUpScreen = ({ navigation }) => {
   const [isRecheckPasswordVisible, setIsRecheckPasswordVisible] =
     useState(false);
   const [loading, setLoading] = useState(false); // Thêm state loading
+  const [isVendor, setIsVendor] = useState(false); // Thêm state cho checkbox
 
   // handle
 
@@ -51,6 +51,7 @@ const SignUpScreen = ({ navigation }) => {
     const phoneRegex = /^\d{10}$/; // Phone number should be exactly 10 digits
     const passwordRegex =
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{6,}$/;
+    console.log("Regex test:", password);
     if (name.trim().length <= 5) {
       setErrorMessage("Họ tên phải có hơn 5 ký tự");
     } else if (gender === "") {
@@ -77,6 +78,7 @@ const SignUpScreen = ({ navigation }) => {
           username,
           password,
           phone,
+          role: isVendor ? 2 : 1, // Nếu tick thì role=2, ngược lại role=1
         });
 
         console.log("API response:", data);
@@ -250,6 +252,28 @@ const SignUpScreen = ({ navigation }) => {
                   style={styles.icon}
                 />
               </TouchableOpacity>
+            </View>
+            {/* Checkbox Đăng ký bán hàng */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 10,
+                alignSelf: "flex-start",
+              }}
+            >
+              <TouchableOpacity onPress={() => setIsVendor(!isVendor)}>
+                <Ionicons
+                  name={isVendor ? "checkbox" : "square-outline"}
+                  size={24}
+                  color={isVendor ? "#007B7F" : "#ccc"}
+                />
+              </TouchableOpacity>
+              <Text
+                style={{ marginLeft: 8, fontSize: 15, fontStyle: "italic" }}
+              >
+                Đăng ký là người bán hàng
+              </Text>
             </View>
             {/* Thông báo lỗi */}
             <View style={styles.noticeContainer}>
