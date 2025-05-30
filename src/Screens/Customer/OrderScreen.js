@@ -5,13 +5,15 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants";
 import OrderCard from "../../components/OrderCard";
 import HistoryOrderCard from "../../components/HistoryOrderCard";
+import { UserContext } from "../../context/UserContext";
 
 const OrderScreen = ({ navigation }) => {
+  const { userInfo } = useContext(UserContext);
   const [activeSortItem, setActiveSortItem] = useState("Đơn đặt");
   const [orders, setOrders] = useState([]);
   useEffect(() => {
@@ -86,6 +88,36 @@ const OrderScreen = ({ navigation }) => {
 
     fontWeight: isActive ? "500" : "400", // tô đậm nếu active
   });
+
+  // Nếu chưa đăng nhập, hiển thị thông báo và nút đăng nhập
+  if (!userInfo) {
+    return (
+      <SafeAreaView
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ fontSize: 16, marginBottom: 16 }}>
+          Bạn cần đăng nhập để xem{" "}
+          <Text style={{ fontWeight: "bold", fontSize: 16 }}>Đơn Hàng</Text>
+        </Text>
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: Colors.DEFAULT_GREEN,
+            padding: 10,
+            borderRadius: 8,
+          }}
+          onPress={() => navigation.navigate("LoginScreen")}
+        >
+          <Text style={{ color: "white", fontWeight: "bold" }}>Đăng nhập</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>

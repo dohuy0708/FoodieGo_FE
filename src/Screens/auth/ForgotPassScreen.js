@@ -74,9 +74,7 @@ const ForgotPassScreen = ({ navigation }) => {
 
         <Image source={Logo} style={styles.logo}></Image>
         {/* Ô nhập email */}
-        <Text
-          style={[Fonts.bodyText, { alignSelf: "flex-start", marginLeft: 30 }]}
-        >
+        <Text style={[{ alignSelf: "flex-start", marginLeft: 30 }]}>
           Nhập địa chỉ email của bạn
         </Text>
         <View style={styles.inputContainer}>

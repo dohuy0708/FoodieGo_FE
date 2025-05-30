@@ -7,22 +7,33 @@ const registerUser = async ({
   username,
   password,
   phone,
+  role = 1,
 }) => {
   const mutation = `
-      mutation {
-        register(createUser: {
-          name: "${name}",
-          email: "${email}",
-          gender: "${gender}",
-          username: "${username}",
-          password: "${password}",
-          phone: "${phone}",
-          roleId: 1
-        }) {
-          token
-        }
+    mutation Register($name: String!, $email: String!, $gender: String!, $username: String!, $password: String!, $phone: String!, $roleId: Int!) {
+      register(createUser: {
+        name: $name,
+        email: $email,
+        gender: $gender,
+        username: $username,
+        password: $password,
+        phone: $phone,
+        roleId: $roleId
+      }) {
+        token
       }
-    `;
+    }
+  `;
+
+  const variables = {
+    name,
+    email,
+    gender,
+    username,
+    password,
+    phone,
+    roleId: Number(role), // Ensure integer
+  };
 
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
@@ -30,7 +41,7 @@ const registerUser = async ({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ query: mutation }),
+      body: JSON.stringify({ query: mutation, variables }),
     });
 
     const data = await response.json();

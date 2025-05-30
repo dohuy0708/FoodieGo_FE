@@ -5,12 +5,13 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../components";
 import RestaurantMediumCard from "../../components/RestaurantMediumCard";
 import FavoriteCard from "../../components/FavouriteCard";
 import { Colors } from "../../constants";
+import { UserContext } from "../../context/UserContext";
 const restaurants = [
   {
     id: "1",
@@ -46,7 +47,7 @@ const restaurants = [
 
 const FavoriteScreen = ({ navigation }) => {
   const [activeSortItem, setActiveSortItem] = useState("Mới nhất");
-
+  const { userInfo } = useContext(UserContext);
   const sortStyle = (isActive) =>
     isActive
       ? {
@@ -64,6 +65,33 @@ const FavoriteScreen = ({ navigation }) => {
 
     fontWeight: isActive ? "500" : "400", // tô đậm nếu active
   });
+  if (!userInfo) {
+    return (
+      <SafeAreaView
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ fontSize: 16, marginBottom: 16 }}>
+          Bạn cần đăng nhập để xem{" "}
+          <Text style={{ fontWeight: "bold", fontSize: 16 }}>Yêu Thích</Text>
+        </Text>
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: Colors.DEFAULT_GREEN,
+            padding: 10,
+            borderRadius: 8,
+          }}
+          onPress={() => navigation.navigate("LoginScreen")}
+        >
+          <Text style={{ color: "white", fontWeight: "bold" }}>Đăng nhập</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
