@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,8 @@ import ReviewItem from "../../components/ReviewItem";
 import { useCart } from "../../context/CartContext";
 import CartModal from "../../components/CartModal";
 import { useTheme } from "react-native-elements";
+import { UserContext } from "../../context/UserContext";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const reviews = [
   {
@@ -59,6 +61,7 @@ const reviews = [
 ];
 
 const FoodScreen = ({ navigation, route }) => {
+  const { userInfo } = useContext(UserContext);
   const { food, restaurantId } = route.params; // lấy restaurantId ở đây
   const { getCartItems, addToCart, hasItems, decreaseFromCart } = useCart();
   const [items, setItems] = useState([]);
@@ -66,7 +69,7 @@ const FoodScreen = ({ navigation, route }) => {
   const [totalItems, setTotalItems] = useState(0);
   const [isCartVisible, setCartVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
-  console.log("restaurant", restaurantId);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     if (restaurantId) {
@@ -88,16 +91,15 @@ const FoodScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     const cartItems = getCartItems(restaurantId);
-    console.log("Cart items:", cartItems); // ✅ Kiểm tra dữ liệu giỏ hàng
     const existingItem = cartItems.find((item) => food.id === item.id);
     setItemCount(existingItem ? existingItem.quantity : 0);
-    console.log(
-      "Existing item count:",
-      existingItem ? existingItem.quantity : 0
-    ); // ✅ Kiểm tra số lượng món ăn
   }, [getCartItems, restaurantId, food.id]);
 
   const handleAdd = () => {
+    if (!userInfo) {
+      setShowLoginModal(true);
+      return;
+    }
     addToCart(restaurantId, {
       id: food.id,
       name: food.name,
@@ -288,6 +290,13 @@ const FoodScreen = ({ navigation, route }) => {
         visible={isCartVisible}
         onClose={() => setCartVisible(false)}
       />
+      <ConfirmModal
+        visible={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onAction={() => navigation.navigate("LoginScreen")}
+        info={"Bạn cần đăng nhập để thêm món vào giỏ hàng."}
+        actionText={"Đăng nhập"}
+      />
     </SafeAreaView>
   );
 };
@@ -302,8 +311,6 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
     zIndex: 100,
   },
   container: {

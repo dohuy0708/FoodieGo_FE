@@ -26,6 +26,7 @@ const CartPanel = ({ restaurantId }) => {
         backgroundColor: "#f8f8f8",
         borderTopWidth: 1,
         borderColor: "#ddd",
+        // Đã bỏ đổ bóng phía dưới
       }}
     >
       {/* Icon giỏ hàng */}
