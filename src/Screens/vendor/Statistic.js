@@ -39,8 +39,8 @@ export default function Statistic({ navigation }) {
   const insets = useSafeAreaInsets();
 
   // --- Mock Data - In a real app, this would be fetched based on filters ---
-  const [orderNumber, setOrderNumber] = useState([]);
-  const [orderRevenue, setOrderRevenue] = useState(1000000);
+  const [orderNumber, setOrderNumber] = useState(0);
+  const [orderRevenue, setOrderRevenue] = useState(0);
   const [topDish, setTopDish] = useState([]);
 
   const [yearlyChartData, setYearlyChartData] = useState({
@@ -67,34 +67,7 @@ export default function Statistic({ navigation }) {
   // --- End Mock Data ---
 
   // Effect to simulate data fetching when filters change
-  useEffect(() => {
-    // Simulate fetching/filtering data based on viewType, currentYear, currentMonth
-    console.log(
-      `Fetching data for: ${viewType}, Year: ${currentYear}, Month: ${
-        viewType === "month" ? currentMonth : "N/A"
-      }`
-    );
-    // Example: update orderNumber and orderRevenue based on filters (simplified)
-    if (viewType === "year") {
-      setOrderNumber(
-        currentYear === 2023 ? 12000 : 10000 + (currentYear % 2020) * 100
-      );
-      setOrderRevenue(
-        currentYear === 2023
-          ? 150000000
-          : 120000000 + (currentYear % 2020) * 1000000
-      );
-      // Update chart data for the selected year if necessary
-      // For now, yearlyChartData.datasets[0].data is static but could be fetched
-    } else {
-      // month view
-      setOrderNumber(1000 + currentMonth * 10 + (currentYear % 2020) * 50);
-      setOrderRevenue(
-        1000000 + currentMonth * 100000 + (currentYear % 2020) * 500000
-      );
-    }
-    // Top dishes could also be updated here
-  }, [viewType, currentYear, currentMonth]);
+ 
   useEffect(() => {
     const fetchTopDishes = async () => {
       let responseDish;
@@ -482,7 +455,7 @@ export default function Statistic({ navigation }) {
             : renderYearPicker()}
 
           <TouchableOpacity
-            style={styles.applyButton}
+            style={[styles.applyButton,{marginBottom:Display.setHeight(4.5)}]}
             onPress={handleApplyFilters}
           >
             <Text style={styles.applyButtonText}>Áp dụng</Text>

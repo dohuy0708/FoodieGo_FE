@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState ,useContext} from "react";
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-
+import { UserContext } from "../../context/UserContext";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import Separator from "../../components/Seporator";
@@ -32,7 +33,8 @@ import CartPanel from "../../components/CartPanel";
 
 const RestaurantScreen = ({ navigation, route }) => {
   const { restaurant } = route.params || {}; // Thêm fallback để tránh lỗi
-
+  const { userInfo } = useContext(UserContext);
+  const customerId = userInfo.id;
   const restaurantId = restaurant?.id; // Lấy restaurantId từ restaurant
 
   const [isCartVisible, setCartVisible] = useState(false);
@@ -59,7 +61,19 @@ const RestaurantScreen = ({ navigation, route }) => {
     setTotalItems(totalQuantity);
     setTotalPrice(total);
   }, [items]);
-
+  const handleChat = () => {
+    if(customerId){
+      navigation.navigate("IndividualChatCustomer", {
+       
+        contactName: restaurant?.name,
+        contactAvatar: restaurant?.avatar,
+        userId: customerId.toString(),
+        vendorId: restaurant?.id,
+      });
+    }else{
+      navigation.navigate("LoginScreen");
+    }
+  };
   const toggleCartModal = () => {
     setCartVisible(!isCartVisible);
   };
@@ -196,6 +210,10 @@ const RestaurantScreen = ({ navigation, route }) => {
               </View>
             </View>
           </View>
+              <TouchableOpacity style={styles.button} onPress={handleChat}>
+            <MaterialCommunityIcons name="chat" size={20} color="white" />
+            <Text style={styles.buttonText}>Nhắn tin</Text>
+          </TouchableOpacity>
         </View>
         <Separator height={Display.setHeight(1)} />
 
@@ -506,6 +524,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 10 * 1.4,
     color: Colors.DEFAULT_GREY,
+  },
+  button: {
+    backgroundColor: Colors.DEFAULT_YELLOW,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginHorizontal: 10,
+    marginTop: 10,
+    alignSelf: "flex-end",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  buttonText: {
+    color: Colors.DEFAULT_WHITE,
+    fontSize: 13,
   },
 });
 

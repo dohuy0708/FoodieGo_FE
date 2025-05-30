@@ -131,7 +131,9 @@ export const uploadImageToServer = async (selectedImage) => {
 // Hàm tiện ích lấy token
 async function getAuthHeaders() {
   const token = await AsyncStorage.getItem("token");
+  console.log("token", token);
   return {
+  
     "Content-Type": "application/json",
     Accept: "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -1489,7 +1491,7 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
     console.error(
       "getAllOrdersByRestaurantId requires a valid integer restaurantId."
     );
-    return null;
+    return [];
   }
 
   const query = `
@@ -1564,18 +1566,18 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
             console.error("GraphQL Error:", err.message)
           );
         }
-        return null;
+        return [];
       }
 
       if (result.errors) {
-        console.error(
-          `Lấy đơn hàng trang ${currentPage} thất bại (GraphQL Errors):`,
-          result.errors
-        );
-        result.errors.forEach((err) =>
-          console.error("GraphQL Error:", err.message)
-        );
-        return null;
+        // console.error(
+        //   `Lấy đơn hàng trang ${currentPage} thất bại (GraphQL Errors):`,
+        //   result.errors
+        // );
+        // result.errors.forEach((err) =>
+        //   console.error("GraphQL Error:", err.message)
+        // );
+        return [];
       }
 
       const pageData = result?.data?.findOrdersByRestaurantId?.data;
@@ -1585,7 +1587,7 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
           `Lấy đơn hàng trang ${currentPage} thất bại: Cấu trúc response không mong muốn hoặc không có data.`,
           result
         );
-        return null;
+        return [];
       }
 
       if (pageData.length > 0) {
@@ -1608,7 +1610,7 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
         `Lỗi khi lấy đơn hàng trang ${currentPage} (Network/Fetch):`,
         error
       );
-      return null;
+      return [];
     }
   }
 
@@ -1984,23 +1986,13 @@ export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
         errorMessage,
         result?.errors || "Không có trường lỗi GraphQL"
       );
-      if (result && result.errors) {
-        result.errors.forEach((err) =>
-          console.error("Lỗi GraphQL:", err.message)
-        );
-      }
-      return null;
+     
+      return [];
     }
 
     if (result.errors) {
-      console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
-        result.errors
-      );
-      result.errors.forEach((err) =>
-        console.error("Lỗi GraphQL:", err.message)
-      );
-      return null;
+     
+      return [];
     }
 
     if (result.data && result.data.findTop10MenuByRestaurantId) {
@@ -2016,15 +2008,12 @@ export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
       console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
       return [];
     } else {
-      console.error(
-        "Lấy 10 món ăn hàng đầu thất bại: Cấu trúc response không mong muốn.",
-        result
-      );
-      return null;
+      
+      return [];
     }
   } catch (error) {
-    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
-    return null;
+   
+    return [];
   }
 };
 
@@ -2088,18 +2077,23 @@ export const getTotalOrderByRestaurantId = async (
 
     if (result.errors) {
       console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        "Tổng đơn thất bại (Lỗi GraphQL):",
         result.errors
       );
       result.errors.forEach((err) =>
         console.error("Lỗi GraphQL:", err.message)
       );
-      return null;
+      return 0;
     }
 
-    if (result.data && result.data.getTotalOrderByRestaurantId) {
+    if (
+      result.data &&
+      result.data.getTotalOrderByRestaurantId !== undefined &&
+      result.data.getTotalOrderByRestaurantId !== null
+    ) {
+      // Giá trị có thể là 0, hợp lệ
       console.log(
-        "Lấy order thành công:",
+        "Lấy order real thành công:",
         result.data.getTotalOrderByRestaurantId
       );
       return result.data.getTotalOrderByRestaurantId;
@@ -2107,18 +2101,18 @@ export const getTotalOrderByRestaurantId = async (
       result.data &&
       result.data.getTotalOrderByRestaurantId === null
     ) {
-      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
-      return [];
+      console.log(" getTotalOrderByRestaurantId nhà hàng ID:", restaurantId);
+      return 0;
     } else {
       console.error(
-        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        "Lấy order real thất bại: Cấu trúc response không mong muốn.",
         result
       );
-      return null;
+      return 0;
     }
   } catch (error) {
-    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
-    return null;
+   
+    return 0;
   }
 };
 
@@ -2182,16 +2176,21 @@ export const getTotalRevenueByRestaurantId = async (
 
     if (result.errors) {
       console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        "Tổng đơn thất bại (Lỗi GraphQL):",
         result.errors
       );
       result.errors.forEach((err) =>
         console.error("Lỗi GraphQL:", err.message)
       );
-      return null;
+      return 0;
     }
 
-    if (result.data && result.data.getTotalRevenueByRestaurantId) {
+    if (
+      result.data &&
+      result.data.getTotalRevenueByRestaurantId !== undefined &&
+      result.data.getTotalRevenueByRestaurantId !== null
+    ) {
+      // Giá trị có thể là 0, hợp lệ
       console.log(
         "Lấy order thành công:",
         result.data.getTotalRevenueByRestaurantId
@@ -2201,18 +2200,18 @@ export const getTotalRevenueByRestaurantId = async (
       result.data &&
       result.data.getTotalRevenueByRestaurantId === null
     ) {
-      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
-      return [];
+      console.log("Không getTotalRevenueByRestaurantId cho nhà hàng ID:", restaurantId);
+      return 0;
     } else {
       console.error(
-        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        "Lấy doanh thu thất bại: Cấu trúc response không mong muốn.",
         result
       );
-      return null;
+      return 0;
     }
   } catch (error) {
-    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
-    return null;
+    console.error("Lỗi getTotalRevenueByRestaurantId (Network/Fetch):", error);
+    return 0;
   }
 };
 
@@ -2263,7 +2262,7 @@ export const getTotalRevenueByRestaurantIdByYear = async (
     if (!response.ok) {
       const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
       console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (HTTP Status):",
+        "getTotalRevenueByRestaurantIdByYear thất bại (HTTP Status):",
         errorMessage,
         result?.errors || "Không có trường lỗi GraphQL"
       );
@@ -2277,18 +2276,23 @@ export const getTotalRevenueByRestaurantIdByYear = async (
 
     if (result.errors) {
       console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        "getTotalRevenueByRestaurantIdByYear thất bại (Lỗi GraphQL):",
         result.errors
       );
       result.errors.forEach((err) =>
         console.error("Lỗi GraphQL:", err.message)
       );
-      return null;
+      return 0;
     }
 
-    if (result.data && result.data.getTotalRevenueByRestaurantIdByYear) {
+    if (
+      result.data &&
+      result.data.getTotalRevenueByRestaurantIdByYear !== undefined &&
+      result.data.getTotalRevenueByRestaurantIdByYear !== null
+    ) {
+      // Giá trị có thể là 0 hoặc object hợp lệ
       console.log(
-        "Lấy order thành công:",
+        "Lấy getTotalRevenueByRestaurantIdByYear thành công:",
         result.data.getTotalRevenueByRestaurantIdByYear
       );
       return result.data.getTotalRevenueByRestaurantIdByYear;
@@ -2296,16 +2300,17 @@ export const getTotalRevenueByRestaurantIdByYear = async (
       result.data &&
       result.data.getTotalRevenueByRestaurantIdByYear === null
     ) {
-      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
+      console.log("Không getTotalRevenueByRestaurantIdByYear ID:", restaurantId);
+      return 0;
     } else {
       console.error(
-        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        "Lấy getTotalRevenueByRestaurantIdByYear thất bại: Cấu trúc response không mong muốn.",
         result
       );
-      return null;
+      return 0;
     }
   } catch (error) {
-    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
-    return null;
+    console.error("Lỗi getTotalRevenueByRestaurantIdByYear (Network/Fetch):", error);
+    return 0;
   }
 };

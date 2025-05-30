@@ -70,13 +70,13 @@ export default function IndividualChatScreen({ route, navigation }) {
     visible: false,
     message: null,
   });
-  const chatId = route.params?.chatId;
+  const chatId = route.params?.chatId || `customer_${route.params?.userId}_vendor_${route.params?.vendorId}`;
   const contactName = route.params?.contactName;
   const contactAvatar = route.params?.contactAvatar;
   const contactInitials = route.params?.contactInitials;
   // Giả định userId lấy từ context hoặc route (bạn thay thế bằng logic thực tế của bạn)
   const userId = route.params?.userId || 'user1';
-
+  const vendorId = route.params?.vendorId || 'vendor1';
   const insets = useSafeAreaInsets();
 
   // Sử dụng state messages từ Firebase
@@ -237,6 +237,7 @@ export default function IndividualChatScreen({ route, navigation }) {
           ]}
         >
         <Text style={{fontSize: Display.setWidth(5), fontWeight: "bold", marginBottom: Display.setHeight(2),alignSelf: "center"}}>{contactName}</Text>
+       
           <FlatList
             ref={flatListRef}
             data={messages}
