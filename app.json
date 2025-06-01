@@ -15,33 +15,40 @@
     "plugins": [
       "@react-native-community/datetimepicker",
       "expo-font"
-      
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
           "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
         }
-      }
+      },
+     "package": "com.firebaseapp",
+      "runtimeVersion": "1.0.0"
     },
     "web": {
-
       "favicon": "./assets/favicon.png",
       "config": {
         "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
       }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e4a3aa28-e817-495b-99ad-948dbb711c79"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e4a3aa28-e817-495b-99ad-948dbb711c79"
     }
-
-     
-    }
-   
-
   }
-
+}

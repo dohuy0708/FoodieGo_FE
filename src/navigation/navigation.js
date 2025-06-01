@@ -1,7 +1,7 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-
+import { navigationRef } from './RootNavigation';
 import SplashScreen from "../Screens/customer/SplashScreen";
 import LoginScreen from "../Screens/auth/LoginScreen";
 import Register from "../Screens/vendor/Register";
@@ -51,7 +51,7 @@ export default function Navigation() {
   return (
     <UserProvider>
       <CartProvider>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             {/*App*/}
           <Stack.Screen name="SplashScreen" component={SplashScreen} />

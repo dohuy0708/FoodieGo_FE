@@ -244,7 +244,7 @@ export default function EditDish({ navigation, route }) {
         <View style={styles.innerContainer}>
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContent}
+            contentContainerStyle={styles.scrollViewContent1}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
@@ -266,7 +266,9 @@ export default function EditDish({ navigation, route }) {
                 <Text style={styles.buttonText}>Thay đổi ảnh</Text>
               </TouchableOpacity>
             </View>
+            <View style={styles.scrollViewContent}>
 
+           
             <View style={styles.input_container}>
               <TextInput
                 style={styles.input_text}
@@ -374,7 +376,7 @@ export default function EditDish({ navigation, route }) {
                 ))}
               </Picker>
             </View>
-
+            </View>
             <View style={styles.bottomButtonContainer}>
               <TouchableOpacity
                 style={[
@@ -423,6 +425,13 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingHorizontal: Display.setWidth(4),
     paddingVertical: Display.setHeight(2.5),
+    paddingBottom: Display.setHeight(5),
+    gap: Display.setHeight(2.2),
+    backgroundColor: Colors.DEFAULT_WHITE,
+    flexGrow: 1,
+  },
+  scrollViewContent1: {
+   
     paddingBottom: Display.setHeight(5),
     gap: Display.setHeight(2.2),
     backgroundColor: Colors.DEFAULT_WHITE,

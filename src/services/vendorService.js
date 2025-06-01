@@ -481,6 +481,7 @@ export const getRestaurantById = async (restaurantId) => {
       findRestaurantById(id: $restaurantId) {
         id
         name
+        avatar
         
       }
     }
@@ -2313,4 +2314,92 @@ export const getTotalRevenueByRestaurantIdByYear = async (
     console.error("Lỗi getTotalRevenueByRestaurantIdByYear (Network/Fetch):", error);
     return 0;
   }
+};
+
+
+export const findNotificationByUserId = async (userId) => {
+  console.log("userId:", userId);
+  if (
+    userId === null ||
+    userId === undefined ||
+    typeof userId !== "number" ||
+    !Number.isInteger(userId)
+  ) {
+    console.error("getAllNotificationsByUserId yêu cầu userId là số nguyên hợp lệ.");
+    return [];
+  }
+
+  const query = `
+    query FindNotificationByUserId($userId: Int!, $page: Int!, $limit: Int!) {
+      findNotificationByUserId(userId: $userId, page: $page, limit: $limit) {
+        data {
+          id
+          title
+          content
+          createdAt
+        }
+        total
+      }
+    }
+  `;
+
+  let allNotifications = [];
+  let currentPage = 1;
+  const limitPerPage = 100; // Có thể tăng nếu backend cho phép
+  let hasMorePages = true;
+
+  while (hasMorePages) {
+    const variables = {
+      userId,
+      page: currentPage,
+      limit: limitPerPage,
+    };
+
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          query,
+          variables,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = `Yêu cầu trang ${currentPage} thất bại với trạng thái: ${response.status}`;
+        console.error("Lấy thông báo thất bại (HTTP Status):", errorMessage, result?.errors || "Không có trường lỗi GraphQL");
+        return allNotifications;
+      }
+
+      if (result.errors) {
+        console.error(`Lấy thông báo trang ${currentPage} thất bại (GraphQL Errors):`, result.errors);
+        return allNotifications;
+      }
+
+      const pageData = result?.data?.findNotificationByUserId?.data;
+      const total = result?.data?.findNotificationByUserId?.total;
+
+      if (!pageData || !Array.isArray(pageData)) {
+        console.error(`Lấy thông báo trang ${currentPage} thất bại: Cấu trúc response không mong muốn hoặc không có data.`, result);
+        return allNotifications;
+      }
+
+      allNotifications = allNotifications.concat(pageData);
+      console.log("allNotifications:", allNotifications);
+
+      if (allNotifications.length >= total || pageData.length < limitPerPage) {
+        hasMorePages = false;
+      } else {
+        currentPage++;
+      }
+    } catch (error) {
+      console.error(`Lỗi khi lấy thông báo trang ${currentPage} (Network/Fetch):`, error);
+      return allNotifications;
+    }
+  }
+  console.log("allNotifications:", allNotifications);
+  return allNotifications;
 };

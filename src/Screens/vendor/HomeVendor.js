@@ -382,7 +382,7 @@ export default function HomeVendor({ navigation, route }) {
         />
       </View>
 
-      <View style={[styles.navContainer, { bottom: insets.bottom }]}>
+      <View style={[styles.navContainer, { height: NAV_HEIGHT+insets.bottom }]}>
         <Nav nav={navigation} />
       </View>
     </View>
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   image: {
     width: "100%",
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   view_information: {
     width: "100%",
     paddingHorizontal: Display.setWidth(5),
-    backgroundColor: "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     position: "absolute",
@@ -549,6 +549,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
+    bottom: 0,
     height: NAV_HEIGHT,
     backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderTopWidth: 1,

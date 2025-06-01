@@ -42,7 +42,7 @@ export default function Nav({ nav }) {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => nav.navigate("Register")}>
+      <TouchableOpacity onPress={() => nav.navigate("Notification")}>
         <FontAwesome5 
           name="bell" 
           size={24} 

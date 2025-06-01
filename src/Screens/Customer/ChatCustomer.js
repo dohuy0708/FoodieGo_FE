@@ -150,7 +150,7 @@ export default function ChatCustomer({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.screenTitle}>Tin nhắn với nhà hàng</Text>
-      <Button title="Tạo chat mẫu với vendor 4" onPress={createSampleChat} />
+     
       <FlatList
         data={chatList}
         renderItem={renderChatItem}

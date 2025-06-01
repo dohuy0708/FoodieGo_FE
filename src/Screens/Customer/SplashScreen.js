@@ -19,6 +19,7 @@ export default function SplashScreen() {
         const userInfoString = await AsyncStorage.getItem("userInfo");
 
         if (token && userInfoString) {
+         
           const userInfo = JSON.parse(userInfoString);
           console.log("LoginuserInfo", userInfo);
           console.log("Logintoken", token);

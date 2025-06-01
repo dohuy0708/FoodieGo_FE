@@ -37,7 +37,7 @@ const formatDate = (dateString) => {
 const handleConfirmOrder = async (orderId) => {
   try {
     const response = await updateOrderStatus(orderId, "confirmed");
-    if (response.status === 200) {
+    if (response.success) {
       console.log("Đơn hàng đã được xác nhận thành công.");
     } else {
       console.error("Lỗi khi xác nhận đơn hàng:", response.data.message);
@@ -239,8 +239,8 @@ export default function OrderDetail({ navigation, route }) {
         >
           <TouchableOpacity
             style={[styles.button, styles.cancelButton]}
-            onPress={() => {
-              handleCancelOrder(orderId);
+            onPress={async () => {
+              await handleCancelOrder(orderId);
               navigation.goBack();
             }}
           >
@@ -248,8 +248,8 @@ export default function OrderDetail({ navigation, route }) {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.confirmButton]}
-            onPress={() => {
-              handleConfirmOrder(orderId);
+            onPress={async () => {
+              await handleConfirmOrder(orderId);
               navigation.goBack();
             }}
           >

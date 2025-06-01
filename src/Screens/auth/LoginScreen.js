@@ -20,6 +20,7 @@ import { GetUserById, loginUser } from "../../services/authService";
 import { useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "../../context/UserContext";
+import { registerForPushNotificationsAsync ,sendPushTokenToServer} from "../../services/pushNotification";
 const LoginScreen = ({ navigation }) => {
   // init state
   const [username, setUsername] = useState("");
@@ -67,7 +68,8 @@ const LoginScreen = ({ navigation }) => {
           );
 
           await AsyncStorage.setItem("token", token);
-
+          const expoPushToken = await registerForPushNotificationsAsync();
+          await sendPushTokenToServer(userId, expoPushToken);
           // Update Context
           setUserInfo({ ...userData, token }); // <<< Cập nhật vào context ở đây nè!!
 
