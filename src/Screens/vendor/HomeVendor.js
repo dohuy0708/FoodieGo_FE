@@ -111,6 +111,7 @@ export default function HomeVendor({ navigation, route }) {
       const response = await getCategoriesByRestaurantId(restaurant.id);
       console.log("Categories response:", response);
       if (Array.isArray(response)) {
+        console.log("response categories",response);
         setCategory(response);
         setCategories(response);
       } else {

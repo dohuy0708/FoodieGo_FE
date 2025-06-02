@@ -12,7 +12,8 @@ import Colors from "../../constants/Colors";
 import Display from "../../utils/Display";
 import {
   findOrderDetailByOrderId,
-  updateOrderStatus
+  updateOrderStatus,
+  sendNotification
 } from "../../services/vendorService";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 const formatPrice = (price) => {
@@ -52,6 +53,13 @@ const handleCancelOrder = async (orderId) => {
     
   } catch (error) {
     console.error("Lỗi khi hủy đơn hàng:", error.message);
+  }
+};
+const handleSendNotification = async (notificationData) => {
+  try {
+    const response = await sendNotification(notificationData);
+  } catch (error) {
+    console.error("Lỗi khi gửi thông báo:", error.message);
   }
 };
 const formatTime = (dateString) => {
@@ -241,6 +249,12 @@ export default function OrderDetail({ navigation, route }) {
             style={[styles.button, styles.cancelButton]}
             onPress={async () => {
               await handleCancelOrder(orderId);
+              await handleSendNotification({
+                title: "Đơn hàng đã được hủy",
+                content: "Đơn hàng đã được hủy, chúng tôi xin lỗi vì sự bất tiện này",
+                type: "push",
+                userId: orderBaseInfo?.userId,
+              });
               navigation.goBack();
             }}
           >
@@ -250,6 +264,7 @@ export default function OrderDetail({ navigation, route }) {
             style={[styles.button, styles.confirmButton]}
             onPress={async () => {
               await handleConfirmOrder(orderId);
+             
               navigation.goBack();
             }}
           >

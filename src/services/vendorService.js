@@ -1824,8 +1824,8 @@ export const updateOrderStatus = async (orderId, newStatus) => {
   }
 
   const mutation = `
-    mutation UpdateOrderStatusMutation($payload: UpdateOrderInput!) {
-      updateOrder(updateOrderInput: $payload) {
+    mutation UpdateOrderStatusMutation($id: Int!, $status: String!) {
+      updateOrderStatus(id: $id, status: $status) {
         id
         status
       }
@@ -1833,10 +1833,8 @@ export const updateOrderStatus = async (orderId, newStatus) => {
   `;
 
   const variables = {
-    payload: {
-      id: orderId,
-      status: newStatus,
-    },
+    id: orderId,
+    status: newStatus,
   };
 
   console.log("Gửi yêu cầu cập nhật trạng thái đơn hàng:", {
@@ -1895,10 +1893,10 @@ export const updateOrderStatus = async (orderId, newStatus) => {
       return { success: false, error: result.errors };
     }
 
-    if (result.data && result.data.updateOrder) {
-      console.log("Cập nhật trạng thái thành công:", result.data.updateOrder);
-      return { success: true, data: result.data.updateOrder };
-    } else if (result.data && result.data.updateOrder === null) {
+    if (result.data && result.data.updateOrderStatus) {
+      console.log("Cập nhật trạng thái thành công:", result.data.updateOrderStatus);
+      return { success: true, data: result.data.updateOrderStatus };
+    } else if (result.data && result.data.updateOrderStatus === null) {
       console.log(
         "Cập nhật trạng thái trả về null, có thể không tìm thấy ID:",
         orderId
@@ -2402,4 +2400,72 @@ export const findNotificationByUserId = async (userId) => {
   }
   console.log("allNotifications:", allNotifications);
   return allNotifications;
+};
+export const sendNotification = async (notificationData) => {
+  if (
+    !notificationData ||
+    typeof notificationData !== "object" ||
+    !notificationData.title ||
+    !notificationData.content ||
+    !notificationData.type ||
+    !notificationData.userId
+  ) {
+    console.error("sendNotification: Dữ liệu đầu vào không hợp lệ.", notificationData);
+    return null;
+  }
+
+  const mutation = `
+    mutation SendNotification($createNotificationDto: CreateNotificationInput!) {
+      sendNotification(createNotificationDto: $createNotificationDto) {
+        title
+        content
+      }
+    }
+  `;
+
+  const variables = {
+    createNotificationDto: {
+      title: notificationData.title,
+      content: notificationData.content,
+      type: notificationData.type,
+      userId: notificationData.userId,
+    },
+  };
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query: mutation,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Send Notification):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
+      console.error("Gửi thông báo thất bại (HTTP Status):", errorMessage, result?.errors || "Không có trường lỗi GraphQL");
+      return null;
+    }
+
+    if (result.errors) {
+      console.error("Gửi thông báo thất bại (GraphQL Errors):", result.errors);
+      return null;
+    }
+
+    if (result.data && result.data.sendNotification) {
+      console.log("Gửi thông báo thành công:", result.data.sendNotification);
+      return result.data.sendNotification;
+    } else {
+      console.error("Gửi thông báo thất bại: Cấu trúc response không mong muốn.", result);
+      return null;
+    }
+  } catch (error) {
+    console.error("Lỗi khi gửi thông báo (Network/Fetch):", error);
+    return null;
+  }
 };

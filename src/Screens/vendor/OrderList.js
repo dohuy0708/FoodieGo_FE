@@ -122,6 +122,7 @@ export default function OrderList({ navigation }) {
               price: formatPrice(order.totalPrice),
               hour: hour+7,
               minute: minute,
+              userId: order.user?.id,
               originalDate: dateObj,
               address: `${order.address?.street || "N/A"}, ${
                 order.address?.ward || "N/A"
