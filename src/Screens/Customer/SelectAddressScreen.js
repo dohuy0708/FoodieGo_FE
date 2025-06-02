@@ -17,12 +17,6 @@ import Icon from "react-native-vector-icons/Ionicons";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps"; // Marker không cần import riêng nếu không dùng trực tiếp
 import * as Location from "expo-location";
 
-// THAY THẾ BẰNG API KEY CỦA BẠN - RẤT QUAN TRỌNG
-// Đảm bảo API Key này đã enable:
-// 1. Maps SDK for Android
-// 2. Maps SDK for iOS
-// 3. Geocoding API
-// 4. Places API (cho Autocomplete và Place Details)
 const GOOGLE_MAPS_API_KEY = "AIzaSyDmthPP3oRtm9E7tRAHo4_ChQ2y2LJeO6w";
 
 const SelectAddressScreen = ({ navigation }) => {
@@ -149,11 +143,17 @@ const SelectAddressScreen = ({ navigation }) => {
         Math.abs(region.latitude - newRegionFromMap.latitude) > 0.000001 ||
         Math.abs(region.longitude - newRegionFromMap.longitude) > 0.000001
       ) {
-        setRegion(newRegionFromMap); // Cập nhật region state (dùng cho initialRegion)
+        //setRegion(newRegionFromMap); // Cập nhật region state (dùng cho initialRegion)
         await fetchAddressFromCoords(
           newRegionFromMap.latitude,
           newRegionFromMap.longitude
         );
+        setRegion((prevRegion) => ({
+          // Giữ lại delta, chỉ cập nhật lat/lng
+          ...prevRegion,
+          latitude: newRegionFromMap.latitude,
+          longitude: newRegionFromMap.longitude,
+        }));
       }
     }
   };
