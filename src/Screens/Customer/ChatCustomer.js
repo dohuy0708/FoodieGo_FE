@@ -68,12 +68,13 @@ export default function ChatCustomer({ navigation }) {
         const memberIds = Object.keys(item.members);
 
         const vendorId = memberIds.find(id => id !== customerId.toString());
-        console.log("vendorId",vendorId);
+      
         let restaurantInfo = null;
         if (vendorId) {
           const info = await getRestaurantById(Number(vendorId));
-          console.log("info",info);
+         
           restaurantInfo = Array.isArray(info) ? info[0] : info;
+          
         }
         return { ...item, restaurantInfo, vendorId };
       }));
@@ -114,6 +115,7 @@ export default function ChatCustomer({ navigation }) {
 
   const renderChatItem = ({ item }) => {
     const vendor = item.restaurantInfo;
+    console.log("vendor",vendor);
     return (
       <TouchableOpacity
         style={styles.chatItemContainer}
@@ -124,6 +126,7 @@ export default function ChatCustomer({ navigation }) {
             contactName: vendor ? vendor.name : "Đang tải...",
             contactAvatar: vendor?.avatar || null,
             contactInitials: vendor?.name ? vendor.name[0] : "V",
+            ownerId: vendor?.owner?.id,
             vendorId: item.vendorId,
           })
         }

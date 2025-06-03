@@ -101,7 +101,7 @@ export default function ChatListScreen({ navigation }) {
         <View style={styles.avatarContainer}>
           {user?.avatar
             ? <Image source={{ uri: user.avatar }} style={styles.avatar} />
-            : <Text style={styles.avatarText}>{user?.name ? user.name[0] : "U"}</Text>
+            : <MaterialIcons name="person" size={24} color="black" />
           }
         </View>
         <View style={styles.chatInfo}>

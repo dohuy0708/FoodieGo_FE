@@ -482,7 +482,10 @@ export const getRestaurantById = async (restaurantId) => {
         id
         name
         avatar
-        
+        owner
+        {
+        id
+        }
       }
     }
   `;
