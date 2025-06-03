@@ -7,6 +7,7 @@ const registerUser = async ({
   username,
   password,
   phone,
+  role = 1,
 }) => {
   const mutation = `
       mutation {
@@ -17,7 +18,7 @@ const registerUser = async ({
           username: "${username}",
           password: "${password}",
           phone: "${phone}",
-          roleId: 1
+          roleId: ${role}
         }) {
           token
         }
@@ -109,6 +110,9 @@ const GetUserById = async (userId, token) => {
         gender
         avatar
         phone
+        role {
+          id
+        }
       
       }
     }

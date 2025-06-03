@@ -11,10 +11,11 @@ import  Colors  from "../../constants/Colors";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Display from "../../utils/Display";
 import Nav from "../../components/Nav";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 const NAV_HEIGHT = Display.setHeight(7);
 export default function Account({ navigation }) {
   const user = "Nguyễn Văn A";
-
+  const insets = useSafeAreaInsets();
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -61,9 +62,9 @@ export default function Account({ navigation }) {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <View style={styles.navContainer}>
-        <Nav nav={navigation} />
-      </View>
+       <View style={[styles.navContainer, { bottom: insets.bottom }]}>
+              <Nav nav={navigation} />
+            </View>
     </View>
   );
 }
@@ -163,6 +164,6 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     width: "100%",
-    marginBottom: Display.setHeight(6),
+    marginBottom: Display.setHeight(6)+ NAV_HEIGHT, // Adjust for nav height
   },
 });

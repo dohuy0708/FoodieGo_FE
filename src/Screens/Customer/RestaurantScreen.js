@@ -5,9 +5,11 @@ import {
   StyleSheet,
   StatusBar,
   Image,
+  TouchableWithoutFeedback,
   ScrollView,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -18,110 +20,119 @@ import { Colors } from "../../constants";
 import Display from "../../utils/Display";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../components";
+import { useCart } from "../../context/CartContext";
+import CartDetailPanel from "../../components/CartModal";
+import CartPanelModal from "../../components/CartModal";
+import CartModal from "../../components/CartModal";
+import {
+  fetchCategoriesByRestaurantId,
+  fetchFoodsByCategoryId,
+} from "../../services/restaurantService";
+import CartPanel from "../../components/CartPanel";
 
-const mockRestaurant = {
-  id: 1,
-  name: "Bún Chả Hương Liên",
-  time: 30, // delivery time in minutes
-  distance: 2500, // distance in meters
-  rating: 4.5,
-  reviews: 120,
-  description:
-    "Bún chả Hương Liên là một trong những quán ăn nổi tiếng nhất tại Hà Nội, nổi bật với món bún chả truyền thống.",
-  categories: [
-    "Món chính",
-    "Đồ uống",
-    "Tráng miệng",
-    "Đồ ăn vặt",
-    "Đồ ăn nhanh",
-  ],
-  foods: [
-    {
-      id: 101,
-      name: "Bún Chả",
-      description: "Thịt nướng ăn kèm bún và nước chấm",
-      price: 45000,
-      image:
-        "https://cdn.tgdd.vn/Files/2021/08/29/1380247/bun-cha-la-gi-cach-an-bun-cha-dung-chuan-ha-noi-202201131431012299.jpg",
-      category: "Món chính",
-    },
-    {
-      id: 102,
-      name: "Nem cua bể",
-      description: "Nem chiên giòn nhân cua bể",
-      price: 30000,
-      image:
-        "https://cdn.tgdd.vn/Files/2021/06/24/1363673/cach-lam-nem-cua-be-gion-ngon-chuan-vi-hai-phong-202107191107490948.jpg",
-      category: "Món chính",
-    },
-    {
-      id: 201,
-      name: "Trà đá",
-      description: "Giải khát mát lạnh",
-      price: 5000,
-      image:
-        "https://media-cdn-v2.laodong.vn/Storage/NewsPortal/2022/9/12/1088945/Tradanh.JPG",
-      category: "Đồ uống",
-    },
-    {
-      id: 301,
-      name: "Chè đậu xanh",
-      description: "Chè đậu xanh nấu với nước cốt dừa",
-      price: 15000,
-      image:
-        "https://cdn.tgdd.vn/Files/2021/09/18/1386084/cach-nau-che-dau-xanh-cot-dua-ngon-don-gian-tai-nha-202201131520562309.jpg",
-      category: "Tráng miệng",
-    },
-  ],
-  images: {
-    cover:
-      "https://media-cdn.tripadvisor.com/media/photo-s/18/f1/41/f8/bun-cha-huong-lien.jpg",
-  },
-};
+const RestaurantScreen = ({ navigation, route }) => {
+  const { restaurant } = route.params || {}; // Thêm fallback để tránh lỗi
 
-const RestaurantScreen = ({
-  navigation,
-  route: {
-    params: { restaurantId },
-  },
-}) => {
-  const [restaurant, setRestaurant] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const restaurantId = restaurant?.id; // Lấy restaurantId từ restaurant
+
+  const [isCartVisible, setCartVisible] = useState(false);
+  const { getCartItems, clearCart, hasItems } = useCart();
+  const [items, setItems] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [totalItems, setTotalItems] = useState(0); // Thêm state tổng số lượng món
+  // Thêm state tổng giá
+
+  useEffect(() => {
+    if (restaurantId) {
+      const cartItems = getCartItems(restaurantId);
+      setItems(cartItems);
+    }
+  }, [restaurantId, getCartItems]);
+  // Tính tổng tiền mỗi khi items thay đổi
+  useEffect(() => {
+    const total = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+    setTotalItems(totalQuantity);
+    setTotalPrice(total);
+  }, [items]);
+
+  const toggleCartModal = () => {
+    setCartVisible(!isCartVisible);
+  };
+  const handleNavigateToCart = () => {
+    setCartVisible(false);
+    // Điều hướng đến OrderConfirmScreen với restaurantId
+    navigation.navigate("OrderConfirmScreen", {
+      restaurant: restaurant,
+      items: items,
+      totalPrice: totalPrice,
+      totalItems: totalItems,
+    });
+  };
+
+  const [isLoadingFoods, setIsLoadingFoods] = useState(false); // 👈 Thêm state loading
+
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState({
+    id: null,
+    name: "",
+  });
+  const [listFoods, setListFoods] = useState([]);
   //const [isBookmarked, setIsBookmarked] = useState(false);
   useEffect(() => {
-    setSelectedCategory(mockRestaurant.categories[0]);
-    setRestaurant(mockRestaurant);
-  }, []);
-  // useEffect(() => {
-  //   RestaurantService.getOneRestaurantById(restaurantId).then((response) => {
-  //     setSelectedCategory(response?.data?.categories[0]);
-  //     setRestaurant(response?.data);
-  //   });
-  // }, []);
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategoriesByRestaurantId(restaurant.id);
 
-  // const isBookmarked = useSelector(
-  //   (state) =>
-  //     state?.bookmarkState?.bookmarks?.filter(
-  //       (item) => item?.restaurantId === restaurantId
-  //     )?.length > 0
-  // );
-  // const addBookmark = () =>
-  //   dispatch(BookmarkAction.addBookmark({ restaurantId }));
-  // const removeBookmark = () =>
-  //   dispatch(BookmarkAction.removeBookmark({ restaurantId }));
+        setCategories(data);
+
+        // Gán category đầu tiên vào selectedCategory nếu có
+        if (data.length > 0) {
+          setSelectedCategory({ id: data[0].id, name: data[0].name });
+        }
+      } catch (error) {
+        console.error("Failed to load categories", error);
+      }
+    };
+
+    if (restaurant?.id) {
+      loadCategories();
+    }
+  }, [restaurant]);
+
+  // 🔁 Khi selectedCategory.id thay đổi thì fetch danh sách món ăn
+  useEffect(() => {
+    const loadFoods = async () => {
+      setIsLoadingFoods(true); // 👈 Bắt đầu loading
+      try {
+        if (selectedCategory.id) {
+          const foods = await fetchFoodsByCategoryId(selectedCategory.id);
+
+          setListFoods(foods);
+        }
+      } catch (error) {
+        console.error("Failed to load foods", error);
+      } finally {
+        setIsLoadingFoods(false); // 👈 Kết thúc loading
+      }
+    };
+
+    loadFoods();
+  }, [selectedCategory.id]);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         <Image
-          // source={{
-          //   uri: StaticImageService.getGalleryImage(
-          //     restaurant?.images?.cover,
-          //     ApiContants.STATIC_IMAGE.SIZE.SQUARE
-          //   ),
-          // }}
           source={{
-            uri: "https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/M6HASPARCZHYNN4XTUYT7H6PTE.jpg&w=800&h=600",
+            uri:
+              restaurant.avatar?.length > 0
+                ? restaurant.avatar
+                : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
           }}
           style={styles.backgroundImage}
         />
@@ -132,113 +143,242 @@ const RestaurantScreen = ({
         >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <ScrollView>
-          <Separator height={Display.setHeight(22)} />
-          <View style={styles.mainContainer}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>{restaurant?.name}</Text>
-              <Ionicons
-                name={"heart-outline"}
-                color={Colors.DEFAULT_YELLOW}
-                size={28}
-                onPress={() =>
-                  isBookmarked ? removeBookmark() : addBookmark()
-                }
-              />
-            </View>
-            {/* Description */}
-            <View style={styles.descriptionContainer}>
-              <Text style={styles.desText}>{restaurant?.description}</Text>
-            </View>
 
-            {/*Delivery */}
-            <View style={styles.footerContainer}>
-              <View style={styles.ratingReviewsContainer}>
-                <FontAwesome
-                  name="star"
-                  size={18}
-                  color={Colors.DEFAULT_YELLOW}
-                />
-                <Text style={styles.ratingText}>4.2</Text>
-                <Text style={styles.reviewsText}>(455 Reviews)</Text>
-              </View>
-              <View style={styles.rowAndCenter}>
-                <View style={styles.timeAndDistanceContainer}>
-                  <Ionicons
-                    name="location-outline"
-                    color={Colors.DEFAULT_YELLOW}
-                    size={15}
-                  />
-                  <Text style={styles.timeAndDistanceText}> 2.7km</Text>
-                </View>
-                <View style={styles.timeAndDistanceContainer}>
-                  <Ionicons
-                    name="time-outline"
-                    color={Colors.DEFAULT_YELLOW}
-                    size={15}
-                  />
-                  <Text style={styles.timeAndDistanceText}> 12phut</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-          <Separator height={Display.setHeight(1)} />
-
-          <View style={styles.categoriesContainer}>
-            <FlatList
-              data={restaurant?.categories}
-              keyExtractor={(item) => item}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{
-                flexGrow: 1,
-                justifyContent: "space-evenly",
-                backgroundColor: Colors.DEFAULT_WHITE,
-                borderRadius: 12,
-              }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.CategoryContainer}
-                  onPress={() => setSelectedCategory(item)}
-                >
-                  <Text
-                    style={
-                      selectedCategory === item
-                        ? styles.activeCategoryText
-                        : styles.inActiveCategoryText
-                    }
-                  >
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              )}
+        <Separator height={Display.setHeight(22)} />
+        <View style={styles.mainContainer}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{restaurant?.name}</Text>
+            <Ionicons
+              name={"heart-outline"}
+              color={Colors.DEFAULT_YELLOW}
+              size={28}
+              onPress={() => (isBookmarked ? removeBookmark() : addBookmark())}
             />
           </View>
+          {/* Description */}
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.desText}>{restaurant?.description}</Text>
+          </View>
 
-          {/* food list */}
-          <View style={styles.foodList}>
-            {restaurant?.foods
-              ?.filter((food) => food?.category === selectedCategory)
-              ?.map((item) => (
-                <FoodCard
-                  key={item?.id}
-                  {...item}
-                  navigate={() =>
-                    navigation.navigate("FoodScreen", { foodId: item?.id })
-                  }
+          {/*Delivery */}
+          <View style={styles.footerContainer}>
+            <View style={styles.ratingReviewsContainer}>
+              <FontAwesome
+                name="star"
+                size={18}
+                color={Colors.DEFAULT_YELLOW}
+              />
+              <Text style={styles.ratingText}>4.2</Text>
+              <Text style={styles.reviewsText}>(455 Reviews)</Text>
+            </View>
+            <View style={styles.rowAndCenter}>
+              <View style={styles.timeAndDistanceContainer}>
+                <Ionicons
+                  name="location-outline"
+                  color={Colors.DEFAULT_YELLOW}
+                  size={15}
                 />
-              ))}
-            <Separator height={Display.setHeight(2)} />
+                <Text style={styles.timeAndDistanceText}>
+                  {" "}
+                  {restaurant.distance?.toFixed(1)} km
+                </Text>
+              </View>
+              <View style={styles.timeAndDistanceContainer}>
+                <Ionicons
+                  name="time-outline"
+                  color={Colors.DEFAULT_YELLOW}
+                  size={15}
+                />
+                <Text style={styles.timeAndDistanceText}>
+                  {" "}
+                  {Math.round(restaurant.distance * 1.5)} phút
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+        <Separator height={Display.setHeight(1)} />
+
+        <View style={styles.categoriesContainer}>
+          <FlatList
+            data={categories}
+            keyExtractor={(item) => item.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: "space-evenly",
+              backgroundColor: Colors.DEFAULT_WHITE,
+              borderRadius: 12,
+            }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.CategoryContainer}
+                onPress={() =>
+                  setSelectedCategory({ id: item.id, name: item.name })
+                }
+              >
+                <Text
+                  style={
+                    selectedCategory.name === item.name
+                      ? styles.activeCategoryText
+                      : styles.inActiveCategoryText
+                  }
+                >
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+        {/* Food List */}
+        <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+          <View style={styles.foodList}>
+            {isLoadingFoods ? (
+              <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN} />
+            ) : (
+              <>
+                {listFoods.map((item) => (
+                  <FoodCard
+                    key={item?.id}
+                    {...item}
+                    restaurantId={restaurantId} // Thêm prop này
+                    navigate={() =>
+                      navigation.navigate("FoodScreen", {
+                        food: item,
+                        restaurantId: restaurantId,
+                      })
+                    }
+                    navigateLogin={() => navigation.navigate("LoginScreen")}
+                  />
+                ))}
+                <Separator height={Display.setHeight(2)} />
+              </>
+            )}
           </View>
         </ScrollView>
+        {/* cart footer*/}
+        {hasItems(restaurantId) && (
+          <View style={styles.cartPanelWrapper}>
+            <TouchableOpacity
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                padding: 10,
+                backgroundColor: "#f8f8f8",
+                borderTopWidth: 1,
+                borderColor: "#ddd",
+              }}
+              onPress={toggleCartModal} // Mở modal giỏ hàng khi nhấn
+            >
+              {/* Icon giỏ hàng */}
+              <View style={{ position: "relative" }}>
+                <Text
+                  style={{ fontSize: 24, color: "#000000", marginLeft: 10 }}
+                >
+                  🛒
+                </Text>
+                <View
+                  style={{
+                    position: "absolute",
+                    top: -5,
+                    right: -8,
+                    backgroundColor: "red",
+                    borderRadius: 10,
+                    width: 20,
+                    height: 20,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{ color: "white", fontSize: 12, fontWeight: "bold" }}
+                  >
+                    {totalItems}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Giá tiền */}
+              <View
+                style={{ flex: 1, alignItems: "flex-end", marginRight: 10 }}
+              >
+                <Text
+                  style={{
+                    fontSize: 17,
+                    fontWeight: "bold",
+                    color: Colors.DEFAULT_YELLOW,
+                  }}
+                >
+                  {totalPrice.toLocaleString("vi-VN")} đ
+                </Text>
+              </View>
+
+              {/* Nút Giao hàng */}
+              <TouchableOpacity
+                style={{
+                  marginRight: 10,
+                  backgroundColor: Colors.DEFAULT_GREEN,
+                  paddingVertical: 8,
+                  paddingHorizontal: 10,
+                  borderRadius: 5,
+                }}
+                onPress={() => {
+                  navigation.navigate("OrderConfirmScreen", {
+                    restaurant: restaurant,
+                    items: items,
+                    totalPrice: totalPrice,
+                    totalItems: totalItems,
+                  });
+                }}
+              >
+                <Text
+                  style={{ color: "white", fontSize: 14, fontWeight: "bold" }}
+                >
+                  Giao hàng ({totalItems})
+                </Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
+
+      {/* // cart model  */}
+      <CartModal
+        restaurantId={restaurantId}
+        visible={isCartVisible}
+        onClose={() => setCartVisible(false)}
+        onNavigateToCart={handleNavigateToCart} // Thêm hàm này để điều hướng đến OrderConfirmScreen
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  cartPanelWrapper: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    zIndex: 100,
+  },
+
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.4)", // Màu mờ đen 40%
+    zIndex: 1,
+  },
   container: {
     flex: 1,
+    position: "relative",
     justifyContent: "center",
   },
   backgroundImage: {

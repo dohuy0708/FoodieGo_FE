@@ -57,6 +57,14 @@ export default function Nav({ nav }) {
           color={currentRoute === "Account" ? Colors.DEFAULT_YELLOW : "black"} 
         />
       </TouchableOpacity>
+       <TouchableOpacity onPress={() => nav.navigate("ChatListScreen")}>
+        <MaterialCommunityIcons 
+          name="chat-outline" 
+          size={24} 
+          color={currentRoute === "ChatListScreen" ? Colors.DEFAULT_YELLOW : "black"} 
+        />
+      </TouchableOpacity>
+       
     </View>
   );
 }

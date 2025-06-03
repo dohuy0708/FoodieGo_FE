@@ -5,49 +5,56 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../components";
 import RestaurantMediumCard from "../../components/RestaurantMediumCard";
 import FavoriteCard from "../../components/FavouriteCard";
 import { Colors } from "../../constants";
-import { UserContext } from "../../context/UserContext";
-const restaurants = [
-  {
-    id: "1",
-    name: "Pizza Palace",
-    images: {
-      poster: "https://example.com/images/pizza.jpg",
-    },
-    tags: ["Pizza", "Italian"],
-    distance: "1.2 km",
-    time: "25-30 min",
-  },
-  {
-    id: "2",
-    name: "Sushi World",
-    images: {
-      poster: "https://example.com/images/sushi.jpg",
-    },
-    tags: ["Sushi", "Japanese"],
-    distance: "2.5 km",
-    time: "30-40 min",
-  },
-  {
-    id: "3",
-    name: "Burger Town",
-    images: {
-      poster: "https://example.com/images/burger.jpg",
-    },
-    tags: ["Burger", "Fast Food"],
-    distance: "0.9 km",
-    time: "20-25 min",
-  },
-];
+import { use } from "react";
+import {
+  findRestaurantsByCategory,
+  searchMostOrderedRestaurants,
+  searchTopRatedRestaurants,
+} from "../../services/restaurantService";
+// const restaurants = [
+//   {
+//     id: "1",
+//     name: "Pizza Palace",
+//     images: {
+//       poster: "https://example.com/images/pizza.jpg",
+//     },
+//     tags: ["Pizza", "Italian"],
+//     distance: "1.2 km",
+//     time: "25-30 min",
+//   },
+//   {
+//     id: "2",
+//     name: "Sushi World",
+//     images: {
+//       poster: "https://example.com/images/sushi.jpg",
+//     },
+//     tags: ["Sushi", "Japanese"],
+//     distance: "2.5 km",
+//     time: "30-40 min",
+//   },
+//   {
+//     id: "3",
+//     name: "Burger Town",
+//     images: {
+//       poster: "https://example.com/images/burger.jpg",
+//     },
+//     tags: ["Burger", "Fast Food"],
+//     distance: "0.9 km",
+//     time: "20-25 min",
+//   },
+// ];
 
-const FavoriteScreen = ({ navigation }) => {
+const CategoryScreen = ({ navigation, route }) => {
+  const { categoryName } = route.params;
   const [activeSortItem, setActiveSortItem] = useState("Mới nhất");
-  const { userInfo } = useContext(UserContext);
+  const [restaurants, setRestaurants] = useState(restaurants);
+  const [isLoading, setIsLoading] = useState(false);
   const sortStyle = (isActive) =>
     isActive
       ? {
@@ -65,42 +72,49 @@ const FavoriteScreen = ({ navigation }) => {
 
     fontWeight: isActive ? "500" : "400", // tô đậm nếu active
   });
-  if (!userInfo) {
-    return (
-      <SafeAreaView
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Text style={{ fontSize: 16, marginBottom: 16 }}>
-          Bạn cần đăng nhập để xem{" "}
-          <Text style={{ fontWeight: "bold", fontSize: 16 }}>Yêu Thích</Text>
-        </Text>
 
-        <TouchableOpacity
-          style={{
-            backgroundColor: Colors.DEFAULT_GREEN,
-            padding: 10,
-            borderRadius: 8,
-          }}
-          onPress={() => navigation.navigate("LoginScreen")}
-        >
-          <Text style={{ color: "white", fontWeight: "bold" }}>Đăng nhập</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      setIsLoading(true);
+      try {
+        let data = [];
+
+        if (categoryName === "Đề xuất") {
+          data = await searchMostOrderedRestaurants(); // có distace r thì truyền ị trí vào
+        } else if (categoryName === "Nổi bật") {
+          data = await searchTopRatedRestaurants(); // có distace r thì truyền ị trí vào
+        } else {
+          data = await findRestaurantsByCategory(
+            categoryName,
+            10.8790332,
+            106.8107046,
+            10
+          );
+        }
+
+        setRestaurants(data);
+      } catch (error) {
+        console.error("Error fetching restaurants:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRestaurants();
+  }, [categoryName]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Loading...</Text>
+      </View>
     );
   }
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.headerContainer}>
-          <View style={styles.center}>
-            <Text style={styles.title}>Yêu thích</Text>
-          </View>
-        </View>
+        <Header title={categoryName} onBackPress={() => navigation.goBack()} />
 
         {/* Sort list */}
         <View style={styles.sortListContainer}>
@@ -120,15 +134,18 @@ const FavoriteScreen = ({ navigation }) => {
 
         {/* List FoodCard */}
         <ScrollView style={styles.listContainer}>
-          {restaurants?.map((item) => (
-            <FavoriteCard
-              {...item}
-              key={item?.id}
-              navigate={(restaurantId) =>
-                navigation.navigate("RestaurantScreen", { restaurantId })
-              }
-            />
-          ))}
+          {restaurants?.map((item) => {
+            console.log("Rendering item:", item); // 👈 Ghi log từng item
+            return (
+              <FavoriteCard
+                {...item}
+                key={item?.id}
+                navigate={(restaurantId) =>
+                  navigation.navigate("RestaurantScreen", { restaurantId })
+                }
+              />
+            );
+          })}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -196,4 +213,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FavoriteScreen;
+export default CategoryScreen;
