@@ -113,8 +113,8 @@ const AddressScreen = ({ navigation, route }) => {
         // Query để lấy các trường chi tiết của Address entity
         // Đảm bảo các trường trong `address { ... }` khớp với Address entity của bạn
         const query = `
-        query FindUserByIdForAddressScreen($id: Int!) {
-          findUserById(id: $id) {
+        query {
+          findUserById(id: ${currentUserId}) {
             id
             name
             phone
@@ -125,9 +125,9 @@ const AddressScreen = ({ navigation, route }) => {
               district
               ward
               street
-              # Thêm trường 'address' nếu backend trả về formatted_address trực tiếp trong Address entity
-              # address 
-              latitude 
+              # Nếu bạn có trường formattedAddress trong Address entity và backend trả về nó:
+              # formattedAddress 
+              latitude
               longitude
               placeId
             }
@@ -140,15 +140,20 @@ const AddressScreen = ({ navigation, route }) => {
           Authorization: `Bearer ${token}`,
         };
 
+        console.log(
+          "[AddressScreen.fetchUserDatAndAddress] Sending GraphQL query (no variables):",
+          query.substring(0, 100) + "..."
+        );
+        console.log(
+          "[AddressScreen.fetchUserDataAndAddress] Headers:",
+          headers
+        );
+
         const res = await fetch(GRAPHQL_ENDPOINT, {
           method: "POST",
           headers: headers,
-          body: JSON.stringify({
-            query: query,
-            variables: { id: currentUserId },
-          }),
+          body: JSON.stringify({ query: query }), // Chỉ gửi query, không có object variables
         });
-
         const responseText = await res.text();
         let responseData;
         try {

@@ -18,7 +18,7 @@ import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import GRAPHQL_ENDPOINT from "../../../config"; // Đảm bảo đường dẫn này đúng
 
-// --- GraphQL Query/Mutation Strings ---
+// --- GraphQL Query/Mutation Strings (Giữ nguyên như bạn cung cấp) ---
 const SEARCH_GOONG_PLACE_QUERY_FULL = `
   query SearchGoongPlace($input: String!) {
     searchPlace(input: $input) {
@@ -45,7 +45,7 @@ const REVERSE_GOONG_GEOCODE_QUERY_SIMPLE = `
     reverseGeocode(lat: $lat, lng: $lng) {
       formatted_address
       place_id
-      # Nếu backend có trả về các thành phần chi tiết, hãy query ở đây
+      # Nếu backend của bạn CÓ trả về các thành phần này, hãy bỏ comment
       # streetName
       # wardName
       # districtName
@@ -58,6 +58,11 @@ const CREATE_ADDRESS_MUTATION = `
   mutation CreateNewAddress($input: CreateAddressInput!) {
     createAddress(createAddressInput: $input) {
       id
+      label
+      street
+      ward
+      district
+      province
     }
   }
 `;
@@ -66,34 +71,37 @@ const UPDATE_ADDRESS_MUTATION = `
   mutation UpdateExistingAddress($input: UpdateAddressInput!) {
     updateAddress(updateAddressInput: $input) {
       id
+      label
+      street
+      ward
+      district
+      province
     }
   }
 `;
 
-// Mutation này gửi addressId, backend cần xử lý để cập nhật User.addressId trong DB
-const UPDATE_USER_WITH_ADDRESS_ID_MUTATION = `
-  mutation UpdateUserWithAddressId($userId: Int!, $addressIdToLink: Int!) {
-    updateUser(updateUserInput: {
-      id: $userId,
-      addressId: $addressIdToLink # Gửi addressId
-    }) {
+const LINK_USER_TO_ADDRESS_MUTATION_FINAL = `
+   mutation UserAddressLink($userId: Int!, $addressId: Int) { # Tên biến $addressId
+    linkUserAddress(userId: $userId, addressId: $addressId) { # Tên mutation mới ở resolver
       id
       name
-      address {
+      address { # Query lại address để xem kết quả
         id
+        # Thêm các trường của Address bạn muốn thấy ở đây, ví dụ:
         # street
         # province
+        # formattedAddress (nếu Address entity của bạn có trường này)
       }
     }
   }
 `;
 // --- Hết GraphQL ---
 
-// Hàm phân tích địa chỉ (CƠ BẢN - CẦN CẢI THIỆN VÀ KIỂM TRA KỸ)
+// Hàm phân tích địa chỉ (CƠ BẢN - CẦN CẢI THIỆN VÀ KIỂM TRA KỸ VỚI NHIỀU DỮ LIỆU)
 const parseFormattedAddress = (formattedAddress) => {
-  console.log("Attempting to parse address:", formattedAddress);
+  console.log("[parseFormattedAddress] Input:", formattedAddress);
   if (!formattedAddress || typeof formattedAddress !== "string") {
-    console.warn("parseFormattedAddress: Input is not a valid string.");
+    console.warn("[parseFormattedAddress] Input không hợp lệ.");
     return { street: "", ward: "", district: "", province: "" };
   }
 
@@ -104,116 +112,116 @@ const parseFormattedAddress = (formattedAddress) => {
     province = "";
   const len = parts.length;
 
-  // Logic phân tích cơ bản dựa trên số lượng phần tử
-  // Giả định phổ biến: Đường, Phường/Xã, Quận/Huyện, Tỉnh/TP
-  if (len >= 4) {
-    province = parts[len - 1];
-    district = parts[len - 2];
-    ward = parts[len - 3];
-    street = parts.slice(0, len - 3).join(", ");
-  } else if (len === 3) {
-    province = parts[2];
-    district = parts[1];
-    // Không chắc phần tử đầu là street hay ward, tạm gán cho street
-    street = parts[0];
-    // ward = ""; // Hoặc cố gắng tìm từ khóa
-  } else if (len === 2) {
-    province = parts[1];
-    street = parts[0];
-  } else if (len === 1) {
-    street = parts[0]; // Toàn bộ là street hoặc tên địa điểm
-  }
+  // Ưu tiên các từ khóa để xác định chính xác hơn
+  const provinceKeywords = ["tỉnh", "thành phố", "tp."]; // Thêm các từ viết tắt nếu có
+  const districtKeywords = ["quận", "huyện", "thị xã", "tx."];
+  const wardKeywords = ["phường", "xã", "thị trấn", "tt."];
 
-  // Cố gắng tinh chỉnh bằng từ khóa (rất cơ bản)
-  // Bạn có thể mở rộng danh sách từ khóa này
-  const provinceKeywords = ["tỉnh", "thành phố", "tp"];
-  const districtKeywords = ["quận", "huyện", "thị xã", "tx"];
-  const wardKeywords = ["phường", "xã", "thị trấn", "tt"];
+  let provinceIndex = -1,
+    districtIndex = -1,
+    wardIndex = -1;
 
-  // Tinh chỉnh province (thường là phần tử cuối)
-  if (parts.length > 0) {
-    const lastPart = parts[parts.length - 1];
-    if (provinceKeywords.some((kw) => lastPart.toLowerCase().includes(kw))) {
-      province = lastPart;
-    }
-  }
-
-  // Tinh chỉnh district (thường là phần tử kế cuối)
-  if (parts.length > 1) {
-    const secondLastPart = parts[parts.length - 2];
+  // Tìm từ dưới lên để tăng độ chính xác
+  for (let i = len - 1; i >= 0; i--) {
+    const partLower = parts[i].toLowerCase();
     if (
-      districtKeywords.some((kw) => secondLastPart.toLowerCase().includes(kw))
+      provinceIndex === -1 &&
+      provinceKeywords.some((kw) => partLower.includes(kw))
     ) {
-      district = secondLastPart;
-      // Nếu district được xác định, và province chưa có hoặc giống district, cập nhật province
-      if (!province || province === district) {
-        if (parts.length > 0) province = parts[parts.length - 1]; // Lấy lại phần tử cuối làm tỉnh
-      }
+      provinceIndex = i;
+      province = parts[i];
+      continue; // Đã tìm thấy tỉnh, chuyển sang phần tử tiếp theo
+    }
+    if (
+      districtIndex === -1 &&
+      provinceIndex !== i &&
+      districtKeywords.some((kw) => partLower.includes(kw))
+    ) {
+      districtIndex = i;
+      district = parts[i];
+      continue;
+    }
+    if (
+      wardIndex === -1 &&
+      provinceIndex !== i &&
+      districtIndex !== i &&
+      wardKeywords.some((kw) => partLower.includes(kw))
+    ) {
+      wardIndex = i;
+      ward = parts[i];
+      continue;
     }
   }
 
-  // Tinh chỉnh ward
-  if (parts.length > 2) {
-    const thirdLastPart = parts[parts.length - 3];
-    if (wardKeywords.some((kw) => thirdLastPart.toLowerCase().includes(kw))) {
-      ward = thirdLastPart;
-      // Nếu ward được xác định, và district/province chưa có hoặc trùng, cập nhật lại
-      if (!district || district === ward) {
-        if (parts.length > 1) district = parts[parts.length - 2];
-        if (!province || province === district || province === ward) {
-          if (parts.length > 0) province = parts[parts.length - 1];
-        }
-      }
-    }
+  // Nếu không tìm thấy tỉnh/thành phố bằng từ khóa, thử lấy phần tử cuối cùng
+  if (!province && len > 0) {
+    province = parts[len - 1];
+    provinceIndex = len - 1;
+  }
+  // Nếu không tìm thấy quận/huyện và có ít nhất 2 phần tử (và phần tử đó không phải là tỉnh)
+  if (
+    !district &&
+    len > 1 &&
+    (provinceIndex === -1 || provinceIndex > len - 2)
+  ) {
+    district = parts[len - 2];
+    districtIndex = len - 2;
+  }
+  // Nếu không tìm thấy phường/xã và có ít nhất 3 phần tử
+  if (
+    !ward &&
+    len > 2 &&
+    (districtIndex === -1 || districtIndex > len - 3) &&
+    (provinceIndex === -1 || provinceIndex > len - 3)
+  ) {
+    ward = parts[len - 3];
+    wardIndex = len - 3;
   }
 
-  // Gán phần còn lại cho street nếu street chưa được xác định rõ ràng từ các bước trên
-  // và các thành phần khác đã có vẻ hợp lý.
-  if (street === "" && (ward || district || province)) {
-    const remainingParts = [];
-    for (const part of parts) {
-      if (part !== ward && part !== district && part !== province) {
-        remainingParts.push(part);
-      }
+  // Ghép các phần còn lại làm street
+  const streetParts = [];
+  for (let i = 0; i < len; i++) {
+    if (i !== provinceIndex && i !== districtIndex && i !== wardIndex) {
+      streetParts.push(parts[i]);
     }
-    street = remainingParts.join(", ");
   }
+  street = streetParts.join(", ").trim();
 
-  // Nếu street vẫn là toàn bộ formattedAddress (trường hợp ít thành phần)
-  // và các thành phần khác đã được xác định, cố gắng loại bỏ chúng khỏi street
+  // Trường hợp đặc biệt: nếu chỉ có 1 hoặc 2 phần, và street đã bao gồm ward/district/province
+  // thì cố gắng làm sạch street
   if (street === formattedAddress && (ward || district || province)) {
     let tempStreet = formattedAddress;
-    if (province)
-      tempStreet = tempStreet.replace(
-        new RegExp(`,\\s*${province.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
-        ""
-      );
-    if (district)
-      tempStreet = tempStreet.replace(
-        new RegExp(`,\\s*${district.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
-        ""
-      );
-    if (ward)
-      tempStreet = tempStreet.replace(
-        new RegExp(`,\\s*${ward.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
-        ""
-      );
-    street = tempStreet.trim();
+    if (province && tempStreet.endsWith(province))
+      tempStreet = tempStreet
+        .substring(0, tempStreet.lastIndexOf(province))
+        .replace(/,\s*$/, "")
+        .trim();
+    if (district && tempStreet.endsWith(district))
+      tempStreet = tempStreet
+        .substring(0, tempStreet.lastIndexOf(district))
+        .replace(/,\s*$/, "")
+        .trim();
+    if (ward && tempStreet.endsWith(ward))
+      tempStreet = tempStreet
+        .substring(0, tempStreet.lastIndexOf(ward))
+        .replace(/,\s*$/, "")
+        .trim();
+    street = tempStreet;
   }
 
-  // Đảm bảo street không rỗng nếu các thành phần khác cũng rỗng (trường hợp chỉ có 1 phần)
-  if (!street && !ward && !district && !province && parts.length > 0) {
+  // Nếu sau tất cả street vẫn rỗng và formattedAddress có giá trị, gán toàn bộ cho street
+  if (!street && formattedAddress) {
     street = formattedAddress;
   }
 
-  const MAX_LEN = 255;
+  const MAX_LEN = 255; // Giới hạn độ dài cột trong DB nếu có
   const result = {
-    street: (street || "").substring(0, MAX_LEN),
-    ward: (ward || "").substring(0, MAX_LEN),
-    district: (district || "").substring(0, MAX_LEN),
-    province: (province || "").substring(0, MAX_LEN),
+    street: (street || "").substring(0, MAX_LEN).trim(),
+    ward: (ward || "").substring(0, MAX_LEN).trim(),
+    district: (district || "").substring(0, MAX_LEN).trim(),
+    province: (province || "").substring(0, MAX_LEN).trim(),
   };
-  console.log("Parsed result:", result);
+  console.log("[parseFormattedAddress] Parsed result:", result);
   return result;
 };
 
@@ -232,7 +240,7 @@ const SelectAddressScreen = ({ navigation, route }) => {
     longitudeDelta: 0.01,
   }).current;
   const [mapRegion, setMapRegion] = useState(defaultRegion);
-  const [selectedLocation, setSelectedLocation] = useState(null); // Sẽ chứa các thành phần chi tiết sau khi parse
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [currentMapAddress, setCurrentMapAddress] = useState(
     "Di chuyển bản đồ để chọn vị trí"
   );
@@ -248,18 +256,18 @@ const SelectAddressScreen = ({ navigation, route }) => {
   const hasFetchedInitialAddress = useRef(false);
 
   const callGraphQL = useCallback(async (query, variables) => {
-    // ... (Hàm callGraphQL giữ nguyên như phiên bản trước)
     console.log(
       "callGraphQL - Query:",
       query.substring(0, 60) + "...",
       "Variables:",
-      variables
+      JSON.stringify(variables)
     );
     const token = await AsyncStorage.getItem("token");
     const headers = { "Content-Type": "application/json" };
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     } else {
+      console.error("callGraphQL: Token không được tìm thấy.");
       throw new Error("Token không được tìm thấy. Vui lòng đăng nhập lại.");
     }
     try {
@@ -273,29 +281,49 @@ const SelectAddressScreen = ({ navigation, route }) => {
       try {
         responseData = JSON.parse(responseText);
       } catch (e) {
-        throw new Error(`Lỗi parse JSON: ${responseText.substring(0, 100)}`);
+        console.error(
+          "callGraphQL - Lỗi parse JSON:",
+          e,
+          "\nResponse text:",
+          responseText.substring(0, 200)
+        );
+        throw new Error(`Lỗi máy chủ: Không thể phân tích phản hồi.`);
       }
       console.log(
         "callGraphQL - Parsed Response:",
         JSON.stringify(responseData, null, 2)
       );
       if (response.status === 401 || response.status === 403) {
+        console.error(
+          "callGraphQL - Lỗi xác thực:",
+          response.status,
+          responseData
+        );
         throw new Error(
           "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại."
         );
       }
       if (!response.ok) {
-        const errTxt =
+        const errorMessage =
           responseData.errors?.map((e) => e.message).join("\n") ||
           responseData.message ||
           `Lỗi API (${response.status})`;
-        throw new Error(errTxt);
+        console.error("callGraphQL - Lỗi HTTP không OK:", errorMessage);
+        throw new Error(errorMessage);
       }
       if (responseData.errors) {
-        throw new Error(responseData.errors.map((e) => e.message).join("\n"));
+        const errorMessage = responseData.errors
+          .map((e) => e.message)
+          .join("\n");
+        console.error("callGraphQL - Lỗi GraphQL:", errorMessage);
+        throw new Error(errorMessage);
       }
       return responseData.data;
     } catch (error) {
+      console.error(
+        "callGraphQL - Lỗi fetch hoặc lỗi đã throw:",
+        error.message
+      );
       throw error;
     }
   }, []);
@@ -313,7 +341,7 @@ const SelectAddressScreen = ({ navigation, route }) => {
           lat: latitude,
           lng: longitude,
         });
-        if (data.reverseGeocode && data.reverseGeocode.length > 0) {
+        if (data && data.reverseGeocode && data.reverseGeocode.length > 0) {
           const primaryResult = data.reverseGeocode[0];
           const formattedAddress = primaryResult.formatted_address;
           const parsedComponents = parseFormattedAddress(formattedAddress); // ÁP DỤNG HÀM PARSE
@@ -322,16 +350,16 @@ const SelectAddressScreen = ({ navigation, route }) => {
           setSelectedLocation({
             latitude,
             longitude,
-            address: formattedAddress, // Giữ lại formatted_address gốc
-            name: formattedAddress.split(",")[0], // Tên vẫn lấy từ phần đầu
+            address: formattedAddress,
+            name: formattedAddress.split(",")[0],
             placeId: primaryResult.place_id,
-            street: parsedComponents.street, // Lưu các thành phần đã parse
+            street: parsedComponents.street,
             ward: parsedComponents.ward,
             district: parsedComponents.district,
             province: parsedComponents.province,
           });
         } else {
-          setCurrentMapAddress("Không tìm thấy địa chỉ.");
+          setCurrentMapAddress("Không tìm thấy địa chỉ cho vị trí này.");
           setSelectedLocation(null);
         }
       } catch (error) {
@@ -358,7 +386,6 @@ const SelectAddressScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     const initializeLocation = async () => {
-      /* ... (Giữ nguyên logic, nó đã gọi fetchAddressFromCoordsGraphQL) ... */
       if (
         hasFetchedInitialAddress.current &&
         locationPermissionGranted !== null
@@ -403,7 +430,6 @@ const SelectAddressScreen = ({ navigation, route }) => {
 
   const onRegionChangeComplete = useCallback(
     async (newRegionFromMap, details) => {
-      // ... (Giữ nguyên logic, nó đã gọi fetchAddressFromCoordsGraphQL) ...
       if (isProgrammaticPan.current) {
         isProgrammaticPan.current = false;
         return;
@@ -427,7 +453,6 @@ const SelectAddressScreen = ({ navigation, route }) => {
 
   const handleSearch = useCallback(
     (query) => {
-      // ... (Giữ nguyên logic) ...
       setSearchQuery(query);
       setShowSearchResults(true);
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -473,14 +498,13 @@ const SelectAddressScreen = ({ navigation, route }) => {
           GET_GOONG_PLACE_DETAILS_QUERY_FULL,
           { input: selectedDescription }
         );
-        if (!detailsData.searchAddress)
+        if (!detailsData?.searchAddress)
           throw new Error("Không thể lấy tọa độ.");
         const { latitude, longitude } = detailsData.searchAddress;
         const latNum = parseFloat(latitude);
         const lngNum = parseFloat(longitude);
         if (isNaN(latNum) || isNaN(lngNum))
           throw new Error("Tọa độ không hợp lệ.");
-
         isProgrammaticPan.current = true;
         const newMapRegion = {
           latitude: latNum,
@@ -491,34 +515,31 @@ const SelectAddressScreen = ({ navigation, route }) => {
         setMapRegion(newMapRegion);
         if (mapRef.current) mapRef.current.animateToRegion(newMapRegion, 1000);
 
-        // Gọi Reverse Geocode để lấy formatted_address và phân tích các thành phần
         const reverseData = await callGraphQL(
           REVERSE_GOONG_GEOCODE_QUERY_SIMPLE,
           { lat: latNum, lng: lngNum }
         );
         if (
-          reverseData.reverseGeocode &&
+          reverseData?.reverseGeocode &&
           reverseData.reverseGeocode.length > 0
         ) {
           const primaryResult = reverseData.reverseGeocode[0];
           const formattedAddress = primaryResult.formatted_address;
           const parsedComponents = parseFormattedAddress(formattedAddress); // ÁP DỤNG HÀM PARSE
-
           setCurrentMapAddress(formattedAddress);
           setSelectedLocation({
             latitude: latNum,
             longitude: lngNum,
-            address: formattedAddress, // Giữ formatted_address gốc
-            name: selectedDescription.split(",")[0], // Giữ tên từ Autocomplete
-            placeId: primaryResult.place_id, // Dùng place_id từ reverse geocode
-            street: parsedComponents.street, // Lưu các thành phần đã parse
+            address: formattedAddress,
+            name: selectedDescription.split(",")[0],
+            placeId: primaryResult.place_id,
+            street: parsedComponents.street,
             ward: parsedComponents.ward,
             district: parsedComponents.district,
             province: parsedComponents.province,
           });
         } else {
-          // Fallback nếu reverse geocode lỗi
-          const parsedComponents = parseFormattedAddress(selectedDescription);
+          const parsedComponents = parseFormattedAddress(selectedDescription); // Parse cả fallback
           setCurrentMapAddress(selectedDescription);
           setSelectedLocation({
             latitude: latNum,
@@ -533,110 +554,270 @@ const SelectAddressScreen = ({ navigation, route }) => {
           });
         }
       } catch (error) {
-        /* ... xử lý lỗi ... */
+        Alert.alert("Lỗi", "Không thể lấy chi tiết vị trí.");
+        if (mapRegion.latitude && mapRegion.longitude)
+          await fetchAddressFromCoordsGraphQL(
+            mapRegion.latitude,
+            mapRegion.longitude
+          );
+        if (
+          error.message.includes("Phiên đăng nhập") ||
+          error.message.includes("Token không được tìm thấy")
+        )
+          Alert.alert("Lỗi xác thực", error.message, [
+            { text: "OK", onPress: () => navigation.goBack() },
+          ]);
       } finally {
         setIsLoadingDetails(false);
       }
     },
-    [callGraphQL, mapRegion, navigation]
-  ); // Bỏ fetchAddressFromCoordsGraphQL
+    [callGraphQL, fetchAddressFromCoordsGraphQL, mapRegion, navigation]
+  );
 
   const handleNavigateToCurrentLocation = useCallback(async () => {
-    /* ... (Giữ nguyên) ... */
+    if (locationPermissionGranted === false) {
+      Alert.alert("Quyền vị trí", "Bạn đã từ chối quyền.");
+      return;
+    }
+    let currentStatus = locationPermissionGranted;
+    if (currentStatus === null) {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setLocationPermissionGranted(status === "granted");
+      currentStatus = status === "granted";
+    }
+    if (!currentStatus) {
+      Alert.alert("Quyền vị trí", "Vui lòng cấp quyền.");
+      return;
+    }
+    try {
+      setIsLoadingAddress(true);
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+        timeout: 10000,
+      });
+      const { latitude, longitude } = location.coords;
+      const newRegion = {
+        latitude,
+        longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+      isProgrammaticPan.current = true;
+      setMapRegion(newRegion);
+      if (mapRef.current) mapRef.current.animateToRegion(newRegion, 1000);
+      await fetchAddressFromCoordsGraphQL(latitude, longitude, true);
+    } catch (e) {
+      Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại.");
+      setIsLoadingAddress(false);
+    }
   }, [fetchAddressFromCoordsGraphQL, locationPermissionGranted]);
 
-  // Xử lý khi xác nhận vị trí
+  // Trong SelectAddressScreen.js
+
+  // Đảm bảo các hằng số mutation này đã được định nghĩa ở phạm vi ngoài hàm:
+  // const CREATE_ADDRESS_MUTATION = `...`;
+  // const UPDATE_ADDRESS_MUTATION = `...`;
+  // const LINK_USER_TO_ADDRESS_MUTATION = `
+  //   mutation UserAddressLink($userId: Int!, $addressId: Int) {
+  //     linkUserAddress(userId: $userId, addressId: $addressId) {
+  //       id
+  //       name
+  //       address {
+  //         id
+  //         street
+  //       }
+  //     }
+  //   }
+  // `;
+
   const handleConfirmAndSaveChanges = async () => {
     // Kiểm tra selectedLocation và các thành phần đã parse
     if (
-      !selectedLocation?.address ||
+      !selectedLocation?.address || // formatted_address gốc
       !selectedLocation.latitude ||
       !selectedLocation.longitude ||
-      !selectedLocation.street ||
-      !selectedLocation.province
+      !selectedLocation.street || // Thành phần đã parse
+      !selectedLocation.province // Thành phần đã parse (ít nhất cần street và province)
     ) {
-      // Thêm kiểm tra street và province (ít nhất)
       Alert.alert(
         "Địa chỉ không đủ thông tin",
-        "Vui lòng chọn một địa chỉ mà hệ thống có thể phân tích được các thành phần chi tiết (đường, tỉnh/thành phố)."
+        "Không thể phân tích chi tiết địa chỉ này. Vui lòng chọn hoặc di chuyển bản đồ đến vị trí rõ ràng hơn, đảm bảo có đủ thông tin đường và tỉnh/thành phố."
       );
       console.log(
-        "selectedLocation hiện tại không đủ chi tiết:",
+        "selectedLocation không đủ chi tiết cho việc lưu:",
         selectedLocation
       );
       return;
     }
+
     if (!userId) {
-      /* ... lỗi userId ... */ return;
+      Alert.alert(
+        "Lỗi người dùng",
+        "Không tìm thấy ID người dùng để thực hiện hành động này. Vui lòng đăng nhập lại."
+      );
+      console.log("handleConfirmAndSaveChanges: userId is missing.");
+      return;
     }
 
     setIsSavingAddress(true);
+    console.log(
+      `[handleConfirm] Bắt đầu lưu địa chỉ. UserID: ${userId}, CurrentAddressID: ${currentAddressId}`
+    );
+    console.log(
+      "[handleConfirm] SelectedLocation đầy đủ:",
+      JSON.stringify(selectedLocation, null, 2)
+    );
+
+    let finalAddressId; // Khai báo ở scope của hàm
+
     try {
       const addressInputForBackend = {
-        label: selectedLocation.name.substring(0, 254),
-        street: selectedLocation.street, // Sử dụng thành phần đã phân tích
-        province: selectedLocation.province, // Sử dụng thành phần đã phân tích
-        district: selectedLocation.district || "", // Gửi chuỗi rỗng nếu không có
-        ward: selectedLocation.ward || "", // Gửi chuỗi rỗng nếu không có
+        label: selectedLocation.name
+          ? selectedLocation.name.substring(0, 254)
+          : (selectedLocation.address.split(",")[0] || "Địa chỉ").substring(
+              0,
+              254
+            ),
+        street: selectedLocation.street,
+        province: selectedLocation.province,
+        district: selectedLocation.district || "", // Gửi chuỗi rỗng nếu parseFormattedAddress không tìm thấy
+        ward: selectedLocation.ward || "", // Gửi chuỗi rỗng nếu parseFormattedAddress không tìm thấy
         latitude: selectedLocation.latitude,
         longitude: selectedLocation.longitude,
-        placeId: selectedLocation.placeId || null,
+        placeId: selectedLocation.placeId || null, // Gửi null nếu không có
       };
       console.log(
-        "Input gửi lên cho Create/Update Address:",
+        "[handleConfirm] Input chuẩn bị cho Create/Update Address Mutation:",
         JSON.stringify(addressInputForBackend, null, 2)
       );
 
-      let finalAddressId;
       if (currentAddressId) {
+        // --- TRƯỜNG HỢP CẬP NHẬT ADDRESS ĐÃ CÓ ---
+        console.log(
+          `[handleConfirm] Đang cập nhật Address ID: ${currentAddressId}`
+        );
         const updateInput = { id: currentAddressId, ...addressInputForBackend };
         const updateResult = await callGraphQL(UPDATE_ADDRESS_MUTATION, {
           input: updateInput,
         });
-        if (!updateResult.updateAddress?.id)
-          throw new Error("Cập nhật địa chỉ thất bại.");
+
+        if (!updateResult?.updateAddress?.id) {
+          // Kiểm tra response chặt chẽ hơn
+          console.error(
+            "[handleConfirm] Lỗi khi cập nhật địa chỉ, không có ID trả về:",
+            updateResult
+          );
+          throw new Error("Cập nhật địa chỉ thất bại trên máy chủ.");
+        }
         finalAddressId = updateResult.updateAddress.id;
+        console.log(
+          "[handleConfirm] Địa chỉ đã được cập nhật thành công, ID:",
+          finalAddressId
+        );
+        // Trong trường hợp cập nhật Address đã có và User đã được liên kết với currentAddressId này,
+        // chúng ta không cần gọi mutation để liên kết lại User.
+        // AddressScreen khi refetch findUserById sẽ thấy nội dung Address được cập nhật.
       } else {
+        // --- TRƯỜNG HỢP TẠO ADDRESS MỚI VÀ LIÊN KẾT VỚI USER ---
+        console.log(
+          `[handleConfirm] Đang tạo Address mới cho User ID: ${userId}`
+        );
+        // CreateAddressInput của bạn không có userId, backend phải tự xử lý gán user
         const createResult = await callGraphQL(CREATE_ADDRESS_MUTATION, {
           input: addressInputForBackend,
         });
-        if (!createResult.createAddress?.id)
-          throw new Error("Tạo địa chỉ mới thất bại.");
-        finalAddressId = createResult.createAddress.id;
 
-        const updateUserLinkResult = await callGraphQL(
-          UPDATE_USER_WITH_ADDRESS_ID_MUTATION,
-          {
-            userId: userId,
-            addressIdToLink: finalAddressId,
-          }
-        );
-        if (!updateUserLinkResult.updateUser?.id)
-          throw new Error("Liên kết địa chỉ với người dùng thất bại.");
-        if (
-          updateUserLinkResult.updateUser.address === null &&
-          finalAddressId
-        ) {
-          console.warn("LƯU Ý: User.address trả về là null sau khi cập nhật.");
+        if (!createResult?.createAddress?.id) {
+          // Kiểm tra response chặt chẽ hơn
+          console.error(
+            "[handleConfirm] Lỗi khi tạo địa chỉ mới, không có ID trả về:",
+            createResult
+          );
+          throw new Error("Tạo địa chỉ mới thất bại trên máy chủ.");
         }
+        finalAddressId = createResult.createAddress.id;
+        console.log(
+          "[handleConfirm] Địa chỉ mới đã được tạo, ID:",
+          finalAddressId
+        );
+
+        // Liên kết Address ID mới này với User bằng mutation mới (linkUserAddress)
+        console.log(
+          `[handleConfirm] Đang liên kết User ID: ${userId} với Address ID mới: ${finalAddressId}`
+        );
+        const linkUserVariables = { userId: userId, addressId: finalAddressId }; // addressId là tên biến trong mutation
+        console.log(
+          "[handleConfirm] Gọi mutation linkUserAddress với variables:",
+          linkUserVariables
+        );
+        const linkUserResult = await callGraphQL(
+          LINK_USER_TO_ADDRESS_MUTATION_FINAL,
+          linkUserVariables
+        ); // Sử dụng mutation đúng
+
+        console.log(
+          "[handleConfirm] Response từ linkUserAddress mutation:",
+          JSON.stringify(linkUserResult, null, 2)
+        );
+        if (!linkUserResult?.linkUserAddress?.id) {
+          // Kiểm tra theo tên mutation mới
+          console.error(
+            "[handleConfirm] Phản hồi từ linkUserAddress không như mong đợi (thiếu user.id)."
+          );
+          throw new Error("Liên kết địa chỉ với người dùng thất bại.");
+        }
+        // Kiểm tra xem address có được populate không sau khi link
+        if (linkUserResult.linkUserAddress.address) {
+          console.log(
+            "[handleConfirm] Thông tin địa chỉ trả về từ linkUserAddress:",
+            linkUserResult.linkUserAddress.address
+          );
+        } else if (finalAddressId) {
+          console.warn(
+            "[handleConfirm] linkUserAddress không trả về object Address chi tiết. User.addressId có thể đã được cập nhật trong DB. AddressScreen sẽ cần query lại User đầy đủ."
+          );
+        }
+        console.log(
+          "[handleConfirm] User đã được liên kết với địa chỉ mới thông qua linkUserAddress."
+        );
       }
-      Alert.alert("Thành công", "Địa chỉ của bạn đã được cập nhật.");
+
+      Alert.alert("Thành công", "Địa chỉ của bạn đã được cập nhật thành công!");
       navigation.navigate({
         name: "AddressScreen",
         params: { addressUpdated: true, newAddressId: finalAddressId },
         merge: true,
       });
     } catch (error) {
-      /* ... xử lý lỗi ... */
+      console.error(
+        "[handleConfirm] Lỗi trong quá trình lưu địa chỉ:",
+        error.name,
+        error.message,
+        error.stack
+      );
+      Alert.alert(
+        "Lỗi lưu địa chỉ",
+        `${
+          error.message || "Không thể lưu địa chỉ."
+        }\nVui lòng thử lại hoặc liên hệ hỗ trợ.`
+      );
+      // Xử lý lỗi xác thực cụ thể
+      if (
+        error.message.includes("Phiên đăng nhập") ||
+        error.message.includes("Token không được tìm thấy")
+      ) {
+        // Cân nhắc điều hướng người dùng về màn hình đăng nhập nếu lỗi là do token
+        // navigation.replace('LoginScreen');
+        navigation.goBack(); // Tạm thời chỉ quay lại
+      }
     } finally {
       setIsSavingAddress(false);
+      console.log("[handleConfirm] Kết thúc xử lý.");
     }
   };
-
   // Phần return JSX (UI)
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -647,7 +828,6 @@ const SelectAddressScreen = ({ navigation, route }) => {
         <Text style={styles.headerTitle}>Chọn địa chỉ trên bản đồ</Text>
       </View>
 
-      {/* Search Section */}
       <View style={styles.searchSection}>
         <View style={styles.searchInputContainer}>
           <Icon
@@ -722,7 +902,6 @@ const SelectAddressScreen = ({ navigation, route }) => {
         )}
       </View>
 
-      {/* Map Section */}
       <View style={styles.mapWrapper}>
         <MapView
           ref={mapRef}
@@ -744,7 +923,6 @@ const SelectAddressScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Confirm Section */}
       <View style={styles.addressConfirmContainer}>
         <Text style={styles.selectedAddressLabel}>Vị trí đã chọn:</Text>
         {(isLoadingAddress || isLoadingDetails) &&
@@ -792,7 +970,6 @@ const SelectAddressScreen = ({ navigation, route }) => {
   );
 };
 
-// Styles (Dán đầy đủ styles của bạn ở đây, giống như phiên bản trước)
 const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
@@ -821,7 +998,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginHorizontal: 16,
     marginTop: 12,
-    paddingHorizontal: 12,
+    /* Bỏ margin bottom để searchResultsContainer sát hơn */ paddingHorizontal: 12,
     height: 48,
   },
   searchIcon: { marginRight: 10 },
@@ -832,7 +1009,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     position: "absolute",
     top: 68,
-    left: 16,
+    /* Điều chỉnh top cho khớp với search bar */ left: 16,
     right: 16,
     borderWidth: 1,
     borderColor: "#e0e0e0",
