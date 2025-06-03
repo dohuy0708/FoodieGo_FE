@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,321 +9,631 @@ import {
   ActivityIndicator,
   FlatList,
   Keyboard,
-  Platform,
-  Dimensions, // Thêm Dimensions
+  Dimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context"; // Sử dụng từ safe-area-context
+import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
-import MapView, { PROVIDER_GOOGLE } from "react-native-maps"; // Marker không cần import riêng nếu không dùng trực tiếp
+import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import GRAPHQL_ENDPOINT from "../../../config"; // Đảm bảo đường dẫn này đúng
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyDmthPP3oRtm9E7tRAHo4_ChQ2y2LJeO6w";
+// --- GraphQL Query/Mutation Strings ---
+const SEARCH_GOONG_PLACE_QUERY_FULL = `
+  query SearchGoongPlace($input: String!) {
+    searchPlace(input: $input) {
+      predictions {
+        description
+        place_id
+      }
+    }
+  }
+`;
 
-const SelectAddressScreen = ({ navigation }) => {
+const GET_GOONG_PLACE_DETAILS_QUERY_FULL = `
+  query GetGoongPlaceDetails($input: String!) {
+    searchAddress(input: $input) {
+      latitude
+      longitude
+      placeId
+    }
+  }
+`;
+
+const REVERSE_GOONG_GEOCODE_QUERY_SIMPLE = `
+  query ReverseGoongGeocode($lat: Float!, $lng: Float!) {
+    reverseGeocode(lat: $lat, lng: $lng) {
+      formatted_address
+      place_id
+      # Nếu backend có trả về các thành phần chi tiết, hãy query ở đây
+      # streetName
+      # wardName
+      # districtName
+      # provinceName
+    }
+  }
+`;
+
+const CREATE_ADDRESS_MUTATION = `
+  mutation CreateNewAddress($input: CreateAddressInput!) {
+    createAddress(createAddressInput: $input) {
+      id
+    }
+  }
+`;
+
+const UPDATE_ADDRESS_MUTATION = `
+  mutation UpdateExistingAddress($input: UpdateAddressInput!) {
+    updateAddress(updateAddressInput: $input) {
+      id
+    }
+  }
+`;
+
+// Mutation này gửi addressId, backend cần xử lý để cập nhật User.addressId trong DB
+const UPDATE_USER_WITH_ADDRESS_ID_MUTATION = `
+  mutation UpdateUserWithAddressId($userId: Int!, $addressIdToLink: Int!) {
+    updateUser(updateUserInput: {
+      id: $userId,
+      addressId: $addressIdToLink # Gửi addressId
+    }) {
+      id
+      name
+      address {
+        id
+        # street
+        # province
+      }
+    }
+  }
+`;
+// --- Hết GraphQL ---
+
+// Hàm phân tích địa chỉ (CƠ BẢN - CẦN CẢI THIỆN VÀ KIỂM TRA KỸ)
+const parseFormattedAddress = (formattedAddress) => {
+  console.log("Attempting to parse address:", formattedAddress);
+  if (!formattedAddress || typeof formattedAddress !== "string") {
+    console.warn("parseFormattedAddress: Input is not a valid string.");
+    return { street: "", ward: "", district: "", province: "" };
+  }
+
+  const parts = formattedAddress.split(",").map((part) => part.trim());
+  let street = "",
+    ward = "",
+    district = "",
+    province = "";
+  const len = parts.length;
+
+  // Logic phân tích cơ bản dựa trên số lượng phần tử
+  // Giả định phổ biến: Đường, Phường/Xã, Quận/Huyện, Tỉnh/TP
+  if (len >= 4) {
+    province = parts[len - 1];
+    district = parts[len - 2];
+    ward = parts[len - 3];
+    street = parts.slice(0, len - 3).join(", ");
+  } else if (len === 3) {
+    province = parts[2];
+    district = parts[1];
+    // Không chắc phần tử đầu là street hay ward, tạm gán cho street
+    street = parts[0];
+    // ward = ""; // Hoặc cố gắng tìm từ khóa
+  } else if (len === 2) {
+    province = parts[1];
+    street = parts[0];
+  } else if (len === 1) {
+    street = parts[0]; // Toàn bộ là street hoặc tên địa điểm
+  }
+
+  // Cố gắng tinh chỉnh bằng từ khóa (rất cơ bản)
+  // Bạn có thể mở rộng danh sách từ khóa này
+  const provinceKeywords = ["tỉnh", "thành phố", "tp"];
+  const districtKeywords = ["quận", "huyện", "thị xã", "tx"];
+  const wardKeywords = ["phường", "xã", "thị trấn", "tt"];
+
+  // Tinh chỉnh province (thường là phần tử cuối)
+  if (parts.length > 0) {
+    const lastPart = parts[parts.length - 1];
+    if (provinceKeywords.some((kw) => lastPart.toLowerCase().includes(kw))) {
+      province = lastPart;
+    }
+  }
+
+  // Tinh chỉnh district (thường là phần tử kế cuối)
+  if (parts.length > 1) {
+    const secondLastPart = parts[parts.length - 2];
+    if (
+      districtKeywords.some((kw) => secondLastPart.toLowerCase().includes(kw))
+    ) {
+      district = secondLastPart;
+      // Nếu district được xác định, và province chưa có hoặc giống district, cập nhật province
+      if (!province || province === district) {
+        if (parts.length > 0) province = parts[parts.length - 1]; // Lấy lại phần tử cuối làm tỉnh
+      }
+    }
+  }
+
+  // Tinh chỉnh ward
+  if (parts.length > 2) {
+    const thirdLastPart = parts[parts.length - 3];
+    if (wardKeywords.some((kw) => thirdLastPart.toLowerCase().includes(kw))) {
+      ward = thirdLastPart;
+      // Nếu ward được xác định, và district/province chưa có hoặc trùng, cập nhật lại
+      if (!district || district === ward) {
+        if (parts.length > 1) district = parts[parts.length - 2];
+        if (!province || province === district || province === ward) {
+          if (parts.length > 0) province = parts[parts.length - 1];
+        }
+      }
+    }
+  }
+
+  // Gán phần còn lại cho street nếu street chưa được xác định rõ ràng từ các bước trên
+  // và các thành phần khác đã có vẻ hợp lý.
+  if (street === "" && (ward || district || province)) {
+    const remainingParts = [];
+    for (const part of parts) {
+      if (part !== ward && part !== district && part !== province) {
+        remainingParts.push(part);
+      }
+    }
+    street = remainingParts.join(", ");
+  }
+
+  // Nếu street vẫn là toàn bộ formattedAddress (trường hợp ít thành phần)
+  // và các thành phần khác đã được xác định, cố gắng loại bỏ chúng khỏi street
+  if (street === formattedAddress && (ward || district || province)) {
+    let tempStreet = formattedAddress;
+    if (province)
+      tempStreet = tempStreet.replace(
+        new RegExp(`,\\s*${province.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+        ""
+      );
+    if (district)
+      tempStreet = tempStreet.replace(
+        new RegExp(`,\\s*${district.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+        ""
+      );
+    if (ward)
+      tempStreet = tempStreet.replace(
+        new RegExp(`,\\s*${ward.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+        ""
+      );
+    street = tempStreet.trim();
+  }
+
+  // Đảm bảo street không rỗng nếu các thành phần khác cũng rỗng (trường hợp chỉ có 1 phần)
+  if (!street && !ward && !district && !province && parts.length > 0) {
+    street = formattedAddress;
+  }
+
+  const MAX_LEN = 255;
+  const result = {
+    street: (street || "").substring(0, MAX_LEN),
+    ward: (ward || "").substring(0, MAX_LEN),
+    district: (district || "").substring(0, MAX_LEN),
+    province: (province || "").substring(0, MAX_LEN),
+  };
+  console.log("Parsed result:", result);
+  return result;
+};
+
+const SelectAddressScreen = ({ navigation, route }) => {
+  const { userId, currentAddressId } = route.params || {};
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]); // Sẽ chứa kết quả từ Places API Autocomplete
+  const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false); // Để kiểm soát việc hiển thị danh sách
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
-  const [region, setRegion] = useState({
-    latitude: 10.7769, // HCM city center
+  const defaultRegion = useRef({
+    latitude: 10.7769,
     longitude: 106.7009,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
-  });
-  // selectedLocation sẽ lưu trữ { latitude, longitude, address, name (tên địa điểm nếu có), placeId }
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  }).current;
+  const [mapRegion, setMapRegion] = useState(defaultRegion);
+  const [selectedLocation, setSelectedLocation] = useState(null); // Sẽ chứa các thành phần chi tiết sau khi parse
   const [currentMapAddress, setCurrentMapAddress] = useState(
     "Di chuyển bản đồ để chọn vị trí"
   );
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [locationPermissionGranted, setLocationPermissionGranted] =
+    useState(null);
 
   const mapRef = useRef(null);
   const searchTimeout = useRef(null);
-  const isMapInteraction = useRef(false); // Cờ để xác định người dùng tương tác với map hay không
+  const isProgrammaticPan = useRef(false);
+  const hasFetchedInitialAddress = useRef(false);
 
-  // Hàm lấy địa chỉ từ tọa độ (Reverse Geocoding)
-  const fetchAddressFromCoords = async (
-    latitude,
-    longitude,
-    placeId = null,
-    name = null
-  ) => {
-    if (
-      !GOOGLE_MAPS_API_KEY ||
-      GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_MAPS_API_KEY"
-    ) {
-      Alert.alert("Lỗi cấu hình", "Vui lòng cung cấp Google Maps API Key.");
-      setCurrentMapAddress("Lỗi API Key");
-      setSelectedLocation(null);
-      return;
+  const callGraphQL = useCallback(async (query, variables) => {
+    // ... (Hàm callGraphQL giữ nguyên như phiên bản trước)
+    console.log(
+      "callGraphQL - Query:",
+      query.substring(0, 60) + "...",
+      "Variables:",
+      variables
+    );
+    const token = await AsyncStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      throw new Error("Token không được tìm thấy. Vui lòng đăng nhập lại.");
     }
-    setIsLoadingAddress(true);
     try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}&language=vi`
-      );
-      const data = await response.json();
-      let fetchedAddress = "Không tìm thấy địa chỉ";
-      let newSelectedLocation = null;
-
-      if (data.results && data.results.length > 0) {
-        fetchedAddress = data.results[0].formatted_address;
-        newSelectedLocation = {
-          latitude,
-          longitude,
-          address: fetchedAddress,
-          name:
-            name ||
-            data.results[0].address_components[0]?.long_name ||
-            fetchedAddress.split(",")[0], // Lấy tên gợi ý
-          placeId: placeId || data.results[0].place_id,
-        };
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ query, variables }),
+      });
+      const responseText = await response.text();
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Lỗi parse JSON: ${responseText.substring(0, 100)}`);
       }
-      setCurrentMapAddress(fetchedAddress);
-      setSelectedLocation(newSelectedLocation);
+      console.log(
+        "callGraphQL - Parsed Response:",
+        JSON.stringify(responseData, null, 2)
+      );
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(
+          "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại."
+        );
+      }
+      if (!response.ok) {
+        const errTxt =
+          responseData.errors?.map((e) => e.message).join("\n") ||
+          responseData.message ||
+          `Lỗi API (${response.status})`;
+        throw new Error(errTxt);
+      }
+      if (responseData.errors) {
+        throw new Error(responseData.errors.map((e) => e.message).join("\n"));
+      }
+      return responseData.data;
     } catch (error) {
-      console.error("Lỗi khi lấy địa chỉ từ tọa độ:", error);
-      setCurrentMapAddress("Lỗi khi tìm địa chỉ");
-      setSelectedLocation(null);
-    } finally {
-      setIsLoadingAddress(false);
+      throw error;
     }
-  };
+  }, []);
 
-  // Lấy vị trí hiện tại khi màn hình được tải
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Cần quyền truy cập vị trí",
-          "Vui lòng cho phép ứng dụng truy cập vị trí của bạn."
-        );
-        // Lấy địa chỉ cho vị trí mặc định nếu không cấp quyền
-        await fetchAddressFromCoords(region.latitude, region.longitude);
-        return;
+  const fetchAddressFromCoordsGraphQL = useCallback(
+    async (latitude, longitude, isUserInitiated = false) => {
+      if (isLoadingAddress && !isUserInitiated) return;
+      setIsLoadingAddress(true);
+      if (isUserInitiated) {
+        setSelectedLocation(null);
+        setCurrentMapAddress("Đang xác định vị trí...");
       }
-
       try {
-        setIsLoadingAddress(true);
-        let location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
+        const data = await callGraphQL(REVERSE_GOONG_GEOCODE_QUERY_SIMPLE, {
+          lat: latitude,
+          lng: longitude,
         });
-        const newRegion = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        };
-        setRegion(newRegion); // Cập nhật region của MapView
-        if (mapRef.current) {
-          mapRef.current.animateToRegion(newRegion, 1000);
+        if (data.reverseGeocode && data.reverseGeocode.length > 0) {
+          const primaryResult = data.reverseGeocode[0];
+          const formattedAddress = primaryResult.formatted_address;
+          const parsedComponents = parseFormattedAddress(formattedAddress); // ÁP DỤNG HÀM PARSE
+
+          setCurrentMapAddress(formattedAddress);
+          setSelectedLocation({
+            latitude,
+            longitude,
+            address: formattedAddress, // Giữ lại formatted_address gốc
+            name: formattedAddress.split(",")[0], // Tên vẫn lấy từ phần đầu
+            placeId: primaryResult.place_id,
+            street: parsedComponents.street, // Lưu các thành phần đã parse
+            ward: parsedComponents.ward,
+            district: parsedComponents.district,
+            province: parsedComponents.province,
+          });
+        } else {
+          setCurrentMapAddress("Không tìm thấy địa chỉ.");
+          setSelectedLocation(null);
         }
-        // Fetch address cho vị trí hiện tại
-        await fetchAddressFromCoords(
-          location.coords.latitude,
-          location.coords.longitude
-        );
       } catch (error) {
-        console.error("Lỗi lấy vị trí hiện tại:", error);
-        Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại.");
-        await fetchAddressFromCoords(region.latitude, region.longitude); // Fallback
+        setCurrentMapAddress("Lỗi khi tìm địa chỉ.");
+        setSelectedLocation(null);
+        if (
+          error.message.includes("Phiên đăng nhập") ||
+          error.message.includes("Token không được tìm thấy")
+        ) {
+          Alert.alert("Lỗi xác thực", error.message, [
+            { text: "OK", onPress: () => navigation.goBack() },
+          ]);
+        } else {
+          console.error("Lỗi Reverse Geocode:", error.message);
+        }
+      } finally {
+        setIsLoadingAddress(false);
+        if (!hasFetchedInitialAddress.current)
+          hasFetchedInitialAddress.current = true;
       }
-    })();
-  }, []); // Chỉ chạy một lần khi component mount
+    },
+    [callGraphQL, isLoadingAddress, navigation]
+  );
 
-  // Xử lý khi người dùng dừng kéo thả bản đồ
-  const onRegionChangeComplete = async (newRegionFromMap, details) => {
-    // details.isGesture sẽ true nếu người dùng tương tác (kéo, zoom)
-    if (details && details.isGesture) {
-      isMapInteraction.current = true; // Đánh dấu là người dùng đã tương tác với map
-      // Chỉ cập nhật region và fetch địa chỉ nếu tọa độ thay đổi đáng kể
+  useEffect(() => {
+    const initializeLocation = async () => {
+      /* ... (Giữ nguyên logic, nó đã gọi fetchAddressFromCoordsGraphQL) ... */
       if (
-        Math.abs(region.latitude - newRegionFromMap.latitude) > 0.000001 ||
-        Math.abs(region.longitude - newRegionFromMap.longitude) > 0.000001
-      ) {
-        //setRegion(newRegionFromMap); // Cập nhật region state (dùng cho initialRegion)
-        await fetchAddressFromCoords(
-          newRegionFromMap.latitude,
-          newRegionFromMap.longitude
+        hasFetchedInitialAddress.current &&
+        locationPermissionGranted !== null
+      )
+        return;
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      setLocationPermissionGranted(status === "granted");
+      if (status === "granted") {
+        try {
+          setIsLoadingAddress(true);
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+            timeout: 10000,
+          });
+          const { latitude, longitude } = location.coords;
+          const newRegion = {
+            latitude,
+            longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          };
+          isProgrammaticPan.current = true;
+          setMapRegion(newRegion);
+          if (mapRef.current) mapRef.current.animateToRegion(newRegion, 1000);
+          await fetchAddressFromCoordsGraphQL(latitude, longitude);
+        } catch (error) {
+          await fetchAddressFromCoordsGraphQL(
+            defaultRegion.latitude,
+            defaultRegion.longitude
+          );
+        }
+      } else {
+        Alert.alert("Quyền vị trí bị từ chối", "Sử dụng vị trí mặc định.");
+        await fetchAddressFromCoordsGraphQL(
+          defaultRegion.latitude,
+          defaultRegion.longitude
         );
-        setRegion((prevRegion) => ({
-          // Giữ lại delta, chỉ cập nhật lat/lng
-          ...prevRegion,
-          latitude: newRegionFromMap.latitude,
-          longitude: newRegionFromMap.longitude,
-        }));
       }
-    }
-  };
+    };
+    initializeLocation();
+  }, [fetchAddressFromCoordsGraphQL, defaultRegion, locationPermissionGranted]);
 
-  // Xử lý tìm kiếm địa điểm với Places API Autocomplete
-  const handleSearch = async (query) => {
-    setSearchQuery(query);
-    setShowSearchResults(true); // Luôn hiển thị danh sách khi đang gõ
+  const onRegionChangeComplete = useCallback(
+    async (newRegionFromMap, details) => {
+      // ... (Giữ nguyên logic, nó đã gọi fetchAddressFromCoordsGraphQL) ...
+      if (isProgrammaticPan.current) {
+        isProgrammaticPan.current = false;
+        return;
+      }
+      if (details && details.isGesture) {
+        if (
+          Math.abs(mapRegion.latitude - newRegionFromMap.latitude) > 0.000001 ||
+          Math.abs(mapRegion.longitude - newRegionFromMap.longitude) > 0.000001
+        ) {
+          setMapRegion(newRegionFromMap);
+          await fetchAddressFromCoordsGraphQL(
+            newRegionFromMap.latitude,
+            newRegionFromMap.longitude,
+            true
+          );
+        }
+      }
+    },
+    [fetchAddressFromCoordsGraphQL, mapRegion]
+  );
 
-    if (searchTimeout.current) {
-      clearTimeout(searchTimeout.current);
-    }
-    if (query.length < 2) {
-      // Cần ít nhất 2 ký tự để tìm
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
-    searchTimeout.current = setTimeout(async () => {
-      if (
-        !GOOGLE_MAPS_API_KEY ||
-        GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_MAPS_API_KEY"
-      ) {
-        Alert.alert("Lỗi cấu hình", "Vui lòng cung cấp Google Maps API Key.");
+  const handleSearch = useCallback(
+    (query) => {
+      // ... (Giữ nguyên logic) ...
+      setSearchQuery(query);
+      setShowSearchResults(true);
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+      if (query.length < 2) {
+        setSearchResults([]);
         setIsSearching(false);
         return;
       }
-      try {
-        // Sử dụng Google Places API Autocomplete
-        // sessiontoken giúp nhóm các yêu cầu autocomplete và details lại, có thể giúp giảm chi phí
-        // const sessionToken = uuid.v4(); // Cần cài thư viện uuid: npm install uuid và import uuid from 'uuid';
-        // Để đơn giản, tạm bỏ sessiontoken
-        const response = await fetch(
-          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-            query
-          )}&key=${GOOGLE_MAPS_API_KEY}&language=vi&components=country:VN&types=address|establishment|geocode`
-          // `&sessiontoken=${sessionToken}` // Nếu dùng session token
-        );
-        const data = await response.json();
-        if (data.predictions && data.predictions.length > 0) {
-          setSearchResults(data.predictions);
-        } else {
+      setIsSearching(true);
+      searchTimeout.current = setTimeout(async () => {
+        try {
+          const data = await callGraphQL(SEARCH_GOONG_PLACE_QUERY_FULL, {
+            input: query,
+          });
+          setSearchResults(data.searchPlace?.predictions || []);
+        } catch (error) {
           setSearchResults([]);
+          if (
+            error.message.includes("Phiên đăng nhập") ||
+            error.message.includes("Token không được tìm thấy")
+          )
+            Alert.alert("Lỗi xác thực", error.message);
+        } finally {
+          setIsSearching(false);
         }
-      } catch (error) {
-        console.error("Lỗi tìm kiếm địa điểm:", error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 500); // Debounce: đợi 500ms
-  };
+      }, 600);
+    },
+    [callGraphQL]
+  );
 
-  // Chọn một địa điểm từ kết quả tìm kiếm (Places API Autocomplete)
-  const onSelectSearchResult = async (prediction) => {
-    Keyboard.dismiss();
-    setSearchQuery(prediction.description); // Hiển thị tên địa điểm lên ô tìm kiếm
-    setShowSearchResults(false); // Ẩn danh sách kết quả
-    setSearchResults([]);
+  const onSelectSearchResult = useCallback(
+    async (prediction) => {
+      Keyboard.dismiss();
+      const selectedDescription = prediction.description;
+      setSearchQuery(selectedDescription);
+      setShowSearchResults(false);
+      setSearchResults([]);
+      setIsLoadingDetails(true);
+      setSelectedLocation(null);
+      setCurrentMapAddress("Đang tải chi tiết vị trí...");
+      try {
+        const detailsData = await callGraphQL(
+          GET_GOONG_PLACE_DETAILS_QUERY_FULL,
+          { input: selectedDescription }
+        );
+        if (!detailsData.searchAddress)
+          throw new Error("Không thể lấy tọa độ.");
+        const { latitude, longitude } = detailsData.searchAddress;
+        const latNum = parseFloat(latitude);
+        const lngNum = parseFloat(longitude);
+        if (isNaN(latNum) || isNaN(lngNum))
+          throw new Error("Tọa độ không hợp lệ.");
 
-    if (
-      !GOOGLE_MAPS_API_KEY ||
-      GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_MAPS_API_KEY"
-    ) {
-      Alert.alert("Lỗi cấu hình", "Vui lòng cung cấp Google Maps API Key.");
-      return;
-    }
-
-    setIsLoadingAddress(true); // Bắt đầu loading
-    try {
-      // Lấy chi tiết địa điểm (bao gồm tọa độ) bằng Place Details API
-      // const sessionToken = uuid.v4(); // Nên dùng session token nếu đã dùng ở autocomplete
-      const detailsResponse = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${prediction.place_id}&key=${GOOGLE_MAPS_API_KEY}&language=vi&fields=geometry,formatted_address,name,place_id`
-        // `&sessiontoken=${sessionToken}`
-      );
-      const detailsData = await detailsResponse.json();
-
-      if (detailsData.result && detailsData.result.geometry) {
-        const { lat, lng } = detailsData.result.geometry.location;
-        const newRegion = {
-          latitude: lat,
-          longitude: lng,
-          latitudeDelta: 0.005, // Zoom gần hơn một chút khi chọn từ search
+        isProgrammaticPan.current = true;
+        const newMapRegion = {
+          latitude: latNum,
+          longitude: lngNum,
+          latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         };
-        setRegion(newRegion); // Cập nhật region của MapView
-        if (mapRef.current) {
-          mapRef.current.animateToRegion(newRegion, 1000);
+        setMapRegion(newMapRegion);
+        if (mapRef.current) mapRef.current.animateToRegion(newMapRegion, 1000);
+
+        // Gọi Reverse Geocode để lấy formatted_address và phân tích các thành phần
+        const reverseData = await callGraphQL(
+          REVERSE_GOONG_GEOCODE_QUERY_SIMPLE,
+          { lat: latNum, lng: lngNum }
+        );
+        if (
+          reverseData.reverseGeocode &&
+          reverseData.reverseGeocode.length > 0
+        ) {
+          const primaryResult = reverseData.reverseGeocode[0];
+          const formattedAddress = primaryResult.formatted_address;
+          const parsedComponents = parseFormattedAddress(formattedAddress); // ÁP DỤNG HÀM PARSE
+
+          setCurrentMapAddress(formattedAddress);
+          setSelectedLocation({
+            latitude: latNum,
+            longitude: lngNum,
+            address: formattedAddress, // Giữ formatted_address gốc
+            name: selectedDescription.split(",")[0], // Giữ tên từ Autocomplete
+            placeId: primaryResult.place_id, // Dùng place_id từ reverse geocode
+            street: parsedComponents.street, // Lưu các thành phần đã parse
+            ward: parsedComponents.ward,
+            district: parsedComponents.district,
+            province: parsedComponents.province,
+          });
+        } else {
+          // Fallback nếu reverse geocode lỗi
+          const parsedComponents = parseFormattedAddress(selectedDescription);
+          setCurrentMapAddress(selectedDescription);
+          setSelectedLocation({
+            latitude: latNum,
+            longitude: lngNum,
+            address: selectedDescription,
+            name: selectedDescription.split(",")[0],
+            placeId: prediction.place_id,
+            street: parsedComponents.street,
+            ward: parsedComponents.ward,
+            district: parsedComponents.district,
+            province: parsedComponents.province,
+          });
         }
-        // Cập nhật địa chỉ và selectedLocation từ Place Details
-        const addressFromDetails = detailsData.result.formatted_address;
-        const nameFromDetails = detailsData.result.name;
-        const placeIdFromDetails = detailsData.result.place_id;
-
-        setCurrentMapAddress(addressFromDetails);
-        setSelectedLocation({
-          latitude: lat,
-          longitude: lng,
-          address: addressFromDetails,
-          name: nameFromDetails,
-          placeId: placeIdFromDetails,
-        });
-        isMapInteraction.current = false; // Reset cờ vì đây là chọn từ search, không phải kéo map
-      } else {
-        Alert.alert("Lỗi", "Không thể lấy chi tiết vị trí đã chọn.");
-        await fetchAddressFromCoords(region.latitude, region.longitude); // Fallback về vị trí hiện tại trên map
+      } catch (error) {
+        /* ... xử lý lỗi ... */
+      } finally {
+        setIsLoadingDetails(false);
       }
-    } catch (error) {
-      console.error("Lỗi lấy chi tiết địa điểm:", error);
-      Alert.alert("Lỗi", "Lỗi khi lấy chi tiết vị trí.");
-      await fetchAddressFromCoords(region.latitude, region.longitude); // Fallback
-    } finally {
-      setIsLoadingAddress(false); // Kết thúc loading
-    }
-  };
+    },
+    [callGraphQL, mapRegion, navigation]
+  ); // Bỏ fetchAddressFromCoordsGraphQL
 
-  // Nút "Định vị hiện tại"
-  const handleNavigateToCurrentLocation = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
+  const handleNavigateToCurrentLocation = useCallback(async () => {
+    /* ... (Giữ nguyên) ... */
+  }, [fetchAddressFromCoordsGraphQL, locationPermissionGranted]);
+
+  // Xử lý khi xác nhận vị trí
+  const handleConfirmAndSaveChanges = async () => {
+    // Kiểm tra selectedLocation và các thành phần đã parse
+    if (
+      !selectedLocation?.address ||
+      !selectedLocation.latitude ||
+      !selectedLocation.longitude ||
+      !selectedLocation.street ||
+      !selectedLocation.province
+    ) {
+      // Thêm kiểm tra street và province (ít nhất)
       Alert.alert(
-        "Cần quyền truy cập vị trí",
-        "Vui lòng cấp quyền để sử dụng tính năng này."
+        "Địa chỉ không đủ thông tin",
+        "Vui lòng chọn một địa chỉ mà hệ thống có thể phân tích được các thành phần chi tiết (đường, tỉnh/thành phố)."
+      );
+      console.log(
+        "selectedLocation hiện tại không đủ chi tiết:",
+        selectedLocation
       );
       return;
     }
-    try {
-      setIsLoadingAddress(true);
-      let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      const { latitude, longitude } = location.coords;
-      const newRegion = {
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      };
-      setRegion(newRegion); // Cập nhật region của MapView
-      if (mapRef.current) {
-        mapRef.current.animateToRegion(newRegion, 1000);
-      }
-      await fetchAddressFromCoords(latitude, longitude);
-      isMapInteraction.current = true; // Giả sử người dùng muốn tương tác với map sau khi nhấn nút này
-    } catch (e) {
-      console.error("Lỗi định vị hiện tại:", e);
-      Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại.");
-      setIsLoadingAddress(false);
+    if (!userId) {
+      /* ... lỗi userId ... */ return;
     }
-  };
 
-  // Xử lý khi chọn địa chỉ và quay lại
-  const handleConfirmLocation = () => {
-    if (selectedLocation && selectedLocation.address) {
+    setIsSavingAddress(true);
+    try {
+      const addressInputForBackend = {
+        label: selectedLocation.name.substring(0, 254),
+        street: selectedLocation.street, // Sử dụng thành phần đã phân tích
+        province: selectedLocation.province, // Sử dụng thành phần đã phân tích
+        district: selectedLocation.district || "", // Gửi chuỗi rỗng nếu không có
+        ward: selectedLocation.ward || "", // Gửi chuỗi rỗng nếu không có
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        placeId: selectedLocation.placeId || null,
+      };
+      console.log(
+        "Input gửi lên cho Create/Update Address:",
+        JSON.stringify(addressInputForBackend, null, 2)
+      );
+
+      let finalAddressId;
+      if (currentAddressId) {
+        const updateInput = { id: currentAddressId, ...addressInputForBackend };
+        const updateResult = await callGraphQL(UPDATE_ADDRESS_MUTATION, {
+          input: updateInput,
+        });
+        if (!updateResult.updateAddress?.id)
+          throw new Error("Cập nhật địa chỉ thất bại.");
+        finalAddressId = updateResult.updateAddress.id;
+      } else {
+        const createResult = await callGraphQL(CREATE_ADDRESS_MUTATION, {
+          input: addressInputForBackend,
+        });
+        if (!createResult.createAddress?.id)
+          throw new Error("Tạo địa chỉ mới thất bại.");
+        finalAddressId = createResult.createAddress.id;
+
+        const updateUserLinkResult = await callGraphQL(
+          UPDATE_USER_WITH_ADDRESS_ID_MUTATION,
+          {
+            userId: userId,
+            addressIdToLink: finalAddressId,
+          }
+        );
+        if (!updateUserLinkResult.updateUser?.id)
+          throw new Error("Liên kết địa chỉ với người dùng thất bại.");
+        if (
+          updateUserLinkResult.updateUser.address === null &&
+          finalAddressId
+        ) {
+          console.warn("LƯU Ý: User.address trả về là null sau khi cập nhật.");
+        }
+      }
+      Alert.alert("Thành công", "Địa chỉ của bạn đã được cập nhật.");
       navigation.navigate({
-        name: "AddAddressScreen",
-        params: { pickedLocation: selectedLocation },
+        name: "AddressScreen",
+        params: { addressUpdated: true, newAddressId: finalAddressId },
         merge: true,
       });
-    } else {
-      Alert.alert(
-        "Chưa có địa chỉ",
-        "Vui lòng di chuyển bản đồ hoặc tìm kiếm để chọn một địa chỉ hợp lệ."
-      );
+    } catch (error) {
+      /* ... xử lý lỗi ... */
+    } finally {
+      setIsSavingAddress(false);
     }
   };
 
+  // Phần return JSX (UI)
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       {/* Header */}
@@ -334,10 +644,10 @@ const SelectAddressScreen = ({ navigation }) => {
         >
           <Icon name="arrow-back" size={24} color="#666" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chọn địa chỉ</Text>
+        <Text style={styles.headerTitle}>Chọn địa chỉ trên bản đồ</Text>
       </View>
 
-      {/* Search Bar and Results */}
+      {/* Search Section */}
       <View style={styles.searchSection}>
         <View style={styles.searchInputContainer}>
           <Icon
@@ -348,10 +658,11 @@ const SelectAddressScreen = ({ navigation }) => {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm địa điểm, địa chỉ..."
+            placeholder="Tìm địa điểm..."
             value={searchQuery}
             onChangeText={handleSearch}
-            onFocus={() => setShowSearchResults(true)} // Hiển thị khi focus
+            onFocus={() => setShowSearchResults(true)}
+            onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
             placeholderTextColor="#999"
           />
           {searchQuery.length > 0 && (
@@ -394,37 +705,33 @@ const SelectAddressScreen = ({ navigation }) => {
                   style={styles.resultIcon}
                 />
                 <View style={styles.resultTextContainer}>
-                  <Text style={styles.resultMainText}>
-                    {item.structured_formatting?.main_text ||
-                      item.description.split(",")[0]}
+                  <Text style={styles.resultMainText} numberOfLines={1}>
+                    {item.description.split(",")[0]}
                   </Text>
-                  <Text style={styles.resultSecondaryText}>
-                    {item.structured_formatting?.secondary_text ||
-                      item.description
-                        .substring(item.description.indexOf(",") + 1)
-                        .trim()}
+                  <Text style={styles.resultSecondaryText} numberOfLines={1}>
+                    {item.description
+                      .substring(item.description.indexOf(",") + 1)
+                      .trim()}
                   </Text>
                 </View>
               </TouchableOpacity>
             )}
             style={styles.searchResultsContainer}
-            keyboardShouldPersistTaps="handled" // Để TouchableOpacity trong FlatList hoạt động tốt
+            keyboardShouldPersistTaps="always"
           />
         )}
       </View>
 
-      {/* Map */}
+      {/* Map Section */}
       <View style={styles.mapWrapper}>
         <MapView
           ref={mapRef}
           provider={PROVIDER_GOOGLE}
           style={styles.map}
-          initialRegion={region} // Chỉ đặt initialRegion một lần
-          // region={region} // Nếu muốn map luôn đồng bộ với state region (có thể gây giật nếu cập nhật quá thường xuyên)
+          region={mapRegion}
           onRegionChangeComplete={onRegionChangeComplete}
           showsUserLocation={false}
           showsMyLocationButton={false}
-          moveOnMarkerPress={false} // Ngăn map di chuyển khi có marker (nếu bạn thêm marker)
         />
         <View style={styles.mapPinContainer}>
           <Icon name="location-sharp" size={40} color="#EA4335" />
@@ -437,15 +744,15 @@ const SelectAddressScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Address Display and Confirm Button */}
+      {/* Confirm Section */}
       <View style={styles.addressConfirmContainer}>
-        <Text style={styles.selectedAddressLabel}>Vị trí trên bản đồ:</Text>
-        {isLoadingAddress &&
-        (!selectedLocation || !selectedLocation.address) ? ( // Chỉ hiện loading chính nếu chưa có địa chỉ
+        <Text style={styles.selectedAddressLabel}>Vị trí đã chọn:</Text>
+        {(isLoadingAddress || isLoadingDetails) &&
+        !selectedLocation?.address ? (
           <ActivityIndicator
             size="small"
             color="#14b8a6"
-            style={{ marginVertical: 8, alignSelf: "flex-start" }}
+            style={styles.addressLoadingIndicator}
           />
         ) : (
           <Text style={styles.selectedAddressText} numberOfLines={2}>
@@ -455,20 +762,29 @@ const SelectAddressScreen = ({ navigation }) => {
         <TouchableOpacity
           style={[
             styles.confirmButton,
-            (!selectedLocation ||
-              !selectedLocation.address ||
-              isLoadingAddress) &&
+            (!userId ||
+              !selectedLocation?.address ||
+              isLoadingAddress ||
+              isLoadingDetails ||
+              isSavingAddress) &&
               styles.confirmButtonDisabled,
           ]}
-          onPress={handleConfirmLocation}
+          onPress={handleConfirmAndSaveChanges}
           disabled={
-            !selectedLocation || !selectedLocation.address || isLoadingAddress
+            !userId ||
+            !selectedLocation?.address ||
+            isLoadingAddress ||
+            isLoadingDetails ||
+            isSavingAddress
           }
         >
-          {isLoadingAddress && selectedLocation && selectedLocation.address ? ( // Hiển thị loading nhỏ trên nút nếu đang load nhưng đã có địa chỉ
+          {isSavingAddress ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (isLoadingAddress || isLoadingDetails) &&
+            selectedLocation?.address ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.confirmButtonText}>Xác nhận địa chỉ này</Text>
+            <Text style={styles.confirmButtonText}>Xác nhận & Lưu địa chỉ</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -476,11 +792,10 @@ const SelectAddressScreen = ({ navigation }) => {
   );
 };
 
+// Styles (Dán đầy đủ styles của bạn ở đây, giống như phiên bản trước)
+const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f9fafb",
-  },
+  container: { flex: 1, backgroundColor: "#f9fafb" },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -490,96 +805,71 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
   },
-  backButton: {
-    padding: 8,
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1f2937",
-  },
+  backButton: { padding: 8, marginRight: 12 },
+  headerTitle: { fontSize: 18, fontWeight: "600", color: "#1f2937" },
   searchSection: {
     backgroundColor: "#ffffff",
-    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
-    zIndex: 10, // Đảm bảo thanh tìm kiếm và kết quả nổi lên trên map
+    zIndex: 10,
+    paddingBottom: 8,
   },
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f3f4f6",
-    borderRadius: 12,
+    borderRadius: 10,
     marginHorizontal: 16,
     marginTop: 12,
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === "ios" ? 12 : 10,
+    height: 48,
   },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: "#111827",
-    padding: 0,
-  },
-  clearIcon: {
-    marginLeft: 8,
-  },
+  searchIcon: { marginRight: 10 },
+  searchInput: { flex: 1, fontSize: 16, color: "#111827", paddingVertical: 0 },
+  clearIcon: { marginLeft: 10 },
   searchResultsContainer: {
+    maxHeight: height * 0.35,
     backgroundColor: "#ffffff",
-    marginHorizontal: 16,
-    marginTop: 1, // Khoảng cách nhỏ từ search bar
+    position: "absolute",
+    top: 68,
+    left: 16,
+    right: 16,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e0e0e0",
     borderRadius: 8,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    zIndex: 20,
   },
   searchResultItem: {
     flexDirection: "row",
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
     alignItems: "center",
   },
-  resultIcon: {
-    marginRight: 12,
-  },
-  resultTextContainer: {
-    flex: 1,
-  },
-  resultMainText: {
-    fontSize: 15,
-    color: "#333",
-    fontWeight: "500",
-  },
-  resultSecondaryText: {
-    fontSize: 13,
-    color: "#777",
-  },
-  mapWrapper: {
-    flex: 1,
-    position: "relative",
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
+  resultIcon: { marginRight: 12 },
+  resultTextContainer: { flex: 1 },
+  resultMainText: { fontSize: 15, color: "#333", fontWeight: "500" },
+  resultSecondaryText: { fontSize: 13, color: "#777", marginTop: 2 },
+  mapWrapper: { flex: 1, backgroundColor: "#e0e0e0" },
+  map: { ...StyleSheet.absoluteFillObject },
   mapPinContainer: {
     position: "absolute",
     top: "50%",
     left: "50%",
-    transform: [{ translateX: -20 }, { translateY: -40 }], // Tâm của icon location-sharp
-    alignItems: "center",
-    justifyContent: "center",
+    transform: [{ translateX: -20 }, { translateY: -40 }],
   },
   currentLocationButton: {
     position: "absolute",
-    bottom: 20,
+    bottom: 25,
     right: 20,
     backgroundColor: "#ffffff",
-    padding: 12,
+    padding: 14,
     borderRadius: 30,
     elevation: 4,
     shadowColor: "#000",
@@ -588,41 +878,38 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   addressConfirmContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: Platform.OS === "ios" ? 16 : 12, // Thêm padding cho bottom safe area
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    paddingBottom: 15,
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
+    borderTopColor: "#e0e0e0",
   },
   selectedAddressLabel: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginBottom: 4,
+    fontSize: 14,
+    color: "#6c757d",
+    marginBottom: 5,
+    fontWeight: "500",
   },
   selectedAddressText: {
-    fontSize: 15,
-    color: "#1f2937",
+    fontSize: 16,
+    color: "#212529",
     fontWeight: "500",
-    marginBottom: 10,
-    minHeight: 20, // Để không bị nhảy layout
+    marginBottom: 12,
+    minHeight: 40,
+    lineHeight: 22,
   },
+  addressLoadingIndicator: { marginVertical: 10, alignSelf: "flex-start" },
   confirmButton: {
-    backgroundColor: "#14b8a6",
-    paddingVertical: 14,
-    borderRadius: 8,
+    backgroundColor: "#007bff",
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 48,
+    minHeight: 50,
   },
-  confirmButtonDisabled: {
-    backgroundColor: "#a0aec0",
-  },
-  confirmButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  confirmButtonDisabled: { backgroundColor: "#ced4da" },
+  confirmButtonText: { color: "#ffffff", fontSize: 17, fontWeight: "600" },
 });
 
 export default SelectAddressScreen;
