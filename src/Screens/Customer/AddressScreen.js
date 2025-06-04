@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import {
   View,
   Text,
@@ -9,15 +9,14 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Header } from "../../components"; // Giả sử bạn có component Header
+import { Header } from "../../components";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import GRAPHQL_ENDPOINT from "../../../config"; // Đảm bảo đường dẫn này đúng
+import GRAPHQL_ENDPOINT from "../../../config";
+import { UserContext } from "../../context/UserContext";
 
-// Component con để hiển thị địa chỉ (giống như bạn đã có)
 const AddressDisplay = ({ addressDetail, userName, userPhone, onEdit }) => {
   if (!addressDetail || (!addressDetail.street && !addressDetail.address)) {
-    // Kiểm tra street hoặc address (nếu address là formatted_address)
     return (
       <View style={styles.noAddressContainer}>
         <Ionicons name="sad-outline" size={60} color="#ccc" />
@@ -29,9 +28,8 @@ const AddressDisplay = ({ addressDetail, userName, userPhone, onEdit }) => {
     );
   }
 
-  // Ưu tiên hiển thị formatted_address nếu có, nếu không thì ghép từ các thành phần
   const fullAddressString =
-    addressDetail.address || // Nếu backend trả về trường address là formatted_address
+    addressDetail.address ||
     [
       addressDetail.street,
       addressDetail.ward,
@@ -58,8 +56,7 @@ const AddressDisplay = ({ addressDetail, userName, userPhone, onEdit }) => {
           {displayName || "N/A"} | {displayPhone || "N/A"}
         </Text>
       </View>
-      {/* Nút onEdit sẽ được xử lý bởi nút actionButton lớn ở dưới */}
-      {/* Nếu bạn vẫn muốn nút "Chỉnh sửa" nhỏ ở đây, có thể giữ lại và gọi cùng hàm onEdit */}
+      {/* Nút "Thay đổi" nhỏ có thể được kích hoạt bởi onEdit prop */}
       <TouchableOpacity onPress={onEdit} style={styles.editButton}>
         <Text style={styles.editButtonText}>Thay đổi</Text>
       </TouchableOpacity>
@@ -67,66 +64,75 @@ const AddressDisplay = ({ addressDetail, userName, userPhone, onEdit }) => {
   );
 };
 
-// Component chính của màn hình AddressScreen
 const AddressScreen = ({ navigation, route }) => {
-  // Thêm route để nhận params
-  const [userInfo, setUserInfo] = useState(null);
-  const [userAddressDetail, setUserAddressDetail] = useState(null); // Đây là object Address từ User
+  const userContext = useContext(UserContext);
+
+  if (!userContext) {
+    console.error(
+      "AddressScreen: UserContext is not available. Make sure UserProvider wraps your app."
+    );
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centeredMessage}>
+          <Text style={styles.errorText}>Lỗi Context</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  const { userInfo, setUserInfo: updateContextUserInfo } = userContext;
+
+  const [userAddressDetail, setUserAddressDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isInitialLoadDone, setIsInitialLoadDone] = useState(false); // Cờ mới
 
-  // Hàm xử lý lỗi xác thực
   const handleAuthenticationError = useCallback(() => {
+    console.warn("AddressScreen: Xử lý lỗi xác thực.");
     setError(
       "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại."
     );
     setLoading(false);
-    AsyncStorage.removeItem("token");
-    AsyncStorage.removeItem("userInfo");
-    setUserInfo(null);
+    AsyncStorage.multiRemove(["token", "userInfo"]);
+    if (updateContextUserInfo) {
+      updateContextUserInfo(null);
+    }
     setUserAddressDetail(null);
-    // Cân nhắc navigation.replace('LoginScreen');
-  }, [navigation]);
+  }, [navigation, updateContextUserInfo]);
 
-  // Hàm gọi API GraphQL để lấy thông tin người dùng và địa chỉ
-  const fetchUserDataAndAddress = useCallback(
-    async (currentUserId) => {
-      if (!currentUserId) {
-        console.log("fetchUserDataAndAddress: currentUserId không hợp lệ.");
-        setLoading(false); // Dừng loading nếu không có ID
-        return;
-      }
+  const fetchUserDataAndAddress = useCallback(async () => {
+    if (!userInfo || !userInfo.id || !userInfo.token) {
       console.log(
-        `AddressScreen: Đang lấy thông tin địa chỉ cho User ID: ${currentUserId}`
+        "AddressScreen.fetchUserDataAndAddress: Thiếu userInfo, ID, hoặc token từ context."
       );
-      setLoading(true);
-      // setError(null); // Không reset error ở đây để giữ lỗi cũ nếu refetch lỗi
+      if (userInfo && userInfo.id && !userInfo.token) {
+        handleAuthenticationError();
+      } else if (!userInfo) {
+        setError("Vui lòng đăng nhập để xem địa chỉ.");
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
+      return;
+    }
 
-      try {
-        const token = await AsyncStorage.getItem("token");
-        if (!token) {
-          handleAuthenticationError();
-          return;
-        }
+    console.log(`AddressScreen: Fetching address cho User ID: ${userInfo.id}`);
+    setLoading(true);
 
-        // Query để lấy các trường chi tiết của Address entity
-        // Đảm bảo các trường trong `address { ... }` khớp với Address entity của bạn
-        const query = `
-        query {
-          findUserById(id: ${currentUserId}) {
+    try {
+      const query = `
+        query FindUserByIdForAddressDisplay($id: Int!) {
+          findUserById(id: $id) {
             id
             name
             phone
-            address {
+            address { # Object Address từ User entity
               id
               label
               province
               district
               ward
               street
-              # Nếu bạn có trường formattedAddress trong Address entity và backend trả về nó:
-              # formattedAddress 
+              # formattedAddress # Nếu backend có trường này và bạn muốn dùng
               latitude
               longitude
               placeId
@@ -135,139 +141,99 @@ const AddressScreen = ({ navigation, route }) => {
         }
       `;
 
-        const headers = {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        };
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${userInfo.token}`,
+      };
 
-        console.log(
-          "[AddressScreen.fetchUserDatAndAddress] Sending GraphQL query (no variables):",
-          query.substring(0, 100) + "..."
-        );
-        console.log(
-          "[AddressScreen.fetchUserDataAndAddress] Headers:",
-          headers
-        );
+      const res = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify({ query: query, variables: { id: userInfo.id } }),
+      });
 
-        const res = await fetch(GRAPHQL_ENDPOINT, {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify({ query: query }), // Chỉ gửi query, không có object variables
-        });
-        const responseText = await res.text();
-        let responseData;
-        try {
-          responseData = JSON.parse(responseText);
-        } catch (e) {
-          throw new Error(`Lỗi parse JSON: ${responseText.substring(0, 100)}`);
-        }
+      const responseText = await res.text();
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Lỗi parse JSON: ${responseText.substring(0, 100)}`);
+      }
 
-        console.log(
-          "AddressScreen GraphQL Response:",
-          JSON.stringify(responseData, null, 2)
-        );
+      console.log(
+        "AddressScreen GraphQL Response:",
+        JSON.stringify(responseData, null, 2)
+      );
 
-        if (res.status === 401 || res.status === 403) {
-          handleAuthenticationError();
-          return;
-        }
-        if (!res.ok) {
-          const errorMessage =
-            responseData.errors?.map((e) => e.message).join("\n") ||
-            responseData.message ||
-            `Lỗi API (${res.status})`;
-          throw new Error(errorMessage);
-        }
-        if (responseData.errors) {
-          throw new Error(responseData.errors.map((e) => e.message).join("\n"));
-        }
+      if (res.status === 401 || res.status === 403) {
+        handleAuthenticationError();
+        return;
+      }
+      if (!res.ok) {
+        const errorMessage =
+          responseData.errors?.map((e) => e.message).join("\n") ||
+          responseData.message ||
+          `Lỗi API (${res.status})`;
+        throw new Error(errorMessage);
+      }
+      if (responseData.errors) {
+        throw new Error(responseData.errors.map((e) => e.message).join("\n"));
+      }
 
-        if (responseData.data?.findUserById) {
-          const fetchedUserData = responseData.data.findUserById;
-          // Cập nhật userInfo để đảm bảo tên và điện thoại là mới nhất
-          setUserInfo((prev) => ({
+      if (responseData.data?.findUserById) {
+        const fetchedUserData = responseData.data.findUserById;
+
+        if (
+          updateContextUserInfo &&
+          (fetchedUserData.name !== userInfo.name ||
+            fetchedUserData.phone !== userInfo.phone)
+        ) {
+          updateContextUserInfo((prev) => ({
             ...prev,
+            id: fetchedUserData.id,
             name: fetchedUserData.name,
             phone: fetchedUserData.phone,
           }));
-          setUserAddressDetail(fetchedUserData.address);
-          setError(null); // Xóa lỗi nếu thành công
-        } else {
-          console.warn(
-            "AddressScreen: Không tìm thấy 'findUserById' trong dữ liệu trả về."
-          );
-          setUserAddressDetail(null); // User có thể không có địa chỉ
         }
-      } catch (err) {
-        console.error(
-          "AddressScreen - Lỗi trong fetchUserDataAndAddress:",
-          err.message
+        setUserAddressDetail(fetchedUserData.address);
+        setError(null);
+      } else {
+        console.warn(
+          "AddressScreen: Không tìm thấy 'findUserById' trong dữ liệu trả về."
         );
-        if (!error) {
-          // Chỉ set lỗi mới nếu chưa có lỗi, hoặc nếu lỗi khác
-          setError(err.message || "Không thể tải dữ liệu địa chỉ.");
-        }
         setUserAddressDetail(null);
-      } finally {
-        setLoading(false);
-        if (!isInitialLoadDone) setIsInitialLoadDone(true);
       }
-    },
-    [handleAuthenticationError, error, isInitialLoadDone]
-  ); // Thêm error, isInitialLoadDone
-
-  // 1. Lấy userInfo từ AsyncStorage khi component mount
-  useEffect(() => {
-    console.log("AddressScreen: useEffect - Lấy userInfo ban đầu.");
-    const loadInitialUserInfo = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const userInfoString = await AsyncStorage.getItem("userInfo");
-        if (userInfoString) {
-          const parsedUserInfo = JSON.parse(userInfoString);
-          if (parsedUserInfo && typeof parsedUserInfo.id === "number") {
-            setUserInfo(parsedUserInfo);
-            // fetchUserDataAndAddress sẽ được gọi bởi useEffect tiếp theo
-          } else {
-            throw new Error(
-              "Thông tin người dùng trong AsyncStorage không hợp lệ."
-            );
-          }
-        } else {
-          // Không có userInfo, coi như lỗi xác thực
-          handleAuthenticationError();
-        }
-      } catch (e) {
-        console.error(
-          "AddressScreen: Lỗi khi tải userInfo từ AsyncStorage:",
-          e
-        );
-        handleAuthenticationError();
+    } catch (err) {
+      console.error(
+        "AddressScreen - Lỗi trong fetchUserDataAndAddress:",
+        err.message
+      );
+      if (error !== err.message) {
+        setError(err.message || "Không thể tải dữ liệu địa chỉ.");
       }
-      // Không setLoading(false) ở đây, để useEffect tiếp theo xử lý
-    };
-    loadInitialUserInfo();
-  }, [handleAuthenticationError]); // Chỉ chạy 1 lần
+      setUserAddressDetail(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [userInfo, handleAuthenticationError, updateContextUserInfo, error]);
 
-  // 2. Fetch dữ liệu địa chỉ khi userInfo đã sẵn sàng
   useEffect(() => {
     console.log(
-      "AddressScreen: useEffect - Kiểm tra userInfo để fetch data:",
+      "AddressScreen: useEffect[userInfo] - userInfo từ context:",
       userInfo
     );
-    if (userInfo && userInfo.id && !isInitialLoadDone && !error) {
-      // Chỉ fetch nếu có userInfo, chưa hoàn tất lần load đầu, và chưa có lỗi
-      fetchUserDataAndAddress(userInfo.id);
-    } else if (!userInfo && !loading && !isInitialLoadDone) {
-      // Nếu không có userInfo và không đang loading, và chưa hoàn tất load đầu
-      // (có thể do lỗi từ loadInitialUserInfo)
-      setIsInitialLoadDone(true); // Đánh dấu hoàn tất để không lặp lại
-      setLoading(false); // Dừng loading nếu chưa dừng
-    }
-  }, [userInfo, fetchUserDataAndAddress, isInitialLoadDone, error, loading]);
+    if (userInfo && userInfo.id && userInfo.token) {
+      fetchUserDataAndAddress();
+    } else if (!userInfo && !loading) {
+      console.log(
+        "AddressScreen: Không có userInfo từ context, có thể cần hiển thị thông báo đăng nhập."
+      );
 
-  // 3. Refetch dữ liệu khi màn hình được focus lại VÀ có param addressUpdated
+      setLoading(false);
+      setUserAddressDetail(null);
+    }
+  }, [userInfo, fetchUserDataAndAddress]);
+
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       const { addressUpdated } = route.params || {};
@@ -277,45 +243,38 @@ const AddressScreen = ({ navigation, route }) => {
       );
 
       if (addressUpdated) {
-        if (userInfo && userInfo.id) {
-          console.log("AddressScreen: Địa chỉ đã được cập nhật, refetching...");
-          setError(null); // Xóa lỗi cũ
-          fetchUserDataAndAddress(userInfo.id);
+        if (userInfo && userInfo.id && userInfo.token) {
+          console.log(
+            "AddressScreen: Địa chỉ đã được cập nhật từ SelectAddressScreen, refetching..."
+          );
+          setError(null);
+          fetchUserDataAndAddress();
         }
         navigation.setParams({
           addressUpdated: undefined,
           newAddressId: undefined,
-        }); // Reset param
+        });
       }
     });
     return unsubscribe;
   }, [navigation, route.params, userInfo, fetchUserDataAndAddress]);
 
-  // Hàm điều hướng SANG SelectAddressScreen
   const handleNavigateToSelectAddress = () => {
     if (!userInfo || !userInfo.id) {
       Alert.alert(
-        "Lỗi",
-        "Không thể xác định người dùng. Vui lòng thử đăng nhập lại."
+        "Yêu cầu đăng nhập",
+        "Vui lòng đăng nhập để quản lý địa chỉ."
       );
+
       return;
     }
-    console.log(
-      "AddressScreen: Điều hướng đến SelectAddressScreen với params:",
-      {
-        userId: userInfo.id,
-        currentAddressId: userAddressDetail?.id,
-      }
-    );
     navigation.navigate("SelectAddressScreen", {
       userId: userInfo.id,
       currentAddressId: userAddressDetail?.id,
     });
   };
 
-  // Render UI
-  if (loading && !isInitialLoadDone) {
-    // Chỉ hiển thị loading toàn màn hình cho lần load đầu
+  if (loading && !userAddressDetail && !error) {
     return (
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.container}>
@@ -332,8 +291,7 @@ const AddressScreen = ({ navigation, route }) => {
     );
   }
 
-  if (error && !userAddressDetail && isInitialLoadDone) {
-    // Hiển thị lỗi nếu không có dữ liệu nào để hiển thị và lần load đầu đã xong
+  if (error && !userAddressDetail) {
     return (
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.container}>
@@ -347,17 +305,15 @@ const AddressScreen = ({ navigation, route }) => {
             {!(
               error.includes("Vui lòng đăng nhập") ||
               error.includes("Phiên đăng nhập")
-            ) && (
-              <TouchableOpacity
-                onPress={() => {
-                  if (userInfo && userInfo.id)
-                    fetchUserDataAndAddress(userInfo.id);
-                }}
-                style={styles.retryButton}
-              >
-                <Text style={styles.retryButtonText}>Thử lại</Text>
-              </TouchableOpacity>
-            )}
+            ) &&
+              userInfo?.id && (
+                <TouchableOpacity
+                  onPress={fetchUserDataAndAddress}
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retryButtonText}>Thử lại</Text>
+                </TouchableOpacity>
+              )}
             {(error.includes("Vui lòng đăng nhập") ||
               error.includes("Phiên đăng nhập")) && (
               <TouchableOpacity
@@ -373,7 +329,6 @@ const AddressScreen = ({ navigation, route }) => {
     );
   }
 
-  // Render nội dung chính
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.container}>
@@ -385,13 +340,12 @@ const AddressScreen = ({ navigation, route }) => {
           style={styles.contentArea}
           contentContainerStyle={{ flexGrow: 1 }}
         >
-          {loading &&
-            isInitialLoadDone && ( // Loading inline khi refetch
-              <View style={styles.inlineLoading}>
-                <ActivityIndicator size="small" color="#007AFF" />
-                <Text style={styles.statusText}>Đang cập nhật...</Text>
-              </View>
-            )}
+          {loading && userAddressDetail && (
+            <View style={styles.inlineLoading}>
+              <ActivityIndicator size="small" color="#007AFF" />
+              <Text style={styles.statusText}>Đang cập nhật...</Text>
+            </View>
+          )}
           {error &&
             userAddressDetail &&
             !loading &&
@@ -416,7 +370,7 @@ const AddressScreen = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleNavigateToSelectAddress}
-          disabled={!userInfo || loading} // Vô hiệu hóa nếu đang loading hoặc chưa có userInfo
+          disabled={!userInfo || loading}
         >
           <Text style={styles.actionButtonText}>
             {userAddressDetail &&
@@ -441,9 +395,8 @@ const styles = StyleSheet.create({
   },
   contentArea: {
     flex: 1,
-    marginTop: 40, // Bỏ marginTop này nếu Header của bạn không position: absolute
-    // Nếu Header của bạn là một phần của luồng bình thường, ScrollView sẽ tự nằm dưới
-    paddingTop: 15, // Thêm chút padding trên cho ScrollView
+    marginTop: 40,
+    paddingTop: 15,
   },
   centeredMessage: {
     flex: 1,
@@ -559,7 +512,7 @@ const styles = StyleSheet.create({
   noAddressContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 60,
+    paddingVertical: 40,
     marginHorizontal: 16,
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -575,7 +528,7 @@ const styles = StyleSheet.create({
   noAddressText: {
     fontSize: 18,
     color: "#343a40",
-    marginTop: 20,
+    marginTop: 15,
     fontWeight: "500",
     textAlign: "center",
   },

@@ -17,7 +17,7 @@ import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import GRAPHQL_ENDPOINT from "../../../config"; // Đảm bảo đường dẫn này đúng
-
+import { CommonActions } from "@react-navigation/native";
 // --- GraphQL Query/Mutation Strings (Giữ nguyên như bạn cung cấp) ---
 const SEARCH_GOONG_PLACE_QUERY_FULL = `
   query SearchGoongPlace($input: String!) {
@@ -783,11 +783,28 @@ const SelectAddressScreen = ({ navigation, route }) => {
       }
 
       Alert.alert("Thành công", "Địa chỉ của bạn đã được cập nhật thành công!");
-      navigation.navigate({
-        name: "AddressScreen",
-        params: { addressUpdated: true, newAddressId: finalAddressId },
-        merge: true,
-      });
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1, // AddressScreen sẽ là màn hình active (index 1 trong stack mới của RootStack)
+          routes: [
+            // Route đầu tiên là màn hình Tab Navigator chính của bạn,
+            // và chúng ta muốn Tab "Tôi" được active bên trong nó.
+            {
+              name: "MainApp", // Tên route của CustomerBottomTab trong RootStack
+              state: {
+                // Chỉ định state cho navigator lồng nhau (CustomerBottomTab)
+                routes: [{ name: "Tôi" }], // Active tab 'Tôi'
+                // Nếu bạn muốn Tab 'Tôi' cũng reset stack bên trong nó (nếu có):
+                // index: 0, // (Tùy chọn, nếu 'Tôi' là một stack và bạn muốn reset nó về màn hình đầu)
+              },
+            },
+            {
+              name: "AddressScreen", // Tên route của AddressScreen trong RootStack
+              params: { addressUpdated: true, newAddressId: finalAddressId },
+            },
+          ],
+        })
+      );
     } catch (error) {
       console.error(
         "[handleConfirm] Lỗi trong quá trình lưu địa chỉ:",
