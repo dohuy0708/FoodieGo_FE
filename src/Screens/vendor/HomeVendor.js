@@ -26,7 +26,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserContext } from "../../context/UserContext";
 
 const NAV_HEIGHT = Display.setHeight(7);
-const IMAGE_ASPECT_RATIO = 16 / 9;
+const IMAGE_ASPECT_RATIO = 16 / 11;
 const IMAGE_WIDTH = Dimensions.get("window").width;
 const IMAGE_HEIGHT = IMAGE_WIDTH / IMAGE_ASPECT_RATIO;
 const VIEW_INFO_OVERLAP = Display.setHeight(2.5);
@@ -184,6 +184,7 @@ export default function HomeVendor({ navigation, route }) {
       categoryId: selectedCategory,
     };
     console.log("Dish data:", dishData);
+    console.log("selectedCategory", dishData.categoryId);
     return <Dish data={dishData} navigation={navigation} />;
   };
 
@@ -275,6 +276,20 @@ export default function HomeVendor({ navigation, route }) {
           <Text style={styles.descriptionText}>{description}</Text>
           <Text style={styles.descriptionText}>Liên hệ: {phone}</Text>
           <Text style={styles.addressText}>{fullAddress}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <TouchableOpacity
+              style={styles.edit_button}
+              onPress={() =>
+                navigation.navigate("SelectAddress", {
+                  currentAddressId: restaurant.address.id,
+                })
+              }
+            >
+              <Text style={{ color: Colors.DEFAULT_WHITE }}>
+                Chỉnh sửa địa chỉ
+              </Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.openingHoursText}>{openingHours}</Text>
           <Text
             style={[

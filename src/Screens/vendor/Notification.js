@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { addNotificationReceivedListener } from "../../services/pushNotification";
 import { findNotificationByUserId } from "../../services/vendorService";
 import { UserContext } from "../../context/UserContext";
+import Icon from "react-native-vector-icons/Ionicons";
 const NAV_COMPONENT_HEIGHT = Display.setHeight(7);
 
 export default function Notification({ navigation }) {
@@ -70,7 +71,12 @@ export default function Notification({ navigation }) {
   };
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => {
-      navigation.navigate("OrderList");
+      if(item.title.includes("Đơn hàng")){
+        navigation.navigate("OrderList");
+      }
+      else{
+        navigation.navigate("ChatListScreen");
+      }
     }}>
     <View style={styles.orderItem}>
       <Text style={{ fontWeight: "bold", fontSize: 16, color: Colors.DEFAULT_GREEN }}>
@@ -89,7 +95,12 @@ export default function Notification({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Thông báo</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Thông báo</Text>
+      </View>
       <FlatList
         data={notifications}
         renderItem={renderItem}
@@ -140,7 +151,7 @@ const styles = StyleSheet.create({
     color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28,
-    width: "100%",
+  
   },
   flatListStyle: {
     width: "100%",
@@ -177,4 +188,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
   },
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+   justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    
+  },
+  backButton: { padding: 8 },
 });

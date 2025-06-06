@@ -16,21 +16,16 @@ import  Colors  from "../../constants/Colors";
 import React, { useState, useEffect } from "react";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
-import {
-  getProvinces,
-  getDistricts,
-  getWards,
-} from "../../services/locationService";
+import Icon from "react-native-vector-icons/Ionicons";
 import Display from "../../utils/Display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   uploadImageToServer,
-  getCoordinatesOfLocation,
-  updateAddressAPI,
   updateRestaurantAPI,
+  getAllRestaurantNames
 } from "../../services/vendorService";
 
-const IMAGE_ASPECT_RATIO = 16 / 9;
+const IMAGE_ASPECT_RATIO = 16 / 11;
 const screenWidth = Dimensions.get("window").width;
 const calculatedImageHeight = screenWidth / IMAGE_ASPECT_RATIO;
 const changeImageButtonOverlap = Display.setHeight(3);
@@ -48,21 +43,17 @@ export default function EditVendor({ navigation, route }) {
   const [closeTime, setCloseTime] = useState("");
   const [minuteOpenTime, setMinuteOpenTime] = useState("");
   const [minuteCloseTime, setMinuteCloseTime] = useState("");
-  const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [wards, setWards] = useState([]);
-  const [selectedProvinceObject, setSelectedProvinceObject] = useState(null);
-  const [selectedDistrictObject, setSelectedDistrictObject] = useState(null);
-  const [selectedWardObject, setSelectedWardObject] = useState(null);
+
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageChangedByUser, setImageChangedByUser] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(null);
-  const [detailAddress, setDetailAddress] = useState("");
+  const selectAddress=route?.params?.selectedAddress || null;
   const [status, setStatus] = useState([
     { id: 'open', name: "Đang mở cửa" },
     { id: 'close', name: "Tạm đóng cửa" },
   ]);
-
+ 
+  const [allRestaurant, setAllRestaurant] = useState([]);
   const selectImage = async () => {
     if (isSaving) return;
     try {
@@ -86,10 +77,14 @@ export default function EditVendor({ navigation, route }) {
       Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh.");
     }
   };
-
+  useEffect(() => {
+    if (selectAddress) {
+      console.log("selectAddress", selectAddress);
+    }
+  }, [selectAddress]);
   useEffect(() => {
     if (restaurant && isLoading) {
-      console.log("Initializing Edit form from Restaurant data:", restaurant);
+    
       setName(restaurant.name || "");
       setPhone(restaurant.phone || "");
       setDescription(restaurant.description || "");
@@ -99,7 +94,7 @@ export default function EditVendor({ navigation, route }) {
       setMinuteOpenTime(openTimeParts[1] || "");
       setCloseTime(closeTimeParts[0] || "");
       setMinuteCloseTime(closeTimeParts[1] || "");
-      setDetailAddress(restaurant.address?.street || "");
+     
       const initialStatus = status.find(s => s.id === restaurant.status);
       setSelectedStatus(initialStatus ? initialStatus.id : null);
       setSelectedImage(restaurant.avatar ? { uri: restaurant.avatar } : null);
@@ -115,123 +110,32 @@ export default function EditVendor({ navigation, route }) {
   }, [restaurant, isLoading, status]);
 
   useEffect(() => {
-    const fetchProvinces = async () => {
-      try {
-        const data = await getProvinces();
-        const provincesData = data || [];
-        setProvinces(provincesData);
-        if (restaurant?.address?.province && provincesData.length > 0) {
-          const initialProvince = provincesData.find(
-            (p) => p.ProvinceName === restaurant.address.province
-          );
-          if (initialProvince) {
-            setSelectedProvinceObject(initialProvince);
-          } else {
-            setSelectedProvinceObject(null);
-          }
-        } else {
-           if(selectedProvinceObject !== null) setSelectedProvinceObject(null);
-        }
-      } catch (error) {
-        console.error("Failed to fetch provinces:", error);
-        setProvinces([]);
-        setSelectedProvinceObject(null);
-      }
+    const fetchAllRestaurantNames = async () => {
+      const allRestaurantNames = await getAllRestaurantNames();
+    
+      setAllRestaurant(allRestaurantNames);
     };
-    fetchProvinces();
-  }, [restaurant]);
-
-  useEffect(() => {
-    const fetchDistricts = async () => {
-      if (selectedProvinceObject?.ProvinceID) {
-        setDistricts([]);
-        setWards([]);
-        if (selectedProvinceObject.ProvinceName !== restaurant?.address?.province) {
-            setSelectedDistrictObject(null);
-            setSelectedWardObject(null);
-        }
-        try {
-          const data = await getDistricts(selectedProvinceObject.ProvinceID);
-          const districtsData = data || [];
-          setDistricts(districtsData);
-          if (restaurant?.address?.district && districtsData.length > 0 && selectedProvinceObject.ProvinceName === restaurant.address.province) {
-            const initialDistrict = districtsData.find(
-              (d) => d.DistrictName === restaurant.address.district
-            );
-            if (initialDistrict) {
-               if (!selectedDistrictObject) {
-                   setSelectedDistrictObject(initialDistrict);
-               }
-            } else {
-               if (selectedDistrictObject !== null) setSelectedDistrictObject(null);
-            }
-          } else {
-             if (selectedDistrictObject !== null) setSelectedDistrictObject(null);
-          }
-        } catch (error) {
-          console.error("Failed to fetch districts:", error);
-          setDistricts([]);
-           setSelectedDistrictObject(null);
-        }
-      } else {
-        setDistricts([]);
-        setWards([]);
-        if (selectedDistrictObject !== null) setSelectedDistrictObject(null);
-        if (selectedWardObject !== null) setSelectedWardObject(null);
-      }
-    };
-    fetchDistricts();
-  }, [selectedProvinceObject, restaurant]);
-
-  useEffect(() => {
-    const fetchWards = async () => {
-      if (selectedDistrictObject?.DistrictID) {
-         setWards([]);
-         if (selectedDistrictObject.DistrictName !== restaurant?.address?.district){
-            setSelectedWardObject(null);
-         }
-        try {
-          const data = await getWards(selectedDistrictObject.DistrictID);
-          const wardsData = data || [];
-          setWards(wardsData);
-          if (restaurant?.address?.ward && wardsData.length > 0 && selectedProvinceObject?.ProvinceName === restaurant.address.province && selectedDistrictObject.DistrictName === restaurant.address.district) {
-             const initialWard = wardsData.find(
-               (w) => w.WardName === restaurant.address.ward
-             );
-             if (initialWard) {
-                if (!selectedWardObject) {
-                    setSelectedWardObject(initialWard);
-                }
-             } else {
-                if (selectedWardObject !== null) setSelectedWardObject(null);
-             }
-          } else {
-             if (selectedWardObject !== null) setSelectedWardObject(null);
-          }
-        } catch (error) {
-          console.error("Failed to fetch wards:", error);
-          setWards([]);
-           setSelectedWardObject(null);
-        }
-      } else {
-        setWards([]);
-         if (selectedWardObject !== null) setSelectedWardObject(null);
-      }
-    };
-    fetchWards();
-  }, [selectedDistrictObject, restaurant]);
-
+    fetchAllRestaurantNames();
+    
+  }, []);
   
   const handleUpdate = async () => {
+    console.log("start update")
      if (!restaurant || !restaurant.id || !restaurant.address?.id) {
          Alert.alert("Lỗi", "Thiếu thông tin nhà hàng hoặc địa chỉ gốc.");
          return;
      }
 
     
-     if (!name.trim() || !phone.trim() || !selectedProvinceObject || !selectedDistrictObject || !selectedWardObject || !detailAddress.trim() || !openTime || !minuteOpenTime || !closeTime || !minuteCloseTime || !selectedStatus) {
+     if (!name.trim() || !phone.trim() ||  !openTime || !minuteOpenTime || !closeTime || !minuteCloseTime || !selectedStatus) {
          Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ các trường bắt buộc (*).");
          return;
+     }
+     if(allRestaurant
+      .filter(restaurant => restaurant.id !== restaurant.id)
+      .some(restaurant => restaurant.name.toLowerCase() === name.trim().toLowerCase())){
+      Alert.alert("Thông báo", "Tên nhà hàng đã tồn tại.");
+      return;
      }
      if (!selectedImage?.uri) {
          Alert.alert("Thiếu thông tin", "Vui lòng chọn ảnh bìa cho nhà hàng.");
@@ -253,9 +157,8 @@ export default function EditVendor({ navigation, route }) {
 
     setIsSaving(true);
     let finalImageUrl = restaurant.imageUrl;
-    let addressUpdateSuccess = false;
-    let restaurantUpdateSuccess = false;
-
+   
+     console.log("start update image")
     try {
       if (imageChangedByUser && selectedImage) {
         console.log("Uploading new image...");
@@ -274,33 +177,12 @@ export default function EditVendor({ navigation, route }) {
           }
       }
 
-      const fullAddressString = `${detailAddress.trim()}, ${selectedWardObject?.WardName}, ${selectedDistrictObject?.DistrictName}, ${selectedProvinceObject?.ProvinceName}`;
-      console.log("Getting coordinates for:", fullAddressString);
-      const coordinates = await getCoordinatesOfLocation(fullAddressString);
-       if (!coordinates) {
-          console.warn("Could not get coordinates for the address. Proceeding without them.");
-      }
+     console.log("start update address")
 
-      const addressUpdateData = {
-        id: restaurant.address.id,
-        province: selectedProvinceObject?.ProvinceName || null,
-        district: selectedDistrictObject?.DistrictName || null,
-        ward: selectedWardObject?.WardName || null,
-        street: detailAddress.trim(),
-        latitude: coordinates ? parseFloat(coordinates.latitude) : restaurant.address.latitude,
-        longitude: coordinates ? parseFloat(coordinates.longitude) : restaurant.address.longitude,
-        placeId: coordinates ? coordinates.placeId : restaurant.address.placeId,
-        label: "restaurant",
-      };
-
-      console.log("Updating address with data:", addressUpdateData);
-      const updatedAddress = await updateAddressAPI(addressUpdateData);
-      if (!updatedAddress) {
-        throw new Error("Không thể cập nhật địa chỉ.");
-      }
-      console.log("Address update successful:", updatedAddress);
-      addressUpdateSuccess = true;
+     
+    
       console.log("status", selectedStatus);
+      console.log("start update restaurant")
       const restaurantUpdateData = {
         id: restaurant.id,
         name: name.trim(),
@@ -318,10 +200,10 @@ export default function EditVendor({ navigation, route }) {
         throw new Error("Không thể cập nhật thông tin nhà hàng.");
       }
       console.log("Restaurant update successful:", updatedRestaurant);
-      restaurantUpdateSuccess = true;
+     
 
       Alert.alert("Thành công", "Đã cập nhật thông tin nhà hàng thành công!", [
-          { text: "OK", onPress: () => navigation.goBack() }
+          { text: "OK", onPress: () => navigation.navigate("HomeVendor") }
       ]);
 
     } catch (error) {
@@ -353,7 +235,14 @@ export default function EditVendor({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.container1}>
+       <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Chỉnh sửa thông tin nhà hàng</Text>
+      </View>
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+     
         <View style={styles.imageContainer}>
           <Image
             source={
@@ -378,7 +267,7 @@ export default function EditVendor({ navigation, route }) {
         </View>
 
         <View style={styles.container}>
-          <Text style={styles.header}>Chỉnh sửa thông tin nhà hàng</Text>
+          
           <View style={styles.input_container}>
             <TextInput
               style={styles.input_text}
@@ -414,110 +303,7 @@ export default function EditVendor({ navigation, route }) {
               editable={!isSaving}
             />
           </View>
-          <View style={styles.picker_container}>
-            <Picker
-              selectedValue={selectedProvinceObject}
-              onValueChange={(itemValue, itemIndex) => {
-                if (itemIndex !== 0) {
-                    setSelectedProvinceObject(itemValue);
-                } else {
-                  setSelectedProvinceObject(null);
-                }
-              }}
-              style={styles.picker}
-              mode="dropdown"
-               enabled={!isSaving}
-            >
-              <Picker.Item
-                label="-- Chọn tỉnh/thành phố (*) --"
-                value={null}
-                enabled={false}
-                style={styles.pickerPlaceholder}
-              />
-              {provinces.map((province) => (
-                <Picker.Item
-                  key={province.ProvinceID}
-                  label={province.ProvinceName}
-                  value={province}
-                  style={styles.pickerItem}
-                />
-              ))}
-            </Picker>
-          </View>
-          <View style={styles.picker_container}>
-            <Picker
-              selectedValue={selectedDistrictObject}
-              onValueChange={(itemValue, itemIndex) => {
-                if (itemIndex !== 0) {
-                   setSelectedDistrictObject(itemValue);
-                } else {
-                   setSelectedDistrictObject(null);
-                }
-              }}
-              style={styles.picker}
-              enabled={!isSaving && !!selectedProvinceObject && districts.length > 0}
-              mode="dropdown"
-            >
-              <Picker.Item
-                label="-- Chọn quận/huyện (*) --"
-                value={null}
-                enabled={false}
-                style={styles.pickerPlaceholder}
-              />
-              {districts.map((district) => (
-                <Picker.Item
-                  key={district.DistrictID}
-                  label={district.DistrictName}
-                  value={district}
-                  style={styles.pickerItem}
-                />
-              ))}
-            </Picker>
-          </View>
-          <View style={styles.picker_container}>
-            <Picker
-              selectedValue={selectedWardObject}
-              onValueChange={(itemValue, itemIndex) => {
-                 if (itemIndex !== 0) {
-                     setSelectedWardObject(itemValue);
-                 } else {
-                     setSelectedWardObject(null);
-                 }
-              }}
-              style={styles.picker}
-              enabled={!isSaving && !!selectedDistrictObject && wards.length > 0}
-              mode="dropdown"
-            >
-              <Picker.Item
-                label="-- Chọn phường/xã (*) --"
-                value={null}
-                enabled={false}
-                style={styles.pickerPlaceholder}
-              />
-              {wards.map((ward) => (
-                <Picker.Item
-                  key={ward.WardCode}
-                  label={ward.WardName}
-                  value={ward}
-                  style={styles.pickerItem}
-                />
-              ))}
-            </Picker>
-          </View>
-          <View style={[styles.input_container, styles.textAreaContainer]}>
-            <TextInput
-              style={[styles.input_text, styles.textArea]}
-              placeholder="Địa chỉ chi tiết (Số nhà, Tên đường) (*)"
-              value={detailAddress}
-              onChangeText={setDetailAddress}
-              multiline={true}
-              numberOfLines={4}
-              textAlignVertical="top"
-              placeholderTextColor={Colors.LIGHT_GREY2}
-              editable={!isSaving}
-            />
-          </View>
-
+             
           <View style={styles.input_container}>
             <View style={styles.input_time_container}>
               <Text style={styles.timeLabel}>Giờ mở cửa:</Text>
@@ -604,11 +390,12 @@ export default function EditVendor({ navigation, route }) {
               ))}
             </Picker>
           </View>
-
+            
+              
           <View style={[styles.buttonContainer,{paddingBottom: insets.bottom + Display.setHeight(1)}]}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton, isSaving && styles.disabledButton]}
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.navigate("HomeVendor")}
               disabled={isSaving}
             >
               <Text style={styles.buttonText}>Hủy bỏ</Text>
@@ -676,9 +463,9 @@ const styles = StyleSheet.create({
   header: {
     textAlign: "center",
     fontWeight: "bold",
-    fontSize: 22,
+    fontSize: 21,
     color: Colors.PRIMARY || Colors.DEFAULT_GREEN,
-    marginBottom: Display.setHeight(1.2),
+   
   },
   input_container: {
     width: "100%",
@@ -725,7 +512,7 @@ const styles = StyleSheet.create({
   },
   pickerItem: {
     fontSize: 15,
-    color: Colors.SECONDARY_BLACK || '#333',
+    color: Colors.LIGHT_GREY2 || '#333',
   },
   input_time_container: {
     flexDirection: "row",
@@ -784,4 +571,15 @@ const styles = StyleSheet.create({
   saveButton: {
     backgroundColor: Colors.DEFAULT_GREEN,
   },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+      paddingHorizontal: Display.setWidth(2),
+      paddingVertical: Display.setHeight(1.2),
+      backgroundColor: "#ffffff",
+      borderBottomWidth: 1,
+      borderBottomColor: "#e5e7eb",
+  },
+  backButton: { padding: 8, marginRight: 12 },
 });

@@ -17,7 +17,8 @@ import Nav from "../../components/Nav"; // Đường dẫn này giả định fi
 import { listenUserChats } from '../../services/chatService';
 import { GetUserById } from '../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import useSessionStore from "../../utils/store";
+import Icon from "react-native-vector-icons/Ionicons";
 if (typeof Display === 'undefined') {
   global.Display = {
     setHeight: val => val * 8,
@@ -51,7 +52,7 @@ const MockNav = ({ nav }) => (
 export default function ChatListScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [chatList, setChatList] = useState([]);
-  const vendorId = 1;
+  const vendorId = useSessionStore((state) => state.restaurantId);
   const [isLoading, setIsLoading] = useState(true);
  
   // Lắng nghe danh sách chat realtime
@@ -117,7 +118,14 @@ export default function ChatListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.screenTitle}>Tin nhắn</Text>
+      <View style={{flex:1}}>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.screenTitle}>Tin nhắn</Text>
+      </View>
+      
       {isLoading ? (<Text style={{fontSize: 20, fontWeight: "bold", alignSelf: "center", marginTop: Display.setHeight(10),flex:1}}>Đang tải...</Text>) :
       chatList.length > 0 ? (
         <FlatList
@@ -132,6 +140,8 @@ export default function ChatListScreen({ navigation }) {
       ) : (
         <Text style={{fontSize: 20, fontWeight: "bold", alignSelf: "center", marginTop: Display.setHeight(10)}}>Không có tin nhắn</Text>
       )}
+      </View>
+     
       {/* Navigation Bar cố định ở dưới cùng */}
       <View style={[styles.navContainerFixed, { paddingBottom: insets.bottom, height: NAV_HEIGHT + insets.bottom }]}>
         {Nav ? <Nav nav={navigation} /> : <MockNav nav={navigation}/>}
@@ -248,4 +258,14 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.GRAY_BORDER || "#e0e0e0", // Sử dụng Colors.GRAY_BORDER nếu có
     // zIndex: 10, // Chỉ cần nếu có thành phần khác có thể che phủ
   },
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+   justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    
+  },
+  backButton: { padding: 8 },
 });

@@ -44,7 +44,7 @@ import { CartProvider } from "../context/CartContext";
 import OrderConfirmScreen from "../Screens/customer/OrderConfirmScreen";
 import PaymentScreen from "../Screens/customer/PaymentScreen";
 import CategoryScreen from "../Screens/customer/CategoryScreen";
-
+import SelectAddress from "../Screens/vendor/SelectAdress";
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
@@ -89,7 +89,7 @@ export default function Navigation() {
           <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
           <Stack.Screen name="IndividualChat" component={IndividualChat} />
           <Stack.Screen name="ChatCustomer" component={ChatCustomer} />
-         
+          <Stack.Screen name="SelectAddress" component={SelectAddress} />
         
          
         

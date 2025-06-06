@@ -11,20 +11,16 @@ import {
   Platform,
 } from "react-native";
 import  Colors  from "../../constants/Colors";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
-import {
-  getProvinces,
-  getDistricts,
-  getWards,
-} from "../../services/locationService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserContext } from "../../context/UserContext";
 import Display from "../../utils/Display";
 import {
   uploadImageToServer,
-  getCoordinatesOfLocation,
-  createNewAddress,
+  getAllRestaurantNames,
   createNewRestaurant,
 } from "../../services/vendorService";
 export default function Register({ navigation }) {
@@ -36,19 +32,18 @@ export default function Register({ navigation }) {
   const [minuteOpenTime, setMinuteOpenTime] = useState("");
   const [minuteCloseTime, setMinuteCloseTime] = useState("");
   const [phone, setPhone] = useState("");
-  const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [wards, setWards] = useState([]);
-  const [detailAddress, setDetailAddress] = useState("");
-  const [selectedProvince, setSelectedProvince] = useState(null);
-  const [selectedDistrict, setSelectedDistrict] = useState(null);
-  const [selectedWard, setSelectedWard] = useState(null);
+  const { userInfo } = useContext(UserContext);
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [restaurantName, setRestaurantName] = useState([]);
   let url=null;
-  const ownerId = 193; 
-  let location=null;
-  let addressId=null;
+  useEffect(() => {
+    const fetchRestaurantNames = async () => {
+      const names = await getAllRestaurantNames();
+      setRestaurantName(names);
+    };
+    fetchRestaurantNames();
+  }, []);
   const selectImage = async () => {
     try {
       const { status } =
@@ -74,6 +69,7 @@ export default function Register({ navigation }) {
     }
   };
   const handleUpload = async () => {
+
     if (!selectedImage) {
       Alert.alert("Thông báo", "Vui lòng chọn ảnh trước khi upload.");
       return;
@@ -99,67 +95,22 @@ export default function Register({ navigation }) {
     } finally {
     }
   };
-  const getCoordinates = async () => {
-    const address = `${detailAddress}, ${selectedWard?.WardName}, ${selectedDistrict?.DistrictName}, ${selectedProvince?.ProvinceName}`;
-    console.log("Full Address:", address);
-    try {
-      const response = await getCoordinatesOfLocation(address);
-      if (response ) {
-         location = response;
-        console.log("Coordinates:", location);
-      } else {
-        console.error("No results found for the address:", address);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching coordinates:", error);
-      return null;
-    }
-  };
-  const createAddress = async () => {
-    console.log("Creating new address...");
-    await getCoordinates();
-    console.log("Location:", location);
-    const address=
-    {
-      label:"restaurant",
-      province: selectedProvince?.ProvinceName,
-      district: selectedDistrict?.DistrictName,
-      ward: selectedWard?.WardName,
-      street:detailAddress,
-      latitude: parseFloat(location.latitude),
-      longitude: parseFloat(location.longitude),
-      placeId: location.placeId,
-  }
-    console.log("Address to create:", address);
-    try {
-      const response = await createNewAddress(address);
-      if (response) {
-        console.log("Address created successfully:", response);
-        addressId = response.id;
-        return response;
-      } else {
-        console.error("Failed to create address:", response);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error creating address:", error);
-      return null;
-    }
-  };
+
+ 
   const isValidPhoneNumber = (phone) => {
     const phoneRegex = /^0\d{9,10}$/;
     return phoneRegex.test(phone);
   };
   const createRestaurant = async () => {
+    console.log("Creating restaurant...");
+    if(restaurantName.some(restaurant => restaurant.name.toLowerCase() === name.toLowerCase())){
+      Alert.alert("Thông báo", "Tên nhà hàng đã tồn tại.");
+      return;
+    }
     if (
       !name.trim() ||
       !description.trim() ||
       !phone.trim() ||
-      !selectedProvince ||
-      !selectedDistrict ||
-      !selectedWard ||
-      !detailAddress.trim() ||
       !openTime.trim() ||
       !minuteOpenTime.trim() ||
       !closeTime.trim() ||
@@ -186,8 +137,9 @@ export default function Register({ navigation }) {
       Alert.alert("Thông báo", "Phút mở cửa và đóng cửa phải nhỏ hơn 59.");
       return;
     }
+    console.log("Uploading image...");
     await handleUpload();
-    await createAddress();
+    
     console.log("Creating new restaurant...");
     const restaurant = {
       name,
@@ -197,16 +149,17 @@ export default function Register({ navigation }) {
       closeTime: `${closeTime}:${minuteCloseTime}`,
       avatar: url,
       status:"open",
-      addressId:addressId,
-      ownerId: ownerId,
+      addressId:1,
+      ownerId: userInfo.id,
     };
     console.log("Restaurant to create:", restaurant);
     try {
       const response = await createNewRestaurant(restaurant);
+      const restaurantId=response.id;
       if (response) {
         console.log("Restaurant created successfully:", response);
-        navigation.navigate("HomeVendor", {
-          ownerId: ownerId,
+        navigation.navigate("SelectAddress", {
+         restaurantId:restaurantId,
         });
 
         return response;
@@ -221,90 +174,10 @@ export default function Register({ navigation }) {
     }
   };
 
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      try {
-        const data = await getProvinces();
-        setProvinces(data || []);
-      } catch (error) {
-        console.error("Failed to fetch provinces:", error);
-        setProvinces([]);
-      }
-    };
-    fetchProvinces();
-  }, []);
 
-  useEffect(() => {
-    const fetchDistricts = async () => {
-      if (selectedProvince?.ProvinceID) {
-        try {
-          console.log("Selected Province Code:", selectedProvince.ProvinceID);
-          const data = await getDistricts(selectedProvince.ProvinceID);
-          setDistricts(data || []);
-          setSelectedDistrict(null);
-          setWards([]);
-        } catch (error) {
-          console.error("Failed to fetch districts:", error);
-          setDistricts([]);
-          setWards([]);
-        }
-      } else {
-        setDistricts([]);
-        setWards([]);
-      }
-    };
-    fetchDistricts();
-  }, [selectedProvince]);
-
-  useEffect(() => {
-    const fetchWards = async () => {
-      if (selectedDistrict?.DistrictID) {
-        try {
-          const data = await getWards(selectedDistrict.DistrictID);
-          setWards(data || []);
-          setSelectedWard(null);
-        } catch (error) {
-          console.error("Failed to fetch wards:", error);
-          setWards([]);
-        }
-      } else {
-        setWards([]);
-      }
-    };
-    fetchWards();
-  }, [selectedDistrict]);
   // ---------------------------------------
 
-  const handleRegister = () => {
-    if (
-      !name ||
-      !description ||
-      !selectedProvince ||
-      !selectedDistrict ||
-      !selectedWard ||
-      !openTime ||
-      !minuteOpenTime ||
-      !closeTime ||
-      !minuteCloseTime ||
-      !selectedImage ||
-      !selectedLocation
-    ) {
-      alert("Vui lòng điền đầy đủ thông tin và chọn vị trí.");
-      return;
-    }
-    console.log("Registering Data:", {
-      name,
-      description,
-      province: selectedProvince.name,
-      district: selectedDistrict.name,
-      ward: selectedWard.name,
-      openTime: `${openTime}:${minuteOpenTime}`,
-      closeTime: `${closeTime}:${minuteCloseTime}`,
-      imageUrl: selectedImage.uri,
-      location: selectedLocation,
-      avatar: uploadedImageUrl,
-    });
-  };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -350,95 +223,8 @@ export default function Register({ navigation }) {
           />
         </View>
 
-        <View style={styles.picker_container}>
-          <Picker
-            selectedValue={selectedProvince}
-            onValueChange={(itemValue, itemIndex) => {
-              if (itemIndex !== 0) setSelectedProvince(itemValue);
-            }}
-            style={styles.picker}
-            mode="dropdown"
-          >
-            <Picker.Item
-              label="-- Chọn tỉnh/thành phố (*) --"
-              value={null}
-              enabled={false}
-              style={styles.pickerPlaceholder}
-            />
-            {provinces.map((province) => (
-              <Picker.Item
-                key={province.ProvinceID}
-                label={province.ProvinceName}
-                value={province}
-                style={styles.pickerItem}
-              />
-            ))}
-          </Picker>
-        </View>
-        <View style={styles.picker_container}>
-          <Picker
-            selectedValue={selectedDistrict}
-            onValueChange={(itemValue, itemIndex) => {
-              if (itemIndex !== 0) setSelectedDistrict(itemValue);
-            }}
-            style={styles.picker}
-            enabled={!!selectedProvince}
-            mode="dropdown"
-          >
-            <Picker.Item
-              label="-- Chọn quận/huyện (*) --"
-              value={null}
-              enabled={false}
-              style={styles.pickerPlaceholder}
-            />
-            {districts.map((district) => (
-              <Picker.Item
-                key={district.DistrictID}
-                label={district.DistrictName}
-                value={district}
-                style={styles.pickerItem}
-              />
-            ))}
-          </Picker>
-        </View>
-        <View style={styles.picker_container}>
-          <Picker
-            selectedValue={selectedWard}
-            onValueChange={(itemValue, itemIndex) => {
-              if (itemIndex !== 0) setSelectedWard(itemValue);
-            }}
-            style={styles.picker}
-            enabled={!!selectedDistrict}
-            mode="dropdown"
-          >
-            <Picker.Item
-              label="-- Chọn phường/xã (*) --"
-              value={null}
-              enabled={false}
-              style={styles.pickerPlaceholder}
-            />
-            {wards.map((ward) => (
-              <Picker.Item
-                key={ward.WardCode}
-                label={ward.WardName}
-                value={ward}
-                style={styles.pickerItem}
-              />
-            ))}
-          </Picker>
-        </View>
-        <View style={[styles.input_container, styles.textAreaContainer]}>
-          <TextInput
-            style={[styles.input_text, styles.textArea]}
-            placeholder="Địa chỉ chi tiết(Số nhà,Tổ dân phố/Xóm) (*)"
-            value={detailAddress}
-            onChangeText={setDetailAddress}
-            multiline={true}
-            numberOfLines={4}
-            textAlignVertical="top"
-            placeholderTextColor={Colors.LIGHT_GREY2}
-          />
-        </View>
+   
+       
 
         <View style={styles.input_container}>
           <View style={styles.input_time_container}>
@@ -508,13 +294,21 @@ export default function Register({ navigation }) {
             </Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
+            <View style={{flexDirection:"row",justifyContent:"flex-end",alignItems:"center",width:"100%",gap:Display.setWidth(2)}}>
+              <TouchableOpacity
+                style={[styles.button, styles.submitButton,{backgroundColor:Colors.DEFAULT_YELLOW}]}
+                onPress={()=>navigation.navigate("LoginScreen")}
+              >
+                <Text style={styles.buttonText}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
           style={[styles.button, styles.submitButton]}
           onPress={createRestaurant}
         >
-          <Text style={styles.buttonText}>Đăng ký</Text>
+          <Text style={styles.buttonText}>Tiếp theo</Text>
         </TouchableOpacity>
+            </View>
+        
        
       </ScrollView>
     </SafeAreaView>
@@ -667,6 +461,6 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: Colors.DEFAULT_GREEN,
     marginBottom: Display.setHeight(3),
-    width: "100%",
+    width: "40%",
   },
 });

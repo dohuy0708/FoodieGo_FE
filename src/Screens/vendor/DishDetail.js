@@ -13,7 +13,7 @@ export default function DishDetail({ navigation, route }) {
   const [currentDishData, setCurrentDishData] = useState(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const [rawDishData, setRawDishData] = useState(initialData);
   const fetchDishDetails = useCallback(async () => {
     if (!initialData?.id) {
       console.error("DishDetail: Missing initial dish ID.");
@@ -120,7 +120,7 @@ export default function DishDetail({ navigation, route }) {
             { marginBottom: insets.bottom + Display.setHeight(2.5) },
              (isLoading || error === "Không tìm thấy thông tin món ăn hoặc có lỗi xảy ra.") && styles.disabledButton
           ]}
-          onPress={() => navigation.navigate("EditDish", { dishData: currentDishData })}
+          onPress={() => navigation.navigate("EditDish", { dishData: rawDishData })}
           disabled={isLoading || error === "Không tìm thấy thông tin món ăn hoặc có lỗi xảy ra."}
         >
           <Text style={styles.buttonText}>Chỉnh sửa</Text>

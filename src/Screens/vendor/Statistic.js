@@ -17,6 +17,7 @@ import Colors from "../../constants/Colors";
 import Nav from "../../components/Nav";
 import Display from "../../utils/Display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Icon from "react-native-vector-icons/Ionicons";
 import { getTop10MenuByRestaurantId,getTotalOrderByRestaurantId,getTotalRevenueByRestaurantId, getTotalRevenueByRestaurantIdByYear } from "../../services/vendorService";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
@@ -325,12 +326,18 @@ export default function Statistic({ navigation }) {
   // --- Main Render ---
   return (
     <View style={[styles.mainContainer, { paddingBottom: insets.bottom }]}>
+       <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Thống kê</Text>
+      </View>
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.header}>Thống kê</Text>
+     
 
         <View style={styles.dateDisplayContainer}>
           {viewType === "month" ? (
@@ -482,7 +489,7 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-    marginBottom: Display.setHeight(2.5),
+   
     color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28,
@@ -720,4 +727,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+   justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    
+  },
+  backButton: { padding: 8 },
 });

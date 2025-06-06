@@ -7,7 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
 import Colors from "../../constants/Colors";
-
+import { checkRestaurantByOwnerId } from "../../services/vendorService";
 export default function SplashScreen() {
   const { setUserInfo } = useContext(UserContext); // Lấy setUserInfo từ context
   const navigation = useNavigation();
@@ -17,10 +17,12 @@ export default function SplashScreen() {
       try {
         const token = await AsyncStorage.getItem("token");
         const userInfoString = await AsyncStorage.getItem("userInfo");
-
+      
         if (token && userInfoString) {
          
           const userInfo = JSON.parse(userInfoString);
+          const restaurant = await checkRestaurantByOwnerId(userInfo.id);
+          console.log("Loginrestaurant", restaurant);
           console.log("LoginuserInfo", userInfo);
           console.log("Logintoken", token);
 
@@ -32,8 +34,12 @@ export default function SplashScreen() {
           if (roleId === 1) {
             navigation.replace("MainApp");
           } else if (roleId === 2) {
-
-            navigation.replace("HomeVendor"); // Có thể thay đổi thành "CustomerApp"
+            if (restaurant) {
+            navigation.replace("HomeVendor");
+            }
+            else{
+              navigation.replace("Register");
+            } // Có thể thay đổi thành "CustomerApp"
           } else if (roleId === 3) {
             navigation.replace("StatisticAdmin"); // Có thể thay đổi thành "RestaurantApp"
 

@@ -15,6 +15,7 @@ import {
   updateOrderStatus,
   sendNotification
 } from "../../services/vendorService";
+import Icon from "react-native-vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 const formatPrice = (price) => {
   if (typeof price !== "number") return "N/A";
@@ -137,7 +138,12 @@ export default function OrderDetail({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Chi tiết đơn hàng</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Chi tiết đơn hàng</Text>
+      </View>
 
       <View style={styles.orderInfoContainer}>
         <View style={styles.viewText}>
@@ -471,4 +477,14 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: Colors.DEFAULT_GREEN,
   },
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+   justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    
+  },
+  backButton: { padding: 8 },
 });

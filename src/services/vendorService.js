@@ -71,7 +71,10 @@ export const uploadImageToServer = async (selectedImage) => {
   });
   console.log("3");
   try {
-    const headers = await getAuthHeaders();
+    console.log("[uploadImageToServer] GRAPHQL_ENDPOINT:", GRAPHQL_ENDPOINT);
+  console.log("[uploadImageToServer] Token for this request:", token);
+  console.log("[uploadImageToServer] Upload Headers for this request:", JSON.stringify(uploadHeaders));
+  console.log("[uploadImageToServer] FormData keys:", Array.from(formData.keys()));
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       body: formData,
@@ -87,10 +90,7 @@ export const uploadImageToServer = async (selectedImage) => {
       result = JSON.parse(responseText);
     } catch (parseError) {
       console.error("Failed to parse server response as JSON:", parseError);
-      Alert.alert(
-        "Lỗi",
-        `Không thể phân tích phản hồi từ server: ${responseText}`
-      );
+     
       return null;
     }
 
@@ -100,7 +100,7 @@ export const uploadImageToServer = async (selectedImage) => {
         result?.errors?.[0]?.message ||
         `Yêu cầu thất bại với mã trạng thái: ${response.status}`;
       console.error("Upload failed (HTTP Status):", errorMessage);
-      Alert.alert("Lỗi Upload", errorMessage);
+   
       return null;
     }
 
@@ -108,7 +108,7 @@ export const uploadImageToServer = async (selectedImage) => {
       const errorMessage =
         result.errors[0].message || "Lỗi không xác định từ GraphQL.";
       console.error("Upload failed (GraphQL Errors):", errorMessage);
-      Alert.alert("Lỗi Upload", errorMessage);
+      
       return null;
     }
 
@@ -118,12 +118,12 @@ export const uploadImageToServer = async (selectedImage) => {
       return result.data.uploadToCloudinary;
     } else {
       console.error("Upload failed: Unexpected response structure", result);
-      Alert.alert("Lỗi", "Cấu trúc phản hồi từ server không đúng.");
+     
       return null;
     }
   } catch (error) {
     console.error("Upload Error (Network/Fetch):", error);
-    Alert.alert("Lỗi Mạng", `Không thể kết nối đến server: ${error.message}`);
+   
     return null;
   }
 };
@@ -291,6 +291,7 @@ export const createNewAddress = async (addressData) => {
 };
 
 export const createNewRestaurant = async (restaurantData) => {
+  console.log("restaurantData",restaurantData);
   if (
     !restaurantData ||
     typeof restaurantData !== "object" ||
@@ -461,6 +462,60 @@ export const getRestaurantByOwnerId = async (ownerId) => {
     }
   } catch (error) {
     console.error("Get restaurant by ownerId Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
+export const checkRestaurantByOwnerId = async (ownerId) => {
+  if (
+    ownerId === null ||
+    ownerId === undefined ||
+    typeof ownerId !== "number" ||
+    !Number.isInteger(ownerId)
+  ) {
+    console.error("getRestaurantByOwnerId requires a valid integer ownerId.");
+    return null;
+  }
+
+  const query = `
+    query GetRestaurantByOwnerId($ownerId: Int!) {
+      findRestaurantsByOwnerId(ownerId: $ownerId) {
+        id
+      }
+    }
+  `;
+  const variables = { ownerId };
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query, variables }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response:", result);
+
+    // Nếu có lỗi và data là null => không có nhà hàng
+    if (result.errors && result.data === null) {
+      return false;
+    }
+
+    // Nếu có data và mảng rỗng => không có nhà hàng
+    if (result.data && Array.isArray(result.data.findRestaurantsByOwnerId) && result.data.findRestaurantsByOwnerId.length === 0) {
+      return false;
+    }
+
+    // Nếu có data và có nhà hàng
+    if (result.data && Array.isArray(result.data.findRestaurantsByOwnerId) && result.data.findRestaurantsByOwnerId.length > 0) {
+      return true;
+    }
+
+    // Trường hợp khác (không xác định)
+    return false;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra nhà hàng theo ownerId:", error);
     return null;
   }
 };
@@ -687,6 +742,96 @@ export const getMenusByCategoryId = async (categoryId) => {
         available
         imageUrl
         quantity
+       
+      }
+    }
+  `;
+
+  const variables = {
+    categoryId: categoryId,
+  };
+
+  console.log("Fetching menus by categoryId:", categoryId);
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Menus):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Get menus by categoryId failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message || "Unknown GraphQL error.";
+        console.error("GraphQL Errors:", graphqlError);
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0]?.message || "Unknown error from GraphQL.";
+      console.error(
+        "Get menus by categoryId failed (GraphQL Errors):",
+        errorMessage
+      );
+      return null;
+    }
+
+    if (result.data && result.data.findMenusByCategoryId !== undefined) {
+      if (result.data.findMenusByCategoryId === null) {
+        console.log("No menus found for categoryId:", categoryId);
+        return [];
+      }
+      console.log(
+        "Menus found successfully:",
+        result.data.findMenusByCategoryId
+      );
+      return result.data.findMenusByCategoryId;
+    } else {
+      console.error(
+        "Get menus by categoryId failed: Unexpected response structure",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Get menus by categoryId Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
+export const getMenusIdByCategoryId = async (categoryId) => {
+  if (
+    categoryId === null ||
+    categoryId === undefined ||
+    typeof categoryId !== "number" ||
+    !Number.isInteger(categoryId)
+  ) {
+    console.error("getMenusByCategoryId requires a valid integer categoryId.");
+    return null;
+  }
+
+  const query = `
+    query GetMenusByCategoryId($categoryId: Int!) {
+      findMenusByCategoryId(categoryId: $categoryId) {
+        id
+        
+       
       }
     }
   `;
@@ -1399,6 +1544,90 @@ export const updateMenu = async (menuUpdateData) => {
   }
 };
 
+export const updateMenuStatus = async (menuId, status) => {
+  console.log("Update menu status", menuId, status);
+  if (!menuId || menuId == null) {
+    console.error(
+      "updateMenuStatusAPI: ID món ăn là bắt buộc để cập nhật.",
+      menuUpdateData
+    );
+    return null;
+  }
+
+
+
+  const mutation = `
+    mutation UpdateExistingMenu($updateMenuInput: UpdateMenuInput!) {
+      updateMenu(updateMenuInput: $updateMenuInput) {
+        id
+        available
+        
+      }
+    }
+  `;
+
+  const variables = {
+    updateMenuInput: {
+      id: parseInt(menuId.id),
+      available: status,
+    },
+  };
+
+  console.log("Sending Update Menu Request:", { query: mutation, variables });
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query: mutation,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Update Menu):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status: ${response.status}`;
+      console.error(
+        "Update menu failed (HTTP Status):",
+        errorMessage,
+        result?.errors || "No GraphQL errors field"
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("GraphQL Error:", err.message)
+        );
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      console.error("Update menu failed (GraphQL Errors):", result.errors);
+      result.errors.forEach((err) =>
+        console.error("GraphQL Error:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.updateMenu) {
+      console.log("Menu updated successfully:", result.data.updateMenu);
+      return result.data.updateMenu;
+    } else {
+      console.error(
+        "Update menu failed: Unexpected response structure.",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Update menu Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
 export const getMenuById = async (menuId) => {
   if (
     menuId === null ||
@@ -1419,7 +1648,11 @@ export const getMenuById = async (menuId) => {
         quantity
         imageUrl
         available
-       
+        category
+        {
+          id
+          name
+        }
       }
     }
   `;
@@ -2404,6 +2637,7 @@ export const findNotificationByUserId = async (userId) => {
   console.log("allNotifications:", allNotifications);
   return allNotifications;
 };
+
 export const sendNotification = async (notificationData) => {
   if (
     !notificationData ||
@@ -2470,5 +2704,41 @@ export const sendNotification = async (notificationData) => {
   } catch (error) {
     console.error("Lỗi khi gửi thông báo (Network/Fetch):", error);
     return null;
+  }
+};
+
+// Lấy tất cả tên nhà hàng (chỉ trường name)
+export const getAllRestaurantNames = async () => {
+  console.log("getAllRestaurantNames");
+  const query = `
+    query {
+      restaurants(page: 1, limit: 100) {
+        data {
+          id
+          name
+        }
+        total
+      }
+    }
+  `;
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query }),
+    });
+    const result = await response.json();
+    console.log("result", result);
+    if (result.data && result.data.restaurants && result.data.restaurants.data) {
+      console.log("result.data.restaurants.data", result.data.restaurants.data);
+      return result.data.restaurants.data;
+    } else {
+      console.error("Không lấy được danh sách tên nhà hàng:", result);
+      return [];
+    }
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách tên nhà hàng:", error);
+    return [];
   }
 };

@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getAllOrdersByRestaurantId } from "../../services/vendorService";
 import useSessionStore from "../../utils/store";
 import Display from "../../utils/Display";
-
+import Icon from "react-native-vector-icons/Ionicons";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 const NAV_HEIGHT = Display.setHeight(7);
@@ -384,8 +384,14 @@ export default function OrderList({ navigation }) {
 
   return (
     <View style={styles.container}>
+     
       <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
+      <View style={styles.headerContainer1}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
         <Text style={styles.header}>Danh sách đơn hàng</Text>
+      </View>
         <View style={styles.filterDisplayContainer}>
           <Text style={styles.filterDisplayText}>
             {formatFilterDateDisplay()}
@@ -531,8 +537,18 @@ const styles = StyleSheet.create({
     color: Colors.PRIMARY_DARK || Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 22,
-    marginBottom: 15,
+    
   },
+  headerContainer1: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+   justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    
+  },
+  backButton: { padding: 8 },
   filterDisplayContainer: {
     flexDirection: "row",
     justifyContent: "space-between",

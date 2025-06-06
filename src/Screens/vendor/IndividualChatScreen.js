@@ -20,7 +20,7 @@ import Display from "../../utils/Display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { listenMessages, sendMessage, recallMessage, updateMessage } from '../../services/chatService';
 import { sendNotification } from '../../services/vendorService';
-
+import Icon from "react-native-vector-icons/Ionicons";
 if (typeof Display === "undefined") {
   global.Display = {
     setHeight: (val) => val * 8,
@@ -236,7 +236,14 @@ export default function IndividualChatScreen({ route, navigation }) {
 
           ]}
         >
-        <Text style={{fontSize: Display.setWidth(5), fontWeight: "bold", marginBottom: Display.setHeight(2),alignSelf: "center", marginTop: Display.setHeight(2)}}>{contactName}</Text>
+           <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={{fontSize: Display.setWidth(5), fontWeight: "bold", marginBottom: Display.setHeight(2),alignSelf:
+           "center", marginTop: Display.setHeight(2)}}>{contactName}</Text>
+      </View>
+        
 
           <FlatList
             ref={flatListRef}
@@ -434,6 +441,15 @@ const styles = StyleSheet.create({
     fontSize: Display.setWidth(3.8),
     color: Colors.DEFAULT_BLACK,
   },
-
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+   justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    
+  },
+  backButton: { padding: 8 },
 
 });
