@@ -141,24 +141,24 @@ const OrderConfirmScreen = ({ navigation, route }) => {
       }
 
       // Gọi API tạo OrderDetail cho từng item trong giỏ
-      // for (const item of items) {
-      //   console.log("iten quantity", item.quantity);
-      //   console.log("note", item?.note);
-      //   console.log("order id", order.id);
-      //   console.log("item id", item.id);
+      for (const item of items) {
+        console.log("iten quantity", item.quantity);
+        console.log("note", item?.note);
+        console.log("order id", order.id);
+        console.log("item id", item.id);
 
-      //   const orderDetail = await createOrderDetail(
-      //     item.quantity,
-      //     item?.note || "",
-      //     order.id,
-      //     item.id
-      //   );
-      //   if (!orderDetail) {
-      //     alert(`Không thể tạo chi tiết đơn hàng cho món: ${item.name}`);
-      //     setIsOrdering(false);
-      //     return;
-      //   }
-      // }
+        const orderDetail = await createOrderDetail(
+          item.quantity,
+          item?.note || "",
+          order.id,
+          item.id
+        );
+        if (!orderDetail) {
+          alert(`Không thể tạo chi tiết đơn hàng cho món: ${item.name}`);
+          setIsOrdering(false);
+          return;
+        }
+      }
       // Gọi API tạo thanh toán PayPal
       const payUrl = await createPaypalOrder("paypal", order.id, "pending");
 
