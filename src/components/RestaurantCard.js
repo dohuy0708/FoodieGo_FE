@@ -46,8 +46,11 @@ const RestaurantCard = ({
       <Image
         // source={{ uri: StaticImageService.getPoster(poster) }}
         source={{
-          uri: "https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/M6HASPARCZHYNN4XTUYT7H6PTE.jpg&w=800&h=600",
-        }} // Replace with your image URL}}
+          uri:
+            avatar?.length > 0
+              ? avatar
+              : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
+        }}
         style={styles.posterStyle}
       />
       <Text style={styles.titleText} numberOfLines={1} ellipsizeMode="tail">

@@ -34,6 +34,8 @@ export const createOrder = async (
     }
   `;
 
+  console.log("GraphQL query:", query);
+  console.log("Total Price:", totalPrice);
   try {
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
@@ -47,6 +49,7 @@ export const createOrder = async (
     const result = await response.json();
 
     if (result?.data?.createOrder) {
+      console.log("Order created successfully:", result.data.createOrder);
       return result.data.createOrder;
     } else {
       throw new Error(result?.errors?.[0]?.message || "Order creation failed");
@@ -132,5 +135,115 @@ export const createOrderDetail = async (quantity, note, orderId, menuId) => {
   } catch (error) {
     console.error("Fetch error:", error);
     return null;
+  }
+};
+export async function fetchPaidOrdersByUserId(userId, page = 1, limit = 10) {
+  const query = `
+    query {
+      findAllPaidOrdersByUserId(
+        userId: ${userId}
+        page: ${page}
+        limit: ${limit}
+      ) {
+        data {
+          id
+          status
+          totalPrice
+          shippingFee
+
+          payment {
+            id
+            transactionId
+            paymentMethod
+          }
+
+          address {
+            id
+            label
+            street
+            ward
+            district
+            province
+          }
+
+          restaurant {
+            id
+            name
+          }
+
+          orderDetail {
+            id
+            quantity
+            note
+            menu {
+              id
+              name
+              price
+              imageUrl
+            }
+          }
+
+          review {
+            id
+            rating
+            content
+          }
+
+          addressSpec
+        }
+        total
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Authorization: `Bearer ${token}` // Bỏ comment nếu bạn dùng auth
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+
+    if (result.errors) {
+      throw new Error(result.errors[0].message);
+    }
+
+    return result.data.findAllPaidOrdersByUserId;
+  } catch (error) {
+    console.error("Error fetching paid orders:", error);
+    throw error;
+  }
+}
+export const serviceUpdateOrderStatus = async (orderId, newStatus) => {
+  const query = `
+    mutation {
+      updateOrder(updateOrderInput: {
+        id: ${orderId},
+        status: "${newStatus}"
+      }) {
+        status
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Authorization: `Bearer ${token}`, // nếu cần token
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+    return result.data.updateOrder;
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw error;
   }
 };

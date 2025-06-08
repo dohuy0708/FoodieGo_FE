@@ -1,65 +1,98 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../constants";
 import { color } from "react-native-elements/dist/helpers";
-const HistoryOrderCard = ({
-  id,
-  storeName,
-  firstFood,
-  firstFoodImg,
-  itemCount,
-  totalItem,
-  totalPrice,
-  isFeedback,
-  navigate,
-}) => {
+const HistoryOrderCard = ({ order, navigate, handleNavigateFeedback }) => {
+  const totalItems =
+    order?.orderDetail?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
+  // Kiểm tra trạng thái đơn hàng
+  let statusText = "";
+  if (order?.status === "confirmed") statusText = "Hoàn thành";
+  else if (order?.status === "cancelled") statusText = "Đã hủy";
+  else statusText = order?.status;
+
+  // Kiểm tra đã đánh giá hay chưa
+  const hasFeedback = Array.isArray(order?.review) && order.review.length > 0;
+
   return (
-    <TouchableOpacity style={styles.container} onPress={() => navigate(id)}>
+    <TouchableOpacity style={styles.container} onPress={() => navigate(order)}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Ionicons style={styles.icon} name="storefront-outline" size={22} />
-          <Text style={styles.storeName}>{storeName}</Text>
+          <Text style={styles.storeName}>{order?.restaurant?.name}</Text>
         </View>
-        <Text style={styles.statusTag}>Hoàn thành</Text>
+        <Text style={{ color: Colors.DEFAULT_GREEN, fontWeight: "bold" }}>
+          ĐH: {order?.id}
+        </Text>
       </View>
 
       <View style={styles.itemDetails}>
         <Image
           source={{
-            uri: "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
+            uri:
+              order?.orderDetail?.[0]?.menu?.imageUrl ||
+              "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
           }}
           style={styles.foodImage}
         />
         <Text style={styles.itemCount}>
-          {itemCount}x {firstFood}
+          {order?.orderDetail?.[0]?.menu?.name}
         </Text>
       </View>
 
       <View style={styles.total}>
-        <Text style={styles.totalText}>Tổng thanh toán ({totalItem} món)</Text>
-        <Text style={styles.price}>{totalPrice} đ</Text>
+        <Text style={styles.totalText}>Tổng thanh toán ({totalItems} món)</Text>
+        <Text>
+          {order?.orderDetail?.[0]?.menu?.price}đ x{" "}
+          {order?.orderDetail?.[0]?.quantity}
+        </Text>
       </View>
 
       <View style={styles.statusContainer}>
-        {isFeedback == true && (
+        {order?.status === "completed" && (
+          <Text
+            style={[
+              styles.statusTag,
+              { flex: 1, textAlign: "left", color: "green" },
+            ]}
+          >
+            Hoàn thành
+          </Text>
+        )}
+        {order?.status === "cancelled" && (
+          <Text
+            style={[
+              styles.statusTag,
+              { flex: 1, textAlign: "left", color: "#e74c3c" },
+            ]}
+          >
+            Đã hủy
+          </Text>
+        )}
+        {order?.status === "completed" && !hasFeedback && (
           <TouchableOpacity
             style={styles.feedbackButton}
-            onPress={() => navigate("FeedbackScreen", { orderId: id })}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleNavigateFeedback(order);
+            }}
           >
             <Text style={styles.buttonText}>Đánh giá</Text>
           </TouchableOpacity>
         )}
-
-        {isFeedback == false && (
-          <TouchableOpacity style={styles.viewFeedbackButton}>
+        {order?.status === "completed" && hasFeedback && (
+          <TouchableOpacity
+            style={styles.viewFeedbackButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleNavigateFeedback(order);
+            }}
+          >
             <Text style={styles.buttonText}>Xem đánh giá</Text>
           </TouchableOpacity>
         )}
-
-        <TouchableOpacity style={styles.reorderButton}>
-          <Text style={styles.buttonText}>Đặt lại</Text>
-        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );

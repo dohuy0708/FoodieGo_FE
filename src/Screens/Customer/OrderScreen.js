@@ -4,73 +4,45 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants";
 import OrderCard from "../../components/OrderCard";
 import HistoryOrderCard from "../../components/HistoryOrderCard";
 import { UserContext } from "../../context/UserContext";
+import { fetchPaidOrdersByUserId } from "../../services/orderService";
+import { useFocusEffect } from "@react-navigation/native";
 
 const OrderScreen = ({ navigation }) => {
   const { userInfo } = useContext(UserContext);
   const [activeSortItem, setActiveSortItem] = useState("Đơn đặt");
   const [orders, setOrders] = useState([]);
-  useEffect(() => {
-    if (activeSortItem === "Đơn đặt") {
-      // API giả cho đơn đặt
-      const fakeOrders = [
-        {
-          id: 1,
-          storeName: "Bún Chả Hà Nội",
-          firstFood: "Bún chả",
-          firstFoodImg: "https://link-to-image.jpg",
-          itemCount: 2,
-          itemPrice: 25000,
-          totalItem: 3,
-          totalPrice: 75000,
-          status: "Chờ xác nhận",
-        },
-        {
-          id: 2,
-          storeName: "Bún Chả Hà Nội",
-          firstFood: "Bún chả",
-          firstFoodImg: "https://link-to-image.jpg",
-          itemCount: 2,
-          itemPrice: 25000,
-          totalItem: 3,
-          totalPrice: 75000,
-          status: "Đang giao",
-        },
-      ];
-      setOrders(fakeOrders);
-    } else if (activeSortItem === "Lịch sử") {
-      // API giả cho lịch sử đơn hàng
-      const fakeHistoryOrders = [
-        {
-          id: 101,
-          storeName: "Cơm Gà Xối Mỡ",
-          firstFood: "Cơm gà",
-          firstFoodImg: "https://link-to-image.jpg",
-          itemCount: 1,
-          totalItem: 1,
-          totalPrice: 45000,
-          isFeedback: false,
-        },
-        {
-          id: 102,
-          storeName: "Bánh Mì PewPew",
-          firstFood: "Bánh mì thịt nướng",
-          firstFoodImg: "https://link-to-image.jpg",
-          itemCount: 1,
-          totalItem: 1,
-          totalPrice: 35000,
-          isFeedback: true,
-        },
-      ];
-      setOrders(fakeHistoryOrders);
+  const [loading, setLoading] = useState(false);
+
+  const handleNavigateFeedback = (order) => {
+    navigation.navigate("FeedbackScreen", { order });
+  };
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await fetchPaidOrdersByUserId(userInfo.id, 1, 10);
+      setOrders(res.data);
+      console.log("Orders fetched successfully:", res.data);
+    } catch (err) {
+      alert(err.message || "Lỗi khi lấy danh sách đơn hàng đã thanh toán");
+    } finally {
+      setLoading(false);
     }
-  }, [activeSortItem]);
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (userInfo?.id) fetchOrders();
+    }, [userInfo?.id])
+  );
+
   const sortStyle = (isActive) =>
     isActive
       ? {
@@ -144,25 +116,75 @@ const OrderScreen = ({ navigation }) => {
 
         <ScrollView style={styles.listContainer}>
           {activeSortItem === "Đơn đặt"
-            ? orders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  {...order}
-                  navigate={(orderId) =>
-                    navigation.navigate("OrderDetailScreen", { orderId })
-                  }
-                />
-              ))
-            : orders.map((order) => (
-                <HistoryOrderCard
-                  key={order.id}
-                  {...order}
-                  navigate={(orderId) =>
-                    navigation.navigate("FeedbackScreen", { orderId })
-                  }
-                />
-              ))}
+            ? (() => {
+                const filtered = orders.filter(
+                  (order) =>
+                    order.status !== "completed" && order.status !== "cancelled"
+                );
+                if (filtered.length === 0) {
+                  return (
+                    <Text
+                      style={{
+                        textAlign: "center",
+                        marginTop: 30,
+                        color: "gray",
+                      }}
+                    >
+                      Không có đơn hàng nào
+                    </Text>
+                  );
+                }
+                return filtered.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    navigate={(orderObj) =>
+                      navigation.navigate("OrderDetailScreen", {
+                        order: orderObj,
+                      })
+                    }
+                    onStatusChange={fetchOrders}
+                    setLoading={setLoading}
+                  />
+                ));
+              })()
+            : (() => {
+                const filtered = orders.filter(
+                  (order) =>
+                    order.status === "completed" || order.status === "cancelled"
+                );
+                if (filtered.length === 0) {
+                  return (
+                    <Text
+                      style={{
+                        textAlign: "center",
+                        marginTop: 30,
+                        color: "gray",
+                      }}
+                    >
+                      Không có đơn hàng nào
+                    </Text>
+                  );
+                }
+                return filtered.map((order) => (
+                  <HistoryOrderCard
+                    key={order.id}
+                    order={order}
+                    navigate={(orderObj) =>
+                      navigation.navigate("OrderDetailScreen", {
+                        order: orderObj,
+                      })
+                    }
+                    handleNavigateFeedback={handleNavigateFeedback}
+                  />
+                ));
+              })()}
         </ScrollView>
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN} />
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -226,6 +248,17 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     zIndex: -5,
     marginBottom: 30,
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
   },
 });
 export default OrderScreen;

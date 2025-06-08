@@ -3,46 +3,77 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../constants";
 import { color } from "react-native-elements/dist/helpers";
-const OrderCard = ({
-  id,
-  storeName,
-  firstFood,
-  firstFoodImg,
-  itemPrice,
-  itemCount,
-  totalItem,
-  totalPrice,
-  status,
-  navigate,
-}) => {
+import { serviceUpdateOrderStatus } from "../services/orderService";
+
+const OrderCard = ({ order, navigate, onStatusChange, setLoading }) => {
+  console.log("OrderCard order:", order);
+  // Tính tổng số món
+  const totalItems =
+    order?.orderDetail?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
+  const handleCancelOrder = async (event) => {
+    event.stopPropagation();
+    try {
+      if (setLoading) setLoading(true);
+      await serviceUpdateOrderStatus(order.id, "cancelled");
+      if (onStatusChange) onStatusChange();
+    } catch (error) {
+      alert("Có lỗi khi hủy đơn hàng!");
+    } finally {
+      if (setLoading) setLoading(false);
+    }
+  };
+  const handleConfirmOrder = async (event) => {
+    event.stopPropagation();
+    try {
+      if (setLoading) setLoading(true);
+      await serviceUpdateOrderStatus(order.id, "completed");
+      if (onStatusChange) onStatusChange();
+    } catch (error) {
+      alert("Có lỗi khi xác nhận đơn hàng!");
+    } finally {
+      if (setLoading) setLoading(false);
+    }
+  };
   return (
-    <TouchableOpacity style={styles.container} onPress={() => navigate(id)}>
+    <TouchableOpacity style={styles.container} onPress={() => navigate(order)}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Ionicons style={styles.icon} name="storefront-outline" size={22} />
-          <Text style={styles.storeName}>{storeName}</Text>
+          <Text style={styles.storeName}>{order?.restaurant?.name}</Text>
         </View>
+        <Text style={{ color: Colors.DEFAULT_GREEN, fontWeight: "bold" }}>
+          ĐH: {order?.id}
+        </Text>
       </View>
 
       <View style={styles.itemDetails}>
         <Image
           source={{
-            uri: "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
+            uri:
+              order?.orderDetail?.[0]?.menu?.imageUrl ||
+              "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
           }}
           style={styles.foodImage}
         />
-        <Text style={styles.itemCount}>{firstFood}</Text>
+        <Text style={styles.itemCount}>
+          {order?.orderDetail?.[0]?.menu?.name}
+        </Text>
         <Text>
-          {itemPrice}đ x {itemCount}
+          {order?.orderDetail?.[0]?.menu?.price}đ x{" "}
+          {order?.orderDetail?.[0]?.quantity}
         </Text>
       </View>
 
       <View>
         <View style={styles.total}>
           <Text style={styles.totalText}>
-            Tổng thanh toán ({totalItem} món)
+            Tổng thanh toán ({totalItems} món)
           </Text>
-          <Text style={styles.price}>{totalPrice} đ</Text>
+          <Text style={styles.price}>
+            {" "}
+            {order?.totalPrice?.toLocaleString("vi-VN")} đ
+          </Text>
         </View>
       </View>
 
@@ -50,20 +81,29 @@ const OrderCard = ({
         <Text
           style={[
             styles.statusTag,
-            status === "Chờ xác nhận" && styles.statusPending,
-            status === "Đang giao" && styles.statusDelivering,
+            order?.status === "pending" && styles.statusPending,
+            order?.status === "confirmed" && styles.statusDelivering,
           ]}
         >
-          {status}
+          {order?.status === "pending"
+            ? "Đang chờ"
+            : order?.status === "confirmed"
+            ? "Đang giao"
+            : order?.status}
         </Text>
-        {status === "Chờ xác nhận" && (
-          <TouchableOpacity style={styles.cancelButton}>
+        {order?.status === "pending" && (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={(event) => handleCancelOrder(event)}
+          >
             <Text style={styles.buttonText}>Hủy đơn</Text>
           </TouchableOpacity>
         )}
-
-        {status === "Đang giao" && (
-          <TouchableOpacity style={styles.confirmButton}>
+        {order?.status === "confirmed" && (
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={(event) => handleConfirmOrder(event)}
+          >
             <Text style={styles.buttonText}>Đã nhận</Text>
           </TouchableOpacity>
         )}
