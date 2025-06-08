@@ -2742,3 +2742,80 @@ export const getAllRestaurantNames = async () => {
     return [];
   }
 };
+export const getReviewByOrderId = async (orderId) => {
+ 
+  const query = `
+    query GetReviewByOrderId($orderId: Int!, $page: Int!, $limit: Int!) {
+     findReviewsByOrderId(orderId: $orderId, page: $page, limit: $limit) {
+       data
+       {
+       id
+       content
+       }
+      }
+    }
+  `;
+  const variables = {
+      orderId: orderId,
+      page: 1,
+      limit: 10,
+  };
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query, variables }),
+    });
+    const result = await response.json();
+    console.log("result", result);
+    if (result.data && result.data.findReviewsByOrderId && result.data.findReviewsByOrderId.data) {
+      console.log("result.data.findReviewsByOrderId.data", result.data.findReviewsByOrderId.data);
+      return result.data.findReviewsByOrderId.data;
+    }
+  }
+  catch (error) {
+    console.error("Lỗi khi lấy đánh giá theo orderId:", error);
+   
+      return [{content:"Không có đánh giá"}];
+    
+   
+  }
+  
+};
+  export const createComplaint = async (complaintData) => {
+    console.log("complaintData", complaintData);
+    const query = `
+      mutation CreateComplaint($createComplaintInput: CreateComplaintInput!) {
+        createComplaint(createComplaintInput: $createComplaintInput) {
+          id
+          content
+        
+        
+          
+          
+        }
+      }
+    `;
+    const variables = {
+      createComplaintInput: complaintData,
+    };
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ query, variables }),
+      });
+      const result = await response.json();
+      console.log("result", result);
+      if (result.data && result.data.createComplaint) {
+        console.log("result.data.createComplaint", result.data.createComplaint);
+        return result.data.createComplaint;
+      }
+    }
+    catch (error) {
+      console.error("Lỗi khi tạo khiếu nại:", error);
+      return null;
+    }
+  };
