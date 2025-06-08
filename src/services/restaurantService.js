@@ -133,6 +133,7 @@ export const searchTopRatedRestaurants = async (
             avatar
           }
           averageRating
+          distance
         }
         total
       }
@@ -154,6 +155,7 @@ export const searchTopRatedRestaurants = async (
       data: result.data.findTopRatedRestaurants.data.map((item) => ({
         ...item.restaurant,
         averageRating: item.averageRating,
+        distance: item.distance,
       })),
       total: result.data.findTopRatedRestaurants.total,
     };

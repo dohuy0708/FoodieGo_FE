@@ -17,6 +17,7 @@ const RestaurantMediumCard = ({
   description,
   time,
   navigate,
+  averageRating,
 }) => {
   return (
     <TouchableOpacity
@@ -57,8 +58,7 @@ const RestaurantMediumCard = ({
         <View style={styles.footerContainer}>
           <View style={styles.rowAndCenter}>
             <FontAwesome name="star" size={14} color={Colors.DEFAULT_YELLOW} />
-            <Text style={styles.ratingText}>4</Text>
-            <Text style={styles.reviewsText}>({10})</Text>
+            <Text style={styles.ratingText}>{averageRating?.toFixed(1)}</Text>
           </View>
           <View style={styles.rowAndCenter}>
             <View style={styles.timeAndDistanceContainer}>

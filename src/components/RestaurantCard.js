@@ -17,6 +17,7 @@ const RestaurantCard = ({
   distance,
   time,
   navigate,
+  averageRating,
 }) => {
   return (
     <TouchableOpacity
@@ -32,7 +33,7 @@ const RestaurantCard = ({
           description,
           time,
         };
-        console.log("Navigating with restaurant:", restaurant);
+
         navigate(restaurant);
       }}
     >
@@ -60,18 +61,17 @@ const RestaurantCard = ({
       <View style={styles.footerContainer}>
         <View style={styles.rowAndCenter}>
           <FontAwesome name="star" size={14} color={Colors.DEFAULT_YELLOW} />
-          <Text style={styles.ratingText}>4</Text>
-          <Text style={styles.reviewsText}>({10})</Text>
+          <Text style={styles.ratingText}>{averageRating?.toFixed(1)}</Text>
         </View>
-        {/* <View style={styles.rowAndCenter}>
+        <View style={styles.rowAndCenter}>
           <View style={styles.timeAndDistanceContainer}>
-            <Ionicons name="location-outline" color={"#yellow"} size={15} />
+            <Ionicons name="location-outline" color={"#yellow"} size={12} />
             <Text style={styles.timeAndDistanceText}>
               {" "}
               {distance?.toFixed(1)} km
             </Text>
           </View>
-        </View> */}
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
   timeAndDistanceContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 5,
-    paddingVertical: 3,
+    paddingHorizontal: 3,
+    paddingVertical: 1,
     backgroundColor: Colors.LIGHT_YELLOW,
     borderRadius: 12,
     marginHorizontal: 3,

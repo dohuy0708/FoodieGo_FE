@@ -147,3 +147,61 @@ export const uploadImageToServer = async (selectedImage) => {
     return null;
   }
 };
+export const getReviewsByRestaurant = async (
+  restaurantId,
+  page = 1,
+  limit = 10
+) => {
+  const token = await AsyncStorage.getItem("token");
+
+  const query = `
+    query {
+      findReviewsByRestaurantId(
+        restaurantId: ${restaurantId},
+        page: ${page},
+        limit: ${limit}
+      ) {
+        data {
+          id
+          content
+          rating
+          imageUrl
+          order {
+            id
+            restaurant {
+              id
+            }
+            user {
+              id
+              name
+            }
+          }
+        }
+        total
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+    if (result.errors) {
+      console.error("GraphQL Errors:", result.errors);
+      throw new Error(result.errors[0]?.message || "Đã xảy ra lỗi.");
+    }
+
+    return result.data.findReviewsByRestaurantId;
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    throw error;
+  }
+};

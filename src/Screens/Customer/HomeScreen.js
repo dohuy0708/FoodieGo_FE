@@ -114,11 +114,21 @@ export default function HomeScreen({ navigation }) {
 
         setNearRestaurants(near.data);
         setNearTotal(near.total);
-        console.log("Near Restaurants:", near.total);
+
         setPopularRestaurants(popular.data);
         setPopularTotal(popular.total);
         setRateRestaurants(rated.data);
         setRateTotal(rated.total);
+
+        console.log("Near restaurants:", {
+          near: near.data,
+        });
+        console.log("Popular restaurants:", {
+          popular: popular.data,
+        });
+        console.log("Rated restaurants:", {
+          rated: rated.data,
+        });
       } catch (error) {
         console.error("Error fetching restaurants:", error);
       } finally {
@@ -353,7 +363,7 @@ export default function HomeScreen({ navigation }) {
             ? popularRestaurants
             : rateRestaurants
           )?.map((item) => {
-            // console.log("Rendering item:", item); // 👈 Ghi log từng item
+            console.log("RestaurantMediumCard ite:", item); // 👈 Log dữ liệu item truyền vào card
             return (
               <RestaurantMediumCard
                 {...item}

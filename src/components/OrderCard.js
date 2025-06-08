@@ -6,7 +6,6 @@ import { color } from "react-native-elements/dist/helpers";
 import { serviceUpdateOrderStatus } from "../services/orderService";
 
 const OrderCard = ({ order, navigate, onStatusChange, setLoading }) => {
-  console.log("OrderCard order:", order);
   // Tính tổng số món
   const totalItems =
     order?.orderDetail?.reduce((sum, item) => sum + item.quantity, 0) || 0;

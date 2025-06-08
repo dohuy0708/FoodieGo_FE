@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { use, useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -23,42 +23,7 @@ import CartModal from "../../components/CartModal";
 import { useTheme } from "react-native-elements";
 import { UserContext } from "../../context/UserContext";
 import ConfirmModal from "../../components/ConfirmModal";
-
-const reviews = [
-  {
-    id: 1,
-    username: "Huy Hoàng",
-    userImageUri: "",
-    rating: 5,
-    content:
-      "Nếu bạn là tín đồ của bún đậu mắm tôm, nhất định phải thử ngay quán này! Mọi thứ từ bún, đậu hủ, chả cốm đến thịt luộc đều tươi ngon, được chế biến vừa vặn.",
-    reviewImage:
-      "https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/M6HASPARCZHYNN4XTUYT7H6PTE.jpg&w=800&h=600",
-    timestamp: "12/03/2025 20:12",
-  },
-  {
-    id: 2,
-    username: "Minh Anh",
-    userImageUri: "",
-    rating: 4,
-    content:
-      "Không gian quán sạch sẽ, phục vụ nhanh nhẹn. Bún đậu ngon, nước mắm pha vừa miệng. Điểm trừ nhỏ là hơi đông vào cuối tuần.",
-    reviewImage: "",
-    timestamp: "11/03/2025 19:00",
-  },
-  {
-    id: 3,
-    username: "Ngọc Trinh",
-    userImageUri: "",
-    rating: 5,
-    content:
-      "Lần nào đến đây cũng ăn no căng bụng! Giá cả hợp lý, đồ ăn nóng hổi và chất lượng ổn định.",
-    reviewImage:
-      "https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/M6HASPARCZHYNN4XTUYT7H6PTE.jpg&w=800&h=600",
-
-    timestamp: "10/03/2025 17:45",
-  },
-];
+import { getReviewsByRestaurant } from "../../services/reviewService";
 
 const FoodScreen = ({ navigation, route }) => {
   const { userInfo } = useContext(UserContext);
@@ -70,7 +35,22 @@ const FoodScreen = ({ navigation, route }) => {
   const [isCartVisible, setCartVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
-
+  const [reviewList, setReviewList] = useState([]);
+  useEffect(() => {
+    if (restaurantId) {
+      const fetchReviews = async () => {
+        try {
+          const reviews = await getReviewsByRestaurant(restaurantId);
+          setReviewList(reviews?.data || []);
+          console.log("Fetched reviews:", reviews?.data);
+        } catch (error) {
+          console.error("Failed to fetch reviews:", error);
+          setReviewList([]);
+        }
+      };
+      fetchReviews();
+    }
+  }, [restaurantId]);
   useEffect(() => {
     if (restaurantId) {
       const cartItems = getCartItems(restaurantId);
@@ -144,7 +124,7 @@ const FoodScreen = ({ navigation, route }) => {
           <Separator height={Display.setHeight(23)} />
 
           {/* Food descrip
-          tion */}
+          ion */}
           <View style={styles.mainContainer}>
             {/* name  */}
             <View style={styles.titleContainer}>
@@ -193,22 +173,29 @@ const FoodScreen = ({ navigation, route }) => {
               <Text style={styles.titleReview}>Bình luận</Text>
             </View>
             {/* Reviews */}
-            {reviews.map((review, index) => (
-              <View key={review.id}>
-                <ReviewItem
-                  username={review.username}
-                  userImageUri={review.userImageUri}
-                  rating={review.rating}
-                  content={review.content}
-                  reviewImage={review.reviewImage}
-                  timestamp={review.timestamp}
-                />
-                {/* Divider trừ phần tử cuối cùng */}
-                {index !== reviews.length - 1 && (
-                  <View style={styles.divider} />
-                )}
-              </View>
-            ))}
+            {reviewList.length > 0 ? (
+              reviewList.map((review, index) => (
+                <View key={review.id}>
+                  <ReviewItem
+                    username={review?.order?.user?.name}
+                    rating={review.rating}
+                    content={review.content}
+                    reviewImage={review.imageUrl}
+                    timestamp={review.createdAt}
+                  />
+                  {/* Divider trừ phần tử cuối cùng */}
+                  {index !== reviewList.length - 1 && (
+                    <View style={styles.divider} />
+                  )}
+                </View>
+              ))
+            ) : (
+              <Text
+                style={{ color: "#888", fontStyle: "italic", marginTop: 10 }}
+              >
+                Chưa có đánh giá nào
+              </Text>
+            )}
           </View>
         </View>
       </ScrollView>

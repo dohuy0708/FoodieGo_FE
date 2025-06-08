@@ -10,6 +10,14 @@ const ReviewItem = ({
   reviewImage,
   timestamp,
 }) => {
+  console.log("ReviewItem props:", {
+    username,
+    userImageUri,
+    rating,
+    content,
+    reviewImage,
+    timestamp,
+  });
   return (
     <View style={styles.reviewContainer}>
       <View style={styles.userRow}>
@@ -26,7 +34,15 @@ const ReviewItem = ({
         <Text style={styles.commentText}>{content}</Text>
 
         {reviewImage && (
-          <Image source={{ uri: reviewImage }} style={styles.imageReview} />
+          <Image
+            source={{
+              uri:
+                reviewImage?.length > 0
+                  ? reviewImage.split(" ")[0]
+                  : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
+            }}
+            style={styles.imageReview}
+          />
         )}
 
         <Text style={styles.timestamp}>{timestamp}</Text>
