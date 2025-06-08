@@ -69,12 +69,13 @@ export default function HomeScreen({ navigation }) {
       setIsLoading(true);
       try {
         const [near, popular, rated] = await Promise.all([
-          searchNearestRestaurants(10.8790332, 106.8107046, 1, 6),
+           searchNearestRestaurants(10.8790332, 106.8107046, 1, 6),
           searchMostOrderedRestaurants(10.8790332, 106.8107046, 1, 6),
           searchTopRatedRestaurants(10.8790332, 106.8107046, 1, 6),
         ]);
 
-        setNearRestaurants(near.data);
+         setNearRestaurants(near.data);
+      
         setNearTotal(near.total);
         console.log("Near Restaurants:", near.total);
         setPopularRestaurants(popular.data);

@@ -19,7 +19,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Display from "../../utils/Display"; // Giả sử file này nằm trong /screens
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { listenMessages, sendMessage, recallMessage, updateMessage } from '../../services/chatService';
-import { sendNotification } from '../../services/vendorService';
+import { sendNotification,getRestaurantById } from '../../services/vendorService';
 // Giả lập Display và Colors nếu bạn chưa có các file này
 // (Trong dự án thực, bạn nên có các file này và xóa phần mock)
 if (typeof Display === "undefined") {
@@ -97,14 +97,14 @@ export default function IndividualChatCustomer({ route, navigation }) {
   const userId = route.params?.userId || 'user1';
   const vendorId = route.params?.vendorId || 'vendor1';
   const insets = useSafeAreaInsets();
-  const ownerId = route.params?.ownerId || 'owner1';
+
   // Sử dụng state messages từ Firebase
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [editingMessage, setEditingMessage] = useState(null);
   const flatListRef = useRef(null);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
-
+  const [ownerId, setOwnerId] = useState(null);
   // Lắng nghe tin nhắn realtime từ Firebase
   useEffect(() => {
   
@@ -127,6 +127,15 @@ export default function IndividualChatCustomer({ route, navigation }) {
       );
     }
   }, [messages]);
+  useEffect(() => {
+    console.log("vendorId",vendorId);
+    const fetchOwnerId = async () => {
+      const restaurant = await getRestaurantById(vendorId);
+      console.log("restaurant",restaurant);
+      setOwnerId(restaurant.owner.id);
+    };
+    fetchOwnerId();
+  }, [vendorId]);
 
   useEffect(() => {
     const onKeyboardShow = () => setKeyboardOffset(30); // offset khi bàn phím hiện
@@ -150,11 +159,13 @@ export default function IndividualChatCustomer({ route, navigation }) {
       setEditingMessage(null);
     } else {
       sendMessage(chatId, userId, inputText);
+      console.log(ownerId);
+      console.log(typeof ownerId);
       await sendNotification({
         title: 'Tin nhắn mới',
         content: 'Bạn có tin nhắn mới',
         type: 'push',
-        userId: ownerId,
+        userId: parseInt(ownerId),
       });
     }
     setInputText("");

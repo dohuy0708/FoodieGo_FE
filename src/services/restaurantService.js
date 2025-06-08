@@ -20,7 +20,10 @@ export const findRestaurantsByCategory = async (
         distance
         description
         avatar
-
+        owner
+        {
+          id
+        }
         
       }
     }
@@ -71,6 +74,11 @@ export const searchNearestRestaurants = async (
           avatar
           distance
           averageRating
+          owner
+          {
+            id
+          }
+
         }
         total
       }
@@ -131,6 +139,10 @@ export const searchTopRatedRestaurants = async (
             name
             description
             avatar
+            owner
+            {
+              id
+            }
           }
           averageRating
         }
@@ -184,6 +196,10 @@ export const searchMostOrderedRestaurants = async (
             name
             description
             avatar
+            owner
+            {
+              id
+            }
           }
           totalOrders
           distance
@@ -266,6 +282,7 @@ export const fetchFoodsByCategoryId = async (categoryId) => {
         price
         available
         imageUrl
+      
       }
     }
   `;

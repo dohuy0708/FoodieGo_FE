@@ -533,7 +533,7 @@ export const getRestaurantById = async (restaurantId) => {
 
   const query = `
     query FindRestaurantById($restaurantId: Int!) {
-      findRestaurantById(id: $restaurantId) {
+     findByIdNotLocation(id: $restaurantId) {
         id
         name
         avatar
@@ -559,7 +559,7 @@ export const getRestaurantById = async (restaurantId) => {
     });
     const result = await response.json();
     console.log("result",result);
-    return result.data.findRestaurantById;
+    return result.data.findByIdNotLocation;
   } catch (error) {
     console.error("Get restaurant by id Error (Network/Fetch):", error);
     return null;

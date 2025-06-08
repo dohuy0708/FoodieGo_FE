@@ -46,6 +46,7 @@ const RestaurantScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     if (restaurantId) {
+      
       const cartItems = getCartItems(restaurantId);
       setItems(cartItems);
     }
@@ -63,12 +64,14 @@ const RestaurantScreen = ({ navigation, route }) => {
   }, [items]);
   const handleChat = () => {
     if(customerId){
+      console.log(restaurant);
       navigation.navigate("IndividualChatCustomer", {
        
         contactName: restaurant?.name,
         contactAvatar: restaurant?.avatar,
         userId: customerId.toString(),
         vendorId: restaurant?.id,
+        
       });
     }else{
       navigation.navigate("LoginScreen");
