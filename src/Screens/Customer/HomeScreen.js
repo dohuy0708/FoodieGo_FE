@@ -7,6 +7,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
+
 import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -24,6 +25,8 @@ import {
   searchNearestRestaurants,
   searchTopRatedRestaurants,
 } from "../../services/restaurantService";
+import * as Location from "expo-location";
+import { GetAddressName } from "../../services/locationService";
 const categories = [
   { id: 1, name: "Cơm", icon: "rice", iconType: "MaterialCommunityIcons" },
   {
@@ -63,6 +66,41 @@ export default function HomeScreen({ navigation }) {
   const [rateRestaurants, setRateRestaurants] = useState([]);
   const [ratePage, setRatePage] = useState(1);
   const [rateTotal, setRateTotal] = useState(0);
+
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [address, setAddress] = useState(null);
+  // Request location permission and get current position
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+
+      let loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc);
+
+      try {
+        console.log("Location:", loc);
+        const result = await GetAddressName(
+          loc.coords.latitude,
+          loc.coords.longitude
+        );
+        if (result && result.formatted_address) {
+          setAddress(result.formatted_address);
+        } else {
+          // Nếu không có địa chỉ, dùng mặc định
+          setAddress(
+            "Cổng sau Trường ĐH Công nghệ thông tin , đại học quốc gia Thành phố Hồ Chí Minh, Linh Trung, Thủ Đức, Hồ Chí Minh"
+          );
+        }
+      } catch (error) {
+        setErrorMsg("Không thể lấy địa chỉ từ vị trí");
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -158,8 +196,14 @@ export default function HomeScreen({ navigation }) {
             {/* location */}
             <TouchableOpacity style={styles.locationContainer}>
               <Ionicons name="location-outline" size={22} color={"#fff"} />
-              <Text style={styles.locationText}>Delivered to</Text>
-              <Text style={styles.selectedLocationText}>HOME</Text>
+              <Text style={styles.locationText}>Giao đến: </Text>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode={"tail"}
+                style={styles.selectedLocationText}
+              >
+                {address}
+              </Text>
               <MaterialIcons
                 name="keyboard-arrow-down"
                 size={18}
@@ -362,6 +406,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 14 * 1.4,
     color: "#fff",
+    width: Display.setWidth(60),
   },
 
   searchContainer: {

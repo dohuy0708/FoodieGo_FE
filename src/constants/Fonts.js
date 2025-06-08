@@ -35,6 +35,7 @@ const Fonts = {
     color: "#BDBDBD", // Dành cho các cảnh báo, tooltip (small text)
   },
   inputText: {
+    width: "100%",
     fontSize: 16,
     fontWeight: "400",
     color: "#000000", // Dành cho văn bản trong các input (text field)

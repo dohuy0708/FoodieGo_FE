@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Header } from "../../components";
@@ -15,6 +16,11 @@ import { Colors } from "../../constants";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useCart } from "../../context/CartContext";
 import { UserContext } from "../../context/UserContext";
+import {
+  createOrder,
+  createOrderDetail,
+  createPaypalOrder,
+} from "../../services/orderService";
 const OrderConfirmScreen = ({ navigation, route }) => {
   const { restaurant, totalPrice, totalItems } = route.params;
 
@@ -28,6 +34,7 @@ const OrderConfirmScreen = ({ navigation, route }) => {
   const [userName, setUserName] = useState("Hoàng Huy");
   const [items, setItems] = useState([]);
   const { getCartItems, clearCart, hasItems } = useCart();
+  const [isOrdering, setIsOrdering] = useState(false);
 
   const handleNoteChange = (itemId, noteText) => {
     const updatedItems = items.map((item) =>
@@ -107,6 +114,70 @@ const OrderConfirmScreen = ({ navigation, route }) => {
     });
   }, []);
 
+  const handleOrder = async () => {
+    if (isOrdering) return; // tránh double click
+    setIsOrdering(true);
+    try {
+      if (!hasItems(restaurant.id)) {
+        alert("Giỏ hàng trống, không thể đặt hàng");
+        setIsOrdering(false);
+        return;
+      }
+
+      // Gọi API tạo đơn hàng
+      const order = await createOrder(
+        totalPrice,
+        "pending",
+        shippingFee,
+        userInfo.id,
+        restaurant.id,
+        1 // hoặc userInfo.addressId nếu có
+      );
+
+      if (!order || !order.id) {
+        alert("Tạo đơn hàng thất bại");
+        setIsOrdering(false);
+        return;
+      }
+
+      // Gọi API tạo OrderDetail cho từng item trong giỏ
+      // for (const item of items) {
+      //   console.log("iten quantity", item.quantity);
+      //   console.log("note", item?.note);
+      //   console.log("order id", order.id);
+      //   console.log("item id", item.id);
+
+      //   const orderDetail = await createOrderDetail(
+      //     item.quantity,
+      //     item?.note || "",
+      //     order.id,
+      //     item.id
+      //   );
+      //   if (!orderDetail) {
+      //     alert(`Không thể tạo chi tiết đơn hàng cho món: ${item.name}`);
+      //     setIsOrdering(false);
+      //     return;
+      //   }
+      // }
+      // Gọi API tạo thanh toán PayPal
+      const payUrl = await createPaypalOrder("paypal", order.id, "pending");
+
+      if (!payUrl) {
+        alert("Không thể tạo thanh toán PayPal");
+        setIsOrdering(false);
+        return;
+      }
+
+      // Mọi thứ ok → xóa giỏ hàng và chuyển trang
+      clearCart(restaurant.id);
+      navigation.navigate("PaymentScreen", { payUrl, orderId: order.id });
+    } catch (error) {
+      console.error("Lỗi khi đặt hàng:", error);
+      alert("Đặt hàng thất bại, vui lòng thử lại sau");
+    }
+    setIsOrdering(false);
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -162,12 +233,12 @@ const OrderConfirmScreen = ({ navigation, route }) => {
               <Text style={styles.shopTitle}>{restaurant?.name}</Text>
             </View>
             <ScrollView
-              howsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 16 }}
             >
               {items.map((item, index) => (
-                <View style={styles.itemRow}>
+                <View style={styles.itemRow} key={item.id || index}>
                   <Image source={{ uri: item.imageUrl }} style={styles.image} />
 
                   <View style={styles.itemDetail}>
@@ -261,11 +332,17 @@ const OrderConfirmScreen = ({ navigation, route }) => {
             </View>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => navigation.navigate("PaymentScreen")}
+              onPress={handleOrder}
+              disabled={isOrdering}
             >
-              <Text style={styles.buttonText}>
-                Đặt đơn - {(totalPrice + shippingFee).toLocaleString("vi-VN")} đ
-              </Text>
+              {isOrdering ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  Đặt đơn - {(totalPrice + shippingFee).toLocaleString("vi-VN")}{" "}
+                  đ
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>

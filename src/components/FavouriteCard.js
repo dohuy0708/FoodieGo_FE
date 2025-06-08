@@ -8,16 +8,7 @@ import { Colors } from "../constants";
 // import { useDispatch, useSelector } from "react-redux";
 // import { BookmarkAction } from "../actions";
 
-const FavoriteCard = ({
-  id,
-  name,
-  image,
-  tags,
-  description,
-  distance,
-  time,
-  navigate,
-}) => {
+const FavoriteCard = ({ id, restaurant, navigate }) => {
   // const addBookmark = () =>
   //   dispatch(BookmarkAction.addBookmark({ restaurantId: id }));
   // const removeBookmark = () =>
@@ -35,16 +26,16 @@ const FavoriteCard = ({
       <Image
         source={{
           uri:
-            image?.length > 0
-              ? image
+            restaurant?.avatar?.length > 0
+              ? restaurant.avatar
               : "https://file.hstatic.net/200000385717/article/fa57c14d-6733-4489-9953-df4a4760d147_1daf56255c344ad79439608b2ef80bd1.jpeg",
         }}
         style={styles.posterStyle}
       />
       {/* Description*/}
       <View style={styles.descriptionContainer}>
-        <Text style={styles.titleText}>{name}</Text>
-        <Text style={styles.desText}>{description}</Text>
+        <Text style={styles.titleText}>{restaurant?.name}</Text>
+        <Text style={styles.desText}>{restaurant?.description}</Text>
         {/* <Text style={styles.tagText}>{tags?.join(" • ")}</Text> */}
         <View style={styles.footerContainer}>
           <View style={styles.rowAndCenter}>
@@ -57,14 +48,16 @@ const FavoriteCard = ({
               <Ionicons name="location-outline" color={"#yellow"} size={15} />
               <Text style={styles.timeAndDistanceText}>
                 {" "}
-                {distance?.toFixed(1)} km
+                {/* {distance?.toFixed(1)} km */}
+                20km
               </Text>
             </View>
             <View style={styles.timeAndDistanceContainer}>
               <Ionicons name="time-outline" color="Blue" size={15} />
               <Text style={styles.timeAndDistanceText}>
                 {" "}
-                {Math.round(distance * 1.5)} phút
+                {/* {Math.round(distance?.toFixed(1) * 1.5)} phút */}
+                15 phút
               </Text>
             </View>
           </View>

@@ -86,6 +86,7 @@ const LoginScreen = ({ navigation }) => {
         setLoading(false); // Dù thành công hay thất bại đều dừng loading
       }
     }
+    a;
   };
   return (
     <SafeAreaView style={{ flex: 1 }}>

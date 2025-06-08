@@ -1,8 +1,11 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import GRAPHQL_ENDPOINT from "../../config";
+
 export const updateUser = async (userId, field, value) => {
   console.log("Gọi service updateUser", userId, field, value);
 
   try {
+    const token = await AsyncStorage.getItem("token");
     // Escape giá trị nếu là chuỗi
     const mutation = `
         mutation {
@@ -19,6 +22,7 @@ export const updateUser = async (userId, field, value) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // Gửi token nếu cần
       },
       body: JSON.stringify({ query: mutation }),
     });

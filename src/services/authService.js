@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import GRAPHQL_ENDPOINT from "../../config";
 
 const registerUser = async ({
@@ -30,6 +31,7 @@ const registerUser = async ({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        //  Authorization: `Bearer ${token}`, // Uncomment if you need to send a token
       },
       body: JSON.stringify({ query: mutation }),
     });
@@ -56,6 +58,7 @@ const verifySignup = async (otp) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        // Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ query: mutation }),
     });
@@ -86,6 +89,7 @@ const loginUser = async (username, password) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         query,

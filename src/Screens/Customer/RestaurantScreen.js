@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -29,17 +29,26 @@ import {
   fetchFoodsByCategoryId,
 } from "../../services/restaurantService";
 import CartPanel from "../../components/CartPanel";
+import { createFavorite } from "../../services/favouriteService";
+import { UserContext } from "../../context/UserContext";
 
 const RestaurantScreen = ({ navigation, route }) => {
   const { restaurant } = route.params || {}; // Thêm fallback để tránh lỗi
-
   const restaurantId = restaurant?.id; // Lấy restaurantId từ restaurant
-
+  const { userInfo } = useContext(UserContext); // <-- Đúng cú pháp
   const [isCartVisible, setCartVisible] = useState(false);
   const { getCartItems, clearCart, hasItems } = useCart();
   const [items, setItems] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [totalItems, setTotalItems] = useState(0); // Thêm state tổng số lượng món
+  const [isLoadingFoods, setIsLoadingFoods] = useState(false); // 👈 Thêm state loading
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState({
+    id: null,
+    name: "",
+  });
+  const [listFoods, setListFoods] = useState([]);
+  const [isFavorite, setIsFavorite] = useState(false);
   // Thêm state tổng giá
 
   useEffect(() => {
@@ -54,7 +63,6 @@ const RestaurantScreen = ({ navigation, route }) => {
       (sum, item) => sum + item.price * item.quantity,
       0
     );
-
     const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
     setTotalItems(totalQuantity);
     setTotalPrice(total);
@@ -63,6 +71,7 @@ const RestaurantScreen = ({ navigation, route }) => {
   const toggleCartModal = () => {
     setCartVisible(!isCartVisible);
   };
+
   const handleNavigateToCart = () => {
     setCartVisible(false);
     // Điều hướng đến OrderConfirmScreen với restaurantId
@@ -74,15 +83,6 @@ const RestaurantScreen = ({ navigation, route }) => {
     });
   };
 
-  const [isLoadingFoods, setIsLoadingFoods] = useState(false); // 👈 Thêm state loading
-
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState({
-    id: null,
-    name: "",
-  });
-  const [listFoods, setListFoods] = useState([]);
-  //const [isBookmarked, setIsBookmarked] = useState(false);
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -124,6 +124,25 @@ const RestaurantScreen = ({ navigation, route }) => {
     loadFoods();
   }, [selectedCategory.id]);
 
+  const addFavorite = async () => {
+    try {
+      console.log("userInfo", userInfo.id);
+      console.log("restaurantId", restaurant.id);
+      await createFavorite(restaurant.id, userInfo.id);
+      setIsFavorite(true);
+    } catch (error) {
+      console.error("Failed to add favorite", error);
+    }
+  };
+
+  const removeFavorite = () => {
+    try {
+      // Giả sử bạn có một hàm để xóa yêu thích, ví dụ:
+      setIsFavorite(false); // Cập nhật trạng thái yêu thích
+    } catch (error) {
+      console.error("Failed to remove favorite", error);
+    }
+  };
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -149,10 +168,10 @@ const RestaurantScreen = ({ navigation, route }) => {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{restaurant?.name}</Text>
             <Ionicons
-              name={"heart-outline"}
+              name={isFavorite ? "heart" : "heart-outline"}
               color={Colors.DEFAULT_YELLOW}
               size={28}
-              onPress={() => (isBookmarked ? removeBookmark() : addBookmark())}
+              onPress={isFavorite ? removeFavorite : addFavorite}
             />
           </View>
           {/* Description */}

@@ -5,48 +5,19 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../components";
 import RestaurantMediumCard from "../../components/RestaurantMediumCard";
 import FavoriteCard from "../../components/FavouriteCard";
 import { Colors } from "../../constants";
 import { UserContext } from "../../context/UserContext";
-const restaurants = [
-  {
-    id: "1",
-    name: "Pizza Palace",
-    images: {
-      poster: "https://example.com/images/pizza.jpg",
-    },
-    tags: ["Pizza", "Italian"],
-    distance: "1.2 km",
-    time: "25-30 min",
-  },
-  {
-    id: "2",
-    name: "Sushi World",
-    images: {
-      poster: "https://example.com/images/sushi.jpg",
-    },
-    tags: ["Sushi", "Japanese"],
-    distance: "2.5 km",
-    time: "30-40 min",
-  },
-  {
-    id: "3",
-    name: "Burger Town",
-    images: {
-      poster: "https://example.com/images/burger.jpg",
-    },
-    tags: ["Burger", "Fast Food"],
-    distance: "0.9 km",
-    time: "20-25 min",
-  },
-];
+import { fetchFavoritesByUserId } from "../../services/favouriteService";
+import { useFocusEffect } from "@react-navigation/native";
 
 const FavoriteScreen = ({ navigation }) => {
   const [activeSortItem, setActiveSortItem] = useState("Mới nhất");
+  const [listFavorite, setListFavorite] = useState([]);
   const { userInfo } = useContext(UserContext);
   const sortStyle = (isActive) =>
     isActive
@@ -65,6 +36,25 @@ const FavoriteScreen = ({ navigation }) => {
 
     fontWeight: isActive ? "500" : "400", // tô đậm nếu active
   });
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchFavorites = async () => {
+        if (!userInfo) return;
+        try {
+          const favorites = await fetchFavoritesByUserId({
+            userId: userInfo.id,
+          });
+          setListFavorite(Array.isArray(favorites) ? favorites : []);
+        } catch (error) {
+          setListFavorite([]);
+          console.error("Failed to fetch favorite restaurants", error);
+        }
+      };
+
+      fetchFavorites();
+    }, [userInfo])
+  );
+
   if (!userInfo) {
     return (
       <SafeAreaView
@@ -120,7 +110,7 @@ const FavoriteScreen = ({ navigation }) => {
 
         {/* List FoodCard */}
         <ScrollView style={styles.listContainer}>
-          {restaurants?.map((item) => (
+          {listFavorite?.map((item) => (
             <FavoriteCard
               {...item}
               key={item?.id}

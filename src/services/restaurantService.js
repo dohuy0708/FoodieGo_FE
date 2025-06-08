@@ -293,3 +293,59 @@ export const fetchFoodsByCategoryId = async (categoryId) => {
     throw error;
   }
 };
+
+export const fetchNearestRestaurantsByName = async ({
+  latitude,
+  longitude,
+  keyword,
+  page = 1,
+  limit = 10,
+}) => {
+  const token = await AsyncStorage.getItem("token");
+  console.log("Fetching nearest restaurants by name:", {
+    latitude,
+    longitude,
+    keyword,
+    page,
+    limit,
+  });
+  const query = `
+    query {
+      searchNearestRestaurantsByName(
+        latitude: ${latitude}
+        longitude: ${longitude}
+        keyword: "${keyword}"
+        page: ${page}
+        limit: ${limit}
+      ) {
+        data {
+          id
+          name
+          description
+          avatar
+          distance
+          averageRating
+        }
+        total
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+    console.log("GraphQL response:", result);
+    return result?.data?.searchNearestRestaurantsByName.data ?? [];
+  } catch (error) {
+    console.error("Error fetching nearest restaurants:", error);
+    throw error;
+  }
+};

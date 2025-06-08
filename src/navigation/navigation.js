@@ -44,6 +44,7 @@ import { CartProvider } from "../context/CartContext";
 import OrderConfirmScreen from "../screens/customer/OrderConfirmScreen";
 import PaymentScreen from "../screens/customer/PaymentScreen";
 import CategoryScreen from "../screens/customer/CategoryScreen";
+import HelpScreen from "../screens/customer/HelpScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -100,6 +101,7 @@ export default function Navigation() {
               name="IndividualChatCustomer"
               component={IndividualChatCustomer}
             />
+            <Stack.Screen name="HelpScreen" component={HelpScreen} />
             <Stack.Screen name="OrderDetailScreen" component={OrderDetail} />
             <Stack.Screen name="FeedbackScreen" component={FeedbackScreen} />
             <Stack.Screen name="CategoryScreen" component={CategoryScreen} />

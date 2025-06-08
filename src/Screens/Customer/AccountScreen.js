@@ -156,7 +156,7 @@ const AccountScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => {
-              navigation.navigate("AboutUsScreen");
+              navigation.navigate("HelpScreen");
             }}
           >
             <View style={styles.iconTitle}>

@@ -1,4 +1,5 @@
-import React from "react";
+import { set } from "firebase/database";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,17 +11,21 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { Colors } from "react-native/Libraries/NewAppScreen";
 
-const searchHistory = [
-  "Matcha đá xay nhầm ánh mắt của em",
-  "Sữa chua việt quất",
-  "Bún bò kobe",
-];
+import {
+  fetchMostOrderedRestaurantsByName,
+  fetchNearestRestaurantsByName,
+  fetchTopRatedRestaurantsByName,
+} from "../../services/restaurantService";
+import RestaurantMediumCard from "../../components/RestaurantMediumCard";
+import { Colors } from "../../constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const suggestions = [
   "Bún",
   "Phở",
+  "Bánh mì",
+  "Pizza",
   "Cơm tấm",
   "Mỳ cay",
   "Trà sữa",
@@ -30,6 +35,63 @@ const suggestions = [
 ];
 
 const SearchScreen = ({ navigation }) => {
+  const [activeSort, setActiveSort] = useState("Gần đây");
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
+
+  const handleSearch = async (text) => {
+    if (!text.trim()) return;
+    setIsLoading(true);
+    setHasSearched(true);
+    try {
+      const data = await fetchNearestRestaurantsByName({
+        latitude: 10.762622,
+        longitude: 106.660172,
+        keyword: text,
+        page: 1,
+        limit: 10,
+      });
+      setSearchResults(data);
+
+      // Lưu lịch sử (không trùng lặp)
+      let newHistory = [text, ...searchHistory.filter((item) => item !== text)];
+      if (newHistory.length > 10) newHistory = newHistory.slice(0, 10);
+      setSearchHistory(newHistory);
+      saveSearchHistory(newHistory);
+    } catch (error) {
+      console.error("Error loading restaurants:", error);
+      setSearchResults([]);
+    }
+    setIsLoading(false);
+  };
+
+  const handleClearHistory = async () => {
+    setSearchHistory([]);
+    try {
+      await AsyncStorage.removeItem("searchHistory");
+    } catch (e) {
+      console.error("Lỗi xóa lịch sử tìm kiếm:", e);
+    }
+  };
+  const loadSearchHistory = async () => {
+    try {
+      const history = await AsyncStorage.getItem("searchHistory");
+      if (history) setSearchHistory(JSON.parse(history));
+    } catch (e) {}
+  };
+  useEffect(() => {
+    loadSearchHistory();
+  }, []);
+  const saveSearchHistory = async (history) => {
+    try {
+      await AsyncStorage.setItem("searchHistory", JSON.stringify(history));
+    } catch (e) {
+      console.error("Lỗi lưu lịch sử tìm kiếm:", e);
+    }
+  };
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -50,8 +112,14 @@ const SearchScreen = ({ navigation }) => {
             style={styles.searchInput}
             placeholder="Tìm kiếm"
             placeholderTextColor="#aaa"
+            value={searchText}
+            onChangeText={setSearchText}
+            onSubmitEditing={() => handleSearch(searchText)}
           />
-          <TouchableOpacity style={{ padding: 4 }}>
+          <TouchableOpacity
+            style={{ padding: 4 }}
+            onPress={() => handleSearch(searchText)}
+          >
             <Ionicons name="search" size={20} />
           </TouchableOpacity>
         </View>
@@ -67,37 +135,85 @@ const SearchScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.sectionContainer}>
-        {/* Search History */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Lịch sử tìm kiếm</Text>
-            <TouchableOpacity>
-              <Text style={styles.clearText}>Xóa</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView>
-            {searchHistory.map((item, index) => (
-              <Text key={index} style={styles.historyItem}>
-                {item}
-              </Text>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Search Suggestions */}
-        <View style={styles.section2}>
-          <Text style={styles.sectionTitle}>Gợi ý tìm kiếm</Text>
-          <View style={styles.suggestionsContainer}>
-            {suggestions.map((item, index) => (
-              <TouchableOpacity key={index} style={styles.suggestionItem}>
-                <Text style={styles.suggestionText}>{item}</Text>
+      {/* UI logic */}
+      {!hasSearched ? (
+        // Lần đầu vào: Hiện lịch sử & gợi ý
+        <View style={styles.sectionContainer}>
+          {/* Search History */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Lịch sử tìm kiếm</Text>
+              <TouchableOpacity onPress={handleClearHistory}>
+                <Text style={styles.clearText}>Xóa</Text>
               </TouchableOpacity>
-            ))}
+            </View>
+            <ScrollView>
+              {searchHistory.map((item, index) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchText(item);
+                  }}
+                  key={index}
+                  style={styles.historyItem}
+                >
+                  <Text>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          {/* Search Suggestions */}
+          <View style={styles.section2}>
+            <Text style={styles.sectionTitle}>Gợi ý tìm kiếm</Text>
+            <View style={styles.suggestionsContainer}>
+              {suggestions.map((item, index) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchText(item);
+                  }}
+                  key={index}
+                  style={styles.suggestionItem}
+                >
+                  <Text style={styles.suggestionText}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
-      </View>
+      ) : isLoading ? (
+        // Đang loading
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text>Đang tìm kiếm...</Text>
+        </View>
+      ) : (
+        // Đã search: luôn hiện sortListContainer, dưới là kết quả hoặc thông báo không tìm thấy
+        <View style={{ flex: 1 }}>
+          {searchResults.length > 0 ? (
+            <ScrollView>
+              {searchResults.map((item) => (
+                <RestaurantMediumCard
+                  {...item}
+                  key={item?.id}
+                  navigate={(restaurant) => {
+                    navigation.navigate("RestaurantScreen", { restaurant });
+                  }}
+                />
+              ))}
+            </ScrollView>
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text>Không tìm thấy sản phẩm</Text>
+            </View>
+          )}
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -185,5 +301,15 @@ const styles = StyleSheet.create({
   suggestionText: {
     fontSize: 14,
     color: "#333",
+  },
+  sortListContainer: {
+    paddingVertical: 8,
+    backgroundColor: Colors.DEFAULT_WHITE,
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 5,
+    elevation: 1,
   },
 });

@@ -1,72 +1,57 @@
 import React, { useState, useRef } from "react";
 import { WebView } from "react-native-webview";
-import { View, Button, ActivityIndicator } from "react-native";
-import GRAPHQL_ENDPOINT from "../../../config";
+import { View, ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "../../constants";
 
 export default function PaymentScreen({ route, navigation }) {
-  //const [payUrl, setPayUrl] = useState(null);
+  const { payUrl, orderId } = route.params;
   const webViewRef = useRef(null);
-  const payUrl =
-    "https://www.sandbox.paypal.com/checkoutnow?token=50L236079K826364V";
-  const startPayment = async () => {
-    console.log("Start payment with PayPal");
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: `
-        mutation {
-          createPaypalOrder(createPaymentInput: {
-            paymentMethod: "paypal"
-            orderId: 1
-            status: "pending"
-          })
-        }
-      `,
-      }),
-    });
-
-    const data = await response.json();
-    console.log("Response from PayPal:", data);
-
-    console.log("Response from PayPal:", data.data.createPaypalOrder);
-    if (data.errors) {
-      console.error("Error creating PayPal order:", data.errors);
-      return;
-    }
-    setPayUrl(data.createPaypalOrder);
-  };
+  const [loading, setLoading] = useState(true);
 
   const handleNavigationChange = (navState) => {
     const { url } = navState;
 
     if (url.includes("/payment/success")) {
-      // 👉 Thành công
-      navigation.replace("PaymentSuccessScreen");
+      setLoading(false);
+      Alert.alert(
+        "Thanh toán thành công",
+        "Cảm ơn bạn đã thanh toán đơn hàng.",
+        [{ text: "OK", onPress: () => navigation.replace("MainApp") }]
+      );
     } else if (url.includes("/payment/cancel")) {
-      // 👉 Hủy thanh toán
-      navigation.replace("PaymentCancelScreen");
+      setLoading(false);
+      Alert.alert("Hủy thanh toán", "Bạn đã hủy thanh toán.");
+      navigation.replace("MainApp");
     }
   };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        {!payUrl ? (
-          <Button title="Thanh toán với PayPal" onPress={startPayment} />
-        ) : (
-          <WebView
-            ref={webViewRef}
-            source={{ uri: payUrl }}
-            onNavigationStateChange={handleNavigationChange}
-            startInLoadingState={true}
-            renderLoading={() => <ActivityIndicator size="large" />}
-          />
+        <WebView
+          ref={webViewRef}
+          source={{ uri: payUrl }}
+          onNavigationStateChange={handleNavigationChange}
+          onLoadStart={() => setLoading(true)}
+          onLoadEnd={() => setLoading(false)}
+        />
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN} />
+          </View>
         )}
       </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+});
