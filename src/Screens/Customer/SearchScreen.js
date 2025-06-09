@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
-
+import * as ImagePicker from "expo-image-picker";
 import {
   fetchMostOrderedRestaurantsByName,
   fetchNearestRestaurantsByName,
@@ -41,7 +41,33 @@ const SearchScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchHistory, setSearchHistory] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
 
+  const selectImage = async () => {
+    try {
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.granted === false) {
+        Alert.alert(
+          "Cần quyền truy cập",
+          "Bạn cần cấp quyền truy cập thư viện ảnh để chọn ảnh."
+        );
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [8, 7],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setSelectedImage(result.assets[0]);
+      }
+    } catch (error) {
+      console.log("ImagePicker Error: ", error);
+      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh.");
+    }
+  };
   const handleSearch = async (text) => {
     if (!text.trim()) return;
     setIsLoading(true);
@@ -129,7 +155,7 @@ const SearchScreen = ({ navigation }) => {
             justifyContent: "center",
             alignItems: "center",
           }}
-          onPress={() => navigation.goBack()}
+          onPress={selectImage}
         >
           <Ionicons name="camera-outline" size={24} />
         </TouchableOpacity>

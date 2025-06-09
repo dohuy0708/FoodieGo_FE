@@ -21,21 +21,64 @@ import {
   createOrderDetail,
   createPaypalOrder,
 } from "../../services/orderService";
+import { GetAddressName } from "../../services/locationService";
 const OrderConfirmScreen = ({ navigation, route }) => {
   const { restaurant, totalPrice, totalItems } = route.params;
 
   const { userInfo } = useContext(UserContext); // Lấy thông tin user
-  // Delivery info
   const [shippingFee, setShippingFee] = useState(0);
+
+  // Lấy thông tin địa chỉ, tên, số điện thoại từ userInfo
+
   const [userLocation, setUserLocation] = useState(
-    "KTX khu A, Phường Đông Hòa, Dĩ An, Bình Dương"
+    userInfo?.address
+      ? `${userInfo.address.street}, ${userInfo.address.ward}, ${userInfo.address.district}, ${userInfo.address.province}`
+      : ""
   );
-  const [userPhone, setUserPhone] = useState("0654428222");
-  const [userName, setUserName] = useState("Hoàng Huy");
+  const [userPhone, setUserPhone] = useState(userInfo?.phone || "");
+  const [userName, setUserName] = useState(userInfo?.name || "");
   const [items, setItems] = useState([]);
   const { getCartItems, clearCart, hasItems } = useCart();
   const [isOrdering, setIsOrdering] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+      let loc = await Location.getCurrentPositionAsync({});
+
+      try {
+        console.log("Location:", loc);
+        console.log("Latitude:", loc.coords.latitude);
+        console.log("Longitude:", loc.coords.longitude);
+        const result = await GetAddressName(
+          loc.coords.latitude,
+          loc.coords.longitude
+        );
+        if (result && result.formatted_address) {
+          setUserLocation(result.formatted_address);
+        }
+      } catch (error) {
+        setErrorMsg("Không thể lấy địa chỉ từ vị trí");
+      }
+    })();
+  }, []);
+  const handleAddress = (userId, currentAddressId) => {
+    // Xử lý cập nhật địa chỉ
+    navigation.navigate("SelectAddressScreen", {
+      userId: userId,
+      currentAddressId: currentAddressId,
+      onAddressUpdated: (newAddress) => {
+        // Cập nhật địa chỉ mới vào state
+        setUserLocation(
+          `${newAddress.street}, ${newAddress.ward}, ${newAddress.district}, ${newAddress.province}`
+        );
+      },
+    });
+  };
   const handleNoteChange = (itemId, noteText) => {
     const updatedItems = items.map((item) =>
       item.id === itemId ? { ...item, note: noteText } : item
@@ -194,9 +237,20 @@ const OrderConfirmScreen = ({ navigation, route }) => {
               size={20}
               color={Colors.DEFAULT_GREEN}
             />
-            <Text style={styles.addressText}>{userLocation}</Text>
-            <TouchableOpacity style={styles.editText}>
-              <Text style={styles.editText}>Chỉnh sửa</Text>
+            <Text
+              style={styles.addressText}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              {userLocation || "Chưa có địa chỉ"}
+            </Text>
+            <TouchableOpacity
+              style={styles.editText}
+              onPress={() => handleAddress(userInfo.id, userInfo.addressId)}
+            >
+              <Text style={styles.editText}>
+                {userLocation ? "Chỉnh sửa" : "Thêm"}
+              </Text>
             </TouchableOpacity>
           </View>
           <View style={styles.row}>
@@ -333,7 +387,7 @@ const OrderConfirmScreen = ({ navigation, route }) => {
             <TouchableOpacity
               style={styles.button}
               onPress={handleOrder}
-              disabled={isOrdering}
+              disabled={isOrdering || !userLocation} // Không cho đặt hàng nếu chưa có địa chỉ
             >
               {isOrdering ? (
                 <ActivityIndicator color="#fff" />
@@ -396,6 +450,8 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     color: "#333",
+    numberOfLines: 2, // Giới hạn số dòng
+    ellipsizeMode: "tail", // Cắt phần dư bằng "..."
   },
   editText: {
     color: "#00AEEF",

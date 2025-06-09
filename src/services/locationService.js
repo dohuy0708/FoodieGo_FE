@@ -30,7 +30,9 @@ export const GetAddressName = async (lat, lng) => {
       throw new Error(JSON.stringify(json.errors));
     }
 
-    return json.data.reverseGeocode;
+    // Chỉ lấy kết quả đầu tiên trả về
+    const firstResult = json.data.reverseGeocode?.[0] || null;
+    return firstResult;
   } catch (error) {
     console.error("Lỗi khi gọi API reverseGeocode:", error);
     throw error;

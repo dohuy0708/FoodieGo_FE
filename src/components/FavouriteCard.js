@@ -13,6 +13,7 @@ const FavoriteCard = ({ id, restaurant, navigate }) => {
   //   dispatch(BookmarkAction.addBookmark({ restaurantId: id }));
   // const removeBookmark = () =>
   //   dispatch(BookmarkAction.removeBookmark({ restaurantId: id }));
+  console.log("RestaurantCard", restaurant);
   return (
     <TouchableOpacity
       style={styles.container}

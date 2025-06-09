@@ -34,6 +34,7 @@ import { UserContext } from "../../context/UserContext";
 
 const RestaurantScreen = ({ navigation, route }) => {
   const { restaurant } = route.params || {}; // Thêm fallback để tránh lỗi
+  console.log("restaurant", restaurant);
   const restaurantId = restaurant?.id; // Lấy restaurantId từ restaurant
   const { userInfo } = useContext(UserContext); // <-- Đúng cú pháp
   const [isCartVisible, setCartVisible] = useState(false);
@@ -187,8 +188,12 @@ const RestaurantScreen = ({ navigation, route }) => {
                 size={18}
                 color={Colors.DEFAULT_YELLOW}
               />
-              <Text style={styles.ratingText}>4.2</Text>
-              <Text style={styles.reviewsText}>(455 Reviews)</Text>
+              <Text style={styles.ratingText}>
+                {" "}
+                {restaurant.averageRating > 0
+                  ? restaurant.averageRating?.toFixed(1)
+                  : "..."}
+              </Text>
             </View>
             <View style={styles.rowAndCenter}>
               <View style={styles.timeAndDistanceContainer}>
@@ -440,7 +445,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 10,
     marginHorizontal: 10,
-    maxHeight: 50,
+    maxHeight: 55,
     overflow: "hidden",
   },
 

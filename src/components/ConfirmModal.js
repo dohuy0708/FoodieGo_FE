@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)", // Màu nền mờ
   },
   modalContent: {
-    width: 300,
+    width: 340,
     padding: 20,
     backgroundColor: "#fff",
     borderRadius: 8,

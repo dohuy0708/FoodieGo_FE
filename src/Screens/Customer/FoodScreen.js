@@ -35,17 +35,15 @@ const FoodScreen = ({ navigation, route }) => {
   const [isCartVisible, setCartVisible] = useState(false);
   const [itemCount, setItemCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [reviewList, setReviewList] = useState([]);
+  const [reviewList, setReviewList] = useState();
   useEffect(() => {
     if (restaurantId) {
       const fetchReviews = async () => {
         try {
           const reviews = await getReviewsByRestaurant(restaurantId);
-          setReviewList(reviews?.data || []);
-          console.log("Fetched reviews:", reviews?.data);
+          setReviewList(reviews);
         } catch (error) {
           console.error("Failed to fetch reviews:", error);
-          setReviewList([]);
         }
       };
       fetchReviews();
@@ -124,7 +122,7 @@ const FoodScreen = ({ navigation, route }) => {
           <Separator height={Display.setHeight(23)} />
 
           {/* Food descrip
-          ion */}
+          tion */}
           <View style={styles.mainContainer}>
             {/* name  */}
             <View style={styles.titleContainer}>
@@ -173,29 +171,21 @@ const FoodScreen = ({ navigation, route }) => {
               <Text style={styles.titleReview}>Bình luận</Text>
             </View>
             {/* Reviews */}
-            {reviewList.length > 0 ? (
-              reviewList.map((review, index) => (
-                <View key={review.id}>
-                  <ReviewItem
-                    username={review?.order?.user?.name}
-                    rating={review.rating}
-                    content={review.content}
-                    reviewImage={review.imageUrl}
-                    timestamp={review.createdAt}
-                  />
-                  {/* Divider trừ phần tử cuối cùng */}
-                  {index !== reviewList.length - 1 && (
-                    <View style={styles.divider} />
-                  )}
-                </View>
-              ))
-            ) : (
-              <Text
-                style={{ color: "#888", fontStyle: "italic", marginTop: 10 }}
-              >
-                Chưa có đánh giá nào
-              </Text>
-            )}
+            {reviewList.map((review, index) => (
+              <View key={review.id}>
+                <ReviewItem
+                  username={review.username}
+                  userImageUri={review.userImageUri}
+                  rating={review.rating}
+                  content={review.content}
+                  reviewImage={review.reviewImage}
+                />
+                {/* Divider trừ phần tử cuối cùng */}
+                {index !== reviews.length - 1 && (
+                  <View style={styles.divider} />
+                )}
+              </View>
+            ))}
           </View>
         </View>
       </ScrollView>

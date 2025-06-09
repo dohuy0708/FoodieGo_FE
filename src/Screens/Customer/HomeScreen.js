@@ -84,6 +84,8 @@ export default function HomeScreen({ navigation }) {
 
       try {
         console.log("Location:", loc);
+        console.log("Latitude:", loc.coords.latitude);
+        console.log("Longitude:", loc.coords.longitude);
         const result = await GetAddressName(
           loc.coords.latitude,
           loc.coords.longitude
@@ -107,9 +109,24 @@ export default function HomeScreen({ navigation }) {
       setIsLoading(true);
       try {
         const [near, popular, rated] = await Promise.all([
-          searchNearestRestaurants(10.8790332, 106.8107046, 1, 6),
-          searchMostOrderedRestaurants(10.8790332, 106.8107046, 1, 6),
-          searchTopRatedRestaurants(10.8790332, 106.8107046, 1, 6),
+          searchNearestRestaurants(
+            location?.coords?.latitude || 10.8790332,
+            location?.coords?.longitude || 106.8107046,
+            1,
+            6
+          ),
+          searchMostOrderedRestaurants(
+            location?.coords?.latitude || 10.8790332,
+            location?.coords?.longitude || 106.8107046,
+            1,
+            6
+          ),
+          searchTopRatedRestaurants(
+            location?.coords?.latitude || 10.8790332,
+            location?.coords?.longitude || 106.8107046,
+            1,
+            6
+          ),
         ]);
 
         setNearRestaurants(near.data);
@@ -119,16 +136,6 @@ export default function HomeScreen({ navigation }) {
         setPopularTotal(popular.total);
         setRateRestaurants(rated.data);
         setRateTotal(rated.total);
-
-        console.log("Near restaurants:", {
-          near: near.data,
-        });
-        console.log("Popular restaurants:", {
-          popular: popular.data,
-        });
-        console.log("Rated restaurants:", {
-          rated: rated.data,
-        });
       } catch (error) {
         console.error("Error fetching restaurants:", error);
       } finally {
@@ -214,11 +221,6 @@ export default function HomeScreen({ navigation }) {
               >
                 {address}
               </Text>
-              <MaterialIcons
-                name="keyboard-arrow-down"
-                size={18}
-                color={"#fff"}
-              />
             </TouchableOpacity>
             {/* search */}
             <View style={styles.searchContainer}>
@@ -363,7 +365,6 @@ export default function HomeScreen({ navigation }) {
             ? popularRestaurants
             : rateRestaurants
           )?.map((item) => {
-            console.log("RestaurantMediumCard ite:", item); // 👈 Log dữ liệu item truyền vào card
             return (
               <RestaurantMediumCard
                 {...item}
@@ -403,20 +404,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 5,
-    marginHorizontal: 20,
+    marginHorizontal: 5,
   },
   locationText: {
-    marginLeft: 5,
-    fontSize: 13,
+    marginLeft: 2,
+    fontSize: 12,
     lineHeight: 13 * 1.4,
     color: "#fff",
   },
   selectedLocationText: {
     marginLeft: 5,
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 14 * 1.4,
     color: "#fff",
-    width: Display.setWidth(60),
+    width: Display.setWidth(68),
   },
 
   searchContainer: {

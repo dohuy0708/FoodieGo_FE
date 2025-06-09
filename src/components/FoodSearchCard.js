@@ -8,16 +8,14 @@ import { Colors } from "../constants";
 // import { useDispatch, useSelector } from "react-redux";
 // import { BookmarkAction } from "../actions";
 
-const RestaurantCard = ({
+const FoodSearchCard = ({
   id,
   name,
   avatar,
+
   description,
-  tags,
-  distance,
-  time,
+
   navigate,
-  averageRating,
 }) => {
   return (
     <TouchableOpacity
@@ -27,26 +25,14 @@ const RestaurantCard = ({
         const restaurant = {
           id,
           name,
-          avatar,
-          tags,
-          distance,
+
           description,
-          time,
-          averageRating,
         };
 
         navigate(restaurant);
       }}
     >
-      {/* <Ionicons
-        // name={isBookmarked ? "bookmark" : "bookmark-outline"}
-        name="heart-outline"
-        size={24}
-        style={styles.bookmark}
-        //  onPress={() => (isBookmarked ? removeBookmark() : addBookmark())}
-      /> */}
       <Image
-        // source={{ uri: StaticImageService.getPoster(poster) }}
         source={{
           uri:
             avatar?.length > 0
@@ -55,24 +41,35 @@ const RestaurantCard = ({
         }}
         style={styles.posterStyle}
       />
-      <Text style={styles.titleText} numberOfLines={1} ellipsizeMode="tail">
-        {name}
-      </Text>
-      {/* <Text style={styles.tagText}>{tags?.join(" • ")}</Text> */}
-      <View style={styles.footerContainer}>
-        <View style={styles.rowAndCenter}>
-          <FontAwesome name="star" size={14} color={Colors.DEFAULT_YELLOW} />
-          <Text style={styles.ratingText}>
-            {averageRating > 0 ? averageRating?.toFixed(1) : "..."}
-          </Text>
-        </View>
-        <View style={styles.rowAndCenter}>
-          <View style={styles.timeAndDistanceContainer}>
-            <Ionicons name="location-outline" color={"#yellow"} size={12} />
-            <Text style={styles.timeAndDistanceText}>
-              {" "}
-              {distance?.toFixed(1)} km
-            </Text>
+      {/* Description*/}
+      <View style={styles.descriptionContainer}>
+        <Text style={styles.titleText}>{name}</Text>
+        <Text style={styles.desText}>
+          {description?.length > 50
+            ? description.substring(0, 50) + "..."
+            : description}
+        </Text>
+        {/* <Text style={styles.tagText}>{tags?.join(" • ")}</Text> */}
+        <View style={styles.footerContainer}>
+          <View style={styles.rowAndCenter}>
+            <FontAwesome name="star" size={14} color={Colors.DEFAULT_YELLOW} />
+            <Text style={styles.ratingText}>{averageRating?.toFixed(1)}</Text>
+          </View>
+          <View style={styles.rowAndCenter}>
+            <View style={styles.timeAndDistanceContainer}>
+              <Ionicons name="location-outline" color={"#yellow"} size={15} />
+              <Text style={styles.timeAndDistanceText}>
+                {" "}
+                {distance?.toFixed(1)} km
+              </Text>
+            </View>
+            <View style={styles.timeAndDistanceContainer}>
+              <Ionicons name="time-outline" color="Blue" size={15} />
+              <Text style={styles.timeAndDistanceText}>
+                {" "}
+                {Math.round(distance * 1.5)} phút
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -82,32 +79,36 @@ const RestaurantCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: 125, // hoặc 180, tùy bạn
-    height: 180,
+    flexDirection: "row",
     justifyContent: "flex-start",
     backgroundColor: Colors.DEFAULT_WHITE,
     borderRadius: 10,
     elevation: 3,
     marginBottom: 5,
+    marginTop: 5,
+    marginHorizontal: 10,
+    padding: 2,
   },
   posterStyle: {
-    width: "100%",
-    height: 120,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    width: 700 * 0.15,
+    height: 700 * 0.15,
+    borderRadius: 10,
+    margin: 5,
+  },
+  descriptionContainer: {
+    flex: 1, // Cho phép chiếm phần còn lại
+    justifyContent: "space-between",
   },
   titleText: {
-    marginHorizontal: 8,
-    marginTop: 6,
-    fontSize: 13,
-    lineHeight: 21,
-    color: Colors.DEFAULT_BLACK,
-    numberOfLines: 1, // thuộc tính JSX, không CSS
-    ellipsizeMode: "tail",
-  },
-  tagText: {
+    marginTop: 10,
     marginLeft: 8,
-    fontSize: 11,
+    fontSize: 15,
+    lineHeight: 15 * 1.4,
+    color: Colors.DEFAULT_BLACK,
+  },
+  desText: {
+    marginLeft: 8,
+    fontSize: 12,
     lineHeight: 11 * 1.4,
     color: Colors.DEFAULT_GREY,
     marginBottom: 5,
@@ -116,8 +117,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 8,
-    marginTop: 5,
-    marginBottom: 6,
+    marginBottom: 15,
     justifyContent: "space-between",
   },
   rowAndCenter: {
@@ -127,13 +127,14 @@ const styles = StyleSheet.create({
   timeAndDistanceContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 3,
-    paddingVertical: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 3,
     backgroundColor: Colors.LIGHT_YELLOW,
     borderRadius: 12,
+    marginHorizontal: 3,
   },
   timeAndDistanceText: {
-    fontSize: 9,
+    fontSize: 10,
     lineHeight: 10 * 1.4,
     color: Colors.DEFAULT_YELLOW,
   },
@@ -156,4 +157,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RestaurantCard;
+export default FoodSearchCard;

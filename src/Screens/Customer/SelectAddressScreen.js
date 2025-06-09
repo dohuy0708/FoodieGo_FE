@@ -783,23 +783,29 @@ const SelectAddressScreen = ({ navigation, route }) => {
       }
 
       Alert.alert("Thành công", "Địa chỉ của bạn đã được cập nhật thành công!");
+      // Gọi callback về màn trước nếu có
+      if (route.params?.onAddressUpdated) {
+        route.params.onAddressUpdated({
+          street: selectedLocation.street,
+          ward: selectedLocation.ward,
+          district: selectedLocation.district,
+          province: selectedLocation.province,
+        });
+        navigation.goBack();
+        return;
+      }
       navigation.dispatch(
         CommonActions.reset({
-          index: 1, // AddressScreen sẽ là màn hình active (index 1 trong stack mới của RootStack)
+          index: 1,
           routes: [
-            // Route đầu tiên là màn hình Tab Navigator chính của bạn,
-            // và chúng ta muốn Tab "Tôi" được active bên trong nó.
             {
-              name: "MainApp", // Tên route của CustomerBottomTab trong RootStack
+              name: "MainApp",
               state: {
-                // Chỉ định state cho navigator lồng nhau (CustomerBottomTab)
-                routes: [{ name: "Tôi" }], // Active tab 'Tôi'
-                // Nếu bạn muốn Tab 'Tôi' cũng reset stack bên trong nó (nếu có):
-                // index: 0, // (Tùy chọn, nếu 'Tôi' là một stack và bạn muốn reset nó về màn hình đầu)
+                routes: [{ name: "Tôi" }],
               },
             },
             {
-              name: "AddressScreen", // Tên route của AddressScreen trong RootStack
+              name: "AddressScreen",
               params: { addressUpdated: true, newAddressId: finalAddressId },
             },
           ],

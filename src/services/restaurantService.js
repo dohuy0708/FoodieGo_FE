@@ -351,3 +351,128 @@ export const fetchNearestRestaurantsByName = async ({
     throw error;
   }
 };
+export const findMenusByImage = async (selectedImage, limit = 10) => {
+  const token = await AsyncStorage.getItem("token");
+  if (!selectedImage?.uri) {
+    Alert.alert("Lỗi", "Không có ảnh hợp lệ.");
+    return null;
+  }
+
+  const formData = new FormData();
+
+  // GraphQL multipart request với truy vấn cập nhật
+  formData.append(
+    "operations",
+    JSON.stringify({
+      query: `
+        query($file: Upload!, $limit: Int!) {
+          findMenusByImageUrl(file: $file, limit: $limit) {
+            id
+            name
+            imageUrl
+            description
+            category {
+              id
+              restaurant {
+                id
+              }
+            }
+            price
+          }
+        }
+      `,
+      variables: {
+        file: null,
+        limit: limit,
+      },
+    })
+  );
+
+  formData.append("map", JSON.stringify({ 0: ["variables.file"] }));
+
+  const fileName = selectedImage.fileName || selectedImage.uri.split("/").pop();
+  const ext = fileName.split(".").pop()?.toLowerCase();
+  const mimeType =
+    selectedImage.mimeType ||
+    {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      gif: "image/gif",
+    }[ext] ||
+    "image/jpeg";
+
+  formData.append("0", {
+    uri: selectedImage.uri,
+    name: fileName,
+    type: mimeType,
+  });
+
+  try {
+    const response = await fetch("http://localhost:3001/graphql", {
+      method: "POST",
+      body: formData,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result?.data?.findMenusByImageUrl) {
+      console.log("✅ Dữ liệu trả về:", result.data.findMenusByImageUrl);
+      return result.data.findMenusByImageUrl;
+    }
+
+    const errorMessage =
+      result?.errors?.[0]?.message || `Gọi API thất bại (${response.status})`;
+    Alert.alert("Lỗi", errorMessage);
+    return null;
+  } catch (error) {
+    Alert.alert("Lỗi Mạng", `Không thể kết nối: ${error.message}`);
+    return null;
+  }
+};
+export const findRestaurantById = async (id, latitude, longitude) => {
+  const token = localStorage.getItem("token"); // Nếu là React Native, dùng AsyncStorage
+
+  const query = `
+    query {
+      findRestaurantById(id: ${id}, latitude: ${latitude}, longitude: ${longitude}) {
+        id
+        name
+        description
+        avatar
+        distance
+        averageRating
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch("http://localhost:3001/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result?.data?.findRestaurantById) {
+      return result.data.findRestaurantById;
+    } else {
+      const errorMessage =
+        result?.errors?.[0]?.message || `Query thất bại (${response.status})`;
+      console.error("Lỗi:", errorMessage);
+      return null;
+    }
+  } catch (error) {
+    console.error("Lỗi mạng:", error.message);
+    return null;
+  }
+};

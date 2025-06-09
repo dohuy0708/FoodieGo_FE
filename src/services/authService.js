@@ -116,6 +116,17 @@ const GetUserById = async (userId, token) => {
         role {
           id
         }
+        address {
+          id
+          label
+          province
+          district
+          ward
+          street
+          latitude
+          longitude
+          placeId
+        }
       
       }
     }
