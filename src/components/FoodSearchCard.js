@@ -8,15 +8,7 @@ import { Colors } from "../constants";
 // import { useDispatch, useSelector } from "react-redux";
 // import { BookmarkAction } from "../actions";
 
-const FoodSearchCard = ({
-  id,
-  name,
-  avatar,
-
-  description,
-
-  navigate,
-}) => {
+const FoodSearchCard = ({ id, name, avatar, description, navigate }) => {
   return (
     <TouchableOpacity
       style={styles.container}
@@ -50,28 +42,6 @@ const FoodSearchCard = ({
             : description}
         </Text>
         {/* <Text style={styles.tagText}>{tags?.join(" • ")}</Text> */}
-        <View style={styles.footerContainer}>
-          <View style={styles.rowAndCenter}>
-            <FontAwesome name="star" size={14} color={Colors.DEFAULT_YELLOW} />
-            <Text style={styles.ratingText}>{averageRating?.toFixed(1)}</Text>
-          </View>
-          <View style={styles.rowAndCenter}>
-            <View style={styles.timeAndDistanceContainer}>
-              <Ionicons name="location-outline" color={"#yellow"} size={15} />
-              <Text style={styles.timeAndDistanceText}>
-                {" "}
-                {distance?.toFixed(1)} km
-              </Text>
-            </View>
-            <View style={styles.timeAndDistanceContainer}>
-              <Ionicons name="time-outline" color="Blue" size={15} />
-              <Text style={styles.timeAndDistanceText}>
-                {" "}
-                {Math.round(distance * 1.5)} phút
-              </Text>
-            </View>
-          </View>
-        </View>
       </View>
     </TouchableOpacity>
   );
@@ -90,8 +60,8 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   posterStyle: {
-    width: 700 * 0.15,
-    height: 700 * 0.15,
+    width: 600 * 0.15,
+    height: 600 * 0.15,
     borderRadius: 10,
     margin: 5,
   },

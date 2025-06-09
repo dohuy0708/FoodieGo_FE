@@ -93,7 +93,7 @@ const FavoriteScreen = ({ navigation }) => {
         </View>
 
         {/* Sort list */}
-        <View style={styles.sortListContainer}>
+        {/* <View style={styles.sortListContainer}>
           {["Mới nhất", "Bán chạy", "Đánh giá"].map((item) => {
             const isActive = activeSortItem === item;
             return (
@@ -106,7 +106,7 @@ const FavoriteScreen = ({ navigation }) => {
               </TouchableOpacity>
             );
           })}
-        </View>
+        </View> */}
 
         {/* List FoodCard */}
         <ScrollView style={styles.listContainer}>

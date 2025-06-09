@@ -122,7 +122,7 @@ const FoodScreen = ({ navigation, route }) => {
           <Separator height={Display.setHeight(23)} />
 
           {/* Food descrip
-          tion */}
+          ion */}
           <View style={styles.mainContainer}>
             {/* name  */}
             <View style={styles.titleContainer}>
@@ -171,21 +171,25 @@ const FoodScreen = ({ navigation, route }) => {
               <Text style={styles.titleReview}>Bình luận</Text>
             </View>
             {/* Reviews */}
-            {reviewList.map((review, index) => (
-              <View key={review.id}>
-                <ReviewItem
-                  username={review.username}
-                  userImageUri={review.userImageUri}
-                  rating={review.rating}
-                  content={review.content}
-                  reviewImage={review.reviewImage}
-                />
-                {/* Divider trừ phần tử cuối cùng */}
-                {index !== reviews.length - 1 && (
-                  <View style={styles.divider} />
-                )}
-              </View>
-            ))}
+            {reviewList && reviewList.length > 0 ? (
+              reviewList.map((review, index) => (
+                <View key={review.id}>
+                  <ReviewItem
+                    username={review.username}
+                    userImageUri={review.userImageUri}
+                    rating={review.rating}
+                    content={review.content}
+                    reviewImage={review.reviewImage}
+                  />
+                  {/* Divider trừ phần tử cuối cùng */}
+                  {index !== reviewList.length - 1 && (
+                    <View style={styles.divider} />
+                  )}
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noReviewText}>Chưa có bình luận nào.</Text>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -334,7 +338,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 10,
     marginHorizontal: 10,
-    maxHeight: 50,
+    maxHeight: 55,
     overflow: "hidden",
   },
 
@@ -429,6 +433,12 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#ccc",
     marginVertical: 16,
+  },
+  noReviewText: {
+    color: Colors.DEFAULT_GREY,
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 10,
   },
 });
 export default FoodScreen;

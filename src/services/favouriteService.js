@@ -86,3 +86,45 @@ export const fetchFavoritesByUserId = async ({
     throw error;
   }
 };
+export const getFavoriteByRestaurantId = async (restaurantId, userId) => {
+  const token = await AsyncStorage.getItem("token");
+
+  const query = `
+    query {
+      findFavoriteByRestaurantId(
+        restaurantId: ${restaurantId}
+        userId: ${userId}
+      ) {
+        id
+        restaurant {
+          id
+          name
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.data?.findFavoriteByRestaurantId) {
+      return result.data.findFavoriteByRestaurantId;
+    } else {
+      console.error("GraphQL errors:", result.errors);
+      return null;
+    }
+  } catch (error) {
+    console.error("Network error:", error);
+    return null;
+  }
+};

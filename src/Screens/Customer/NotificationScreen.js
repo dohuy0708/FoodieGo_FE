@@ -134,7 +134,7 @@ export default function Notification({ navigation }) {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
    navContainer: {

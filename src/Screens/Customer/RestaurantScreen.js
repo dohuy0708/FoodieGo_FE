@@ -32,7 +32,10 @@ import {
   fetchFoodsByCategoryId,
 } from "../../services/restaurantService";
 import CartPanel from "../../components/CartPanel";
-import { createFavorite } from "../../services/favouriteService";
+import {
+  createFavorite,
+  getFavoriteByRestaurantId,
+} from "../../services/favouriteService";
 import { UserContext } from "../../context/UserContext";
 
 const RestaurantScreen = ({ navigation, route }) => {
@@ -59,7 +62,19 @@ const RestaurantScreen = ({ navigation, route }) => {
   const [listFoods, setListFoods] = useState([]);
   const [isFavorite, setIsFavorite] = useState(false);
   // Thêm state tổng giá
-
+  // kiểm tra nhà hàng đã được yêu thích chưa
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (restaurantId && userInfo) {
+        const favorite = await getFavoriteByRestaurantId(
+          restaurantId,
+          userInfo.id
+        );
+        setIsFavorite(!!favorite);
+      }
+    };
+    checkFavorite();
+  }, [restaurantId, userInfo]);
   useEffect(() => {
     if (restaurantId) {
       
