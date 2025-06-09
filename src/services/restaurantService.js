@@ -352,15 +352,15 @@ export const fetchNearestRestaurantsByName = async ({
   }
 };
 export const findMenusByImage = async (selectedImage, limit = 10) => {
+  console.log("Selected image:", selectedImage);
+
   const token = await AsyncStorage.getItem("token");
   if (!selectedImage?.uri) {
-    Alert.alert("Lỗi", "Không có ảnh hợp lệ.");
-    return null;
+    throw new Error("No image selected");
   }
 
   const formData = new FormData();
 
-  // GraphQL multipart request với truy vấn cập nhật
   formData.append(
     "operations",
     JSON.stringify({
@@ -409,29 +409,19 @@ export const findMenusByImage = async (selectedImage, limit = 10) => {
   });
 
   try {
-    const response = await fetch("http://localhost:3001/graphql", {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      body: formData,
       headers: {
-        Accept: "application/json",
         Authorization: `Bearer ${token}`,
       },
+      body: formData,
     });
 
     const result = await response.json();
-
-    if (response.ok && result?.data?.findMenusByImageUrl) {
-      console.log("✅ Dữ liệu trả về:", result.data.findMenusByImageUrl);
-      return result.data.findMenusByImageUrl;
-    }
-
-    const errorMessage =
-      result?.errors?.[0]?.message || `Gọi API thất bại (${response.status})`;
-    Alert.alert("Lỗi", errorMessage);
-    return null;
+    console.log("GraphQL response:", result);
+    return result?.data?.findMenusByImageUrl || [];
   } catch (error) {
-    Alert.alert("Lỗi Mạng", `Không thể kết nối: ${error.message}`);
-    return null;
+    throw error;
   }
 };
 export const findRestaurantById = async (id, latitude, longitude) => {
@@ -476,3 +466,10 @@ export const findRestaurantById = async (id, latitude, longitude) => {
     return null;
   }
 };
+
+if (!GRAPHQL_ENDPOINT) {
+  console.error(
+    "GRAPHQL_ENDPOINT is not defined. Please check your configuration."
+  );
+  throw new Error("API endpoint is missing.");
+}

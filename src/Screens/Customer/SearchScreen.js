@@ -16,10 +16,12 @@ import {
   fetchMostOrderedRestaurantsByName,
   fetchNearestRestaurantsByName,
   fetchTopRatedRestaurantsByName,
+  findMenusByImage,
 } from "../../services/restaurantService";
 import RestaurantMediumCard from "../../components/RestaurantMediumCard";
 import { Colors } from "../../constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import FoodSearchCard from "../../components/FoodSearchCard";
 
 const suggestions = [
   "Bún",
@@ -38,10 +40,35 @@ const SearchScreen = ({ navigation }) => {
   const [activeSort, setActiveSort] = useState("Gần đây");
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [imageSearchResults, setImageSearchResults] = useState([]); // State mới để chứa kết quả tìm kiếm bằng ảnh
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchHistory, setSearchHistory] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+
+  const handleImageSearch = async (image) => {
+    console.log("Handling image search with image:", image);
+    if (!image) {
+      Alert.alert("Chưa chọn ảnh", "Vui lòng chọn ảnh để tìm kiếm.");
+      return;
+    }
+    setIsLoading(true);
+    setHasSearched(true);
+    try {
+      const data = await findMenusByImage(image);
+      setImageSearchResults(data); // Lưu kết quả vào state mới
+    } catch (error) {
+      setImageSearchResults([]); // Đặt kết quả là mảng rỗng nếu có lỗi
+      if (error.message === "Network request failed") {
+        Alert.alert(
+          "Lỗi mạng",
+          "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng của bạn."
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const selectImage = async () => {
     try {
@@ -62,6 +89,7 @@ const SearchScreen = ({ navigation }) => {
       });
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setSelectedImage(result.assets[0]);
+        handleImageSearch(result.assets[0]); // Gọi API sau khi chọn ảnh
       }
     } catch (error) {
       console.log("ImagePicker Error: ", error);
@@ -118,6 +146,13 @@ const SearchScreen = ({ navigation }) => {
       console.error("Lỗi lưu lịch sử tìm kiếm:", e);
     }
   };
+
+  useEffect(() => {
+    // Ensure UI updates immediately when searchResults or imageSearchResults change
+    console.log("Search Results Updated:", searchResults);
+    console.log("Image Search Results Updated:", imageSearchResults);
+  }, [searchResults, imageSearchResults]);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -215,19 +250,7 @@ const SearchScreen = ({ navigation }) => {
       ) : (
         // Đã search: luôn hiện sortListContainer, dưới là kết quả hoặc thông báo không tìm thấy
         <View style={{ flex: 1 }}>
-          {searchResults.length > 0 ? (
-            <ScrollView>
-              {searchResults.map((item) => (
-                <RestaurantMediumCard
-                  {...item}
-                  key={item?.id}
-                  navigate={(restaurant) => {
-                    navigation.navigate("RestaurantScreen", { restaurant });
-                  }}
-                />
-              ))}
-            </ScrollView>
-          ) : (
+          {searchResults.length === 0 && imageSearchResults.length === 0 ? (
             <View
               style={{
                 flex: 1,
@@ -237,6 +260,48 @@ const SearchScreen = ({ navigation }) => {
             >
               <Text>Không tìm thấy sản phẩm</Text>
             </View>
+          ) : (
+            <>
+              {searchResults.length > 0 && (
+                <ScrollView>
+                  {searchResults.map((item) => (
+                    <RestaurantMediumCard
+                      {...item}
+                      key={item?.id}
+                      navigate={(restaurant) => {
+                        navigation.navigate("RestaurantScreen", { restaurant });
+                      }}
+                    />
+                  ))}
+                </ScrollView>
+              )}
+              {imageSearchResults.length > 0 && (
+                <ScrollView>
+                  {imageSearchResults.map((item) => (
+                    <FoodSearchCard
+                      key={item.id}
+                      id={item.id}
+                      name={item.name}
+                      avatar={item.imageUrl}
+                      description={item.description}
+                      navigate={() => {
+                        console.log("Navigating to FoodScreen with data:");
+                        console.log("Food item:", item);
+                        console.log(
+                          "Restaurant ID:",
+                          item.category?.restaurant?.id
+                        );
+
+                        navigation.navigate("FoodScreen", {
+                          food: item,
+                          restaurantId: item.category?.restaurant?.id,
+                        });
+                      }}
+                    />
+                  ))}
+                </ScrollView>
+              )}
+            </>
           )}
         </View>
       )}
