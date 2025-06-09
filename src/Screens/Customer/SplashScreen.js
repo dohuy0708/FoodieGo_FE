@@ -29,7 +29,7 @@ export default function SplashScreen() {
           const roleId = userInfo.roleId;
 
           if (roleId === 1) {
-            navigation.replace("MainApp");
+            navigation.replace("ListVendor");
           } else if (roleId === 2) {
             navigation.replace("MainApp"); // Có thể thay đổi thành "CustomerApp"
           } else if (roleId === 3) {

@@ -104,8 +104,8 @@ const AccountScreen = ({ navigation }) => {
             style={styles.menuItem}
             onPress={() => {
               if (isLoggedIn) {
-                // Nếu đã đăng nhập, điều hướng đến màn hình ProfileScreen
-                navigation.navigate("ProfileScreen");
+                // Nếu đã đăng nhập, điều hướng đến màn hình AddressScreen
+                navigation.navigate("AddressScreen");
               } else {
                 // Nếu chưa đăng nhập, hiển thị modal yêu cầu đăng nhập
                 setIsAlertModalVisible(true);
