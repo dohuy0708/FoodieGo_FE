@@ -41,11 +41,18 @@ import IndividualChatCustomer from "../Screens/Customer/InvidualChatCustomer";
 // import OrderDetailScreen from "../Screens/Customer/OrderDetailScreen";
 import FeedbackScreen from "../Screens/Customer/FeedbackScreen";
 import { CartProvider } from "../context/CartContext";
+import OrderConfirmScreen from "../screens/customer/OrderConfirmScreen";
+import PaymentScreen from "../screens/customer/PaymentScreen";
+import CategoryScreen from "../screens/customer/CategoryScreen";
 import OrderConfirmScreen from "../Screens/Customer/OrderConfirmScreen";
 import PaymentScreen from "../Screens/Customer/PaymentScreen";
 import CategoryScreen from "../Screens/Customer/CategoryScreen";
 import HelpScreen from "../Screens/Customer/HelpScreen";
 import OrderDetailScreen from "../Screens/Customer/OrderDetailScreen";
+import AddressScreen from "../Screens/Customer/AddressScreen";
+import AddAddressScreens from "../Screens/Customer/AddAddressScreen";
+import SelectAddressScreen from "../Screens/Customer/SelectAddressScreen";
+import SeeRestaurantScreen from "../Screens/Admin/SeeRestaurantScreen";
 
 const Stack = createNativeStackNavigator();
 
