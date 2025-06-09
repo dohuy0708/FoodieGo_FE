@@ -15,11 +15,14 @@ import {
   ActivityIndicator,
 } from "react-native";
 import Display from "../../utils/Display";
+import Icon from "react-native-vector-icons/Ionicons";
 
 import {
   createCategory,
   updateCategory,
-  updateCategoryStatus
+  updateCategoryStatus,
+  getMenusIdByCategoryId,
+  updateMenuStatus
 } from "../../services/vendorService"; 
 
 
@@ -105,6 +108,12 @@ export default function EditCategory({ route, navigation }) {
       Alert.alert("Thông báo", "Vui lòng nhập tên danh mục.");
       return;
     }
+    if(allCategories
+      .filter(cat => cat.id !== editingCategory.id)
+      .some(cat => cat.name.toLowerCase() === categoryInput.trim().toLowerCase())){
+      Alert.alert("Thông báo", "Tên danh mục đã tồn tại.");
+      return;
+    }
     if (isLoading) return;
     setIsLoading(true);
 
@@ -138,6 +147,10 @@ export default function EditCategory({ route, navigation }) {
   const handleAddCategory = async () => {
     if (!categoryInput.trim()) {
       Alert.alert("Thông báo", "Vui lòng nhập tên danh mục.");
+      return;
+    }
+    if(allCategories.some(cat => cat.name === categoryInput.trim())){
+      Alert.alert("Thông báo", "Tên danh mục đã tồn tại.");
       return;
     }
      if (restaurantId === null || restaurantId === undefined) {
@@ -175,6 +188,11 @@ export default function EditCategory({ route, navigation }) {
     setIsLoading(true);
 
     try {
+      const menusId = await getMenusIdByCategoryId(categoryToBlock.id);
+      menusId.forEach(async (menuId) => {
+        console.log("menuId", menuId);
+        await updateMenuStatus(menuId, 'unavailable');
+      });
       const success = await updateCategoryStatus(categoryToBlock.id, 'blocked');
 
       if (success) {
@@ -261,7 +279,13 @@ export default function EditCategory({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Quản lý danh mục</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Quản lý danh mục</Text>
+      </View>
+    
       <TouchableOpacity
         style={[styles.addCategoryButton, isLoading && styles.disabledButton]}
         onPress={openAddModal}
@@ -457,7 +481,7 @@ const styles = StyleSheet.create({
     color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 25,
-    width: "100%",
+   
     marginBottom: Display.setHeight(1.5),
   },
   sectionHeader: {
@@ -582,4 +606,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: Display.setHeight(2.5),
   },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+   
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    width: "100%",
+    
+  },
+  backButton: { padding: 8, marginRight: 12 },
 });

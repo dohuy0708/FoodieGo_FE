@@ -1,6 +1,9 @@
 import Navigation from "./src/navigation/navigation.js";
-
+import * as Notifications from 'expo-notifications';
 import { LocaleConfig } from 'react-native-calendars';
+import { useEffect } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as RootNavigation from './src/navigation/RootNavigation';
 LocaleConfig.locales['vi'] = {
   monthNames: [
     'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
@@ -16,13 +19,32 @@ LocaleConfig.locales['vi'] = {
 };
 LocaleConfig.defaultLocale = 'vi';
 
-import { SafeAreaProvider } from "react-native-safe-area-context";
+
 
 
 export default function App() {
+  useEffect(() => {
+    // Lắng nghe sự kiện khi người dùng nhấn vào thông báo
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      // Điều hướng đến trang Notification
+      RootNavigation.navigate("Notification");
+    });
+
+    return () => subscription.remove();
+  }, []);
   return (
     <SafeAreaProvider>
       <Navigation />
     </SafeAreaProvider>
   );
 }
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,      // Hiện banner
+    shouldPlaySound: true,      // Có thể bật âm thanh nếu muốn
+    shouldSetBadge: false,
+  }),
+  onPress: async (notification) => {
+    navigation.navigate("Notification");
+  },
+});

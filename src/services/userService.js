@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import GRAPHQL_ENDPOINT from "../../config";
 
+
 export const updateUser = async (userId, field, value) => {
   console.log("Gọi service updateUser", userId, field, value);
 
@@ -17,12 +18,15 @@ export const updateUser = async (userId, field, value) => {
           }
         }
       `;
-
+     
     const res = await fetch(GRAPHQL_ENDPOINT, {
+     
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Gửi token nếu cần
+
+        "Authorization": `Bearer ${token}`,
+
       },
       body: JSON.stringify({ query: mutation }),
     });

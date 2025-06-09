@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import { useFocusEffect } from '@react-navigation/native';
 import Colors from "../../constants/Colors";
 import {
@@ -23,22 +23,25 @@ import Dish from "../../components/Dish";
 import Nav from "../../components/Nav";
 import Display from "../../utils/Display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { UserContext } from "../../context/UserContext";
 
 const NAV_HEIGHT = Display.setHeight(7);
-const IMAGE_ASPECT_RATIO = 16 / 9;
+const IMAGE_ASPECT_RATIO = 16 / 11;
 const IMAGE_WIDTH = Dimensions.get("window").width;
 const IMAGE_HEIGHT = IMAGE_WIDTH / IMAGE_ASPECT_RATIO;
 const VIEW_INFO_OVERLAP = Display.setHeight(2.5);
 
 export default function HomeVendor({ navigation, route }) {
+  const { userInfo } = useContext(UserContext);
+  const ownerId = userInfo?.id || 155;
   const insets = useSafeAreaInsets();
-  const ownerId = 155;
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
   const [category, setCategory] = useState([]);
   const [menus, setMenus] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory]
+   = useState(useSessionStore.getState().selectedCategoryId || null);
 
   const [isLoadingRestaurant, setIsLoadingRestaurant] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -47,7 +50,8 @@ export default function HomeVendor({ navigation, route }) {
   const [errorRestaurant, setErrorRestaurant] = useState(null);
   const [errorCategories, setErrorCategories] = useState(null);
   const [errorMenus, setErrorMenus] = useState(null);
-  const { setRestaurantId,setCategories } = useSessionStore();
+  const { setRestaurantId,setCategories ,setSelectedCategoryId} = useSessionStore();
+
   const fetchRestaurantCallback = useCallback(() => {
     async function fetchData() {
       setSelectedCategory(null);
@@ -109,6 +113,7 @@ export default function HomeVendor({ navigation, route }) {
       const response = await getCategoriesByRestaurantId(restaurant.id);
       console.log("Categories response:", response);
       if (Array.isArray(response)) {
+        console.log("response categories",response);
         setCategory(response);
         setCategories(response);
       } else {
@@ -181,6 +186,7 @@ export default function HomeVendor({ navigation, route }) {
       categoryId: selectedCategory,
     };
     console.log("Dish data:", dishData);
+    console.log("selectedCategory", dishData.categoryId);
     return <Dish data={dishData} navigation={navigation} />;
   };
 
@@ -272,6 +278,20 @@ export default function HomeVendor({ navigation, route }) {
           <Text style={styles.descriptionText}>{description}</Text>
           <Text style={styles.descriptionText}>Liên hệ: {phone}</Text>
           <Text style={styles.addressText}>{fullAddress}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <TouchableOpacity
+              style={styles.edit_button}
+              onPress={() =>
+                navigation.navigate("SelectAddress", {
+                  currentAddressId: restaurant.address.id,
+                })
+              }
+            >
+              <Text style={{ color: Colors.DEFAULT_WHITE }}>
+                Chỉnh sửa địa chỉ
+              </Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.openingHoursText}>{openingHours}</Text>
           <Text
             style={[
@@ -300,7 +320,12 @@ export default function HomeVendor({ navigation, route }) {
             <View style={styles.picker_container}>
               <Picker
                 selectedValue={selectedCategory}
-                onValueChange={(itemValue) => setSelectedCategory(itemValue)}
+                onValueChange={(itemValue) => 
+                  {
+                    setSelectedCategory(itemValue)
+                    setSelectedCategoryId(itemValue)
+                  }
+                }
                 style={styles.picker}
                 mode="dropdown"
                 enabled={!isLoadingMenus}
@@ -380,7 +405,7 @@ export default function HomeVendor({ navigation, route }) {
         />
       </View>
 
-      <View style={[styles.navContainer, { bottom: insets.bottom }]}>
+      <View style={[styles.navContainer, { height: NAV_HEIGHT+insets.bottom }]}>
         <Nav nav={navigation} />
       </View>
     </View>
@@ -391,7 +416,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE,
   },
   image: {
     width: "100%",
@@ -400,7 +425,7 @@ const styles = StyleSheet.create({
   view_information: {
     width: "100%",
     paddingHorizontal: Display.setWidth(5),
-    backgroundColor: "#fff",
+    backgroundColor: Colors.DEFAULT_WHITE,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     position: "absolute",
@@ -547,6 +572,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
+    bottom: 0,
     height: NAV_HEIGHT,
     backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderTopWidth: 1,

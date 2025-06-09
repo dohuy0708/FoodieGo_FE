@@ -17,6 +17,7 @@ import Colors from "../../constants/Colors";
 import Nav from "../../components/Nav";
 import Display from "../../utils/Display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Icon from "react-native-vector-icons/Ionicons";
 import { getTop10MenuByRestaurantId,getTotalOrderByRestaurantId,getTotalRevenueByRestaurantId, getTotalRevenueByRestaurantIdByYear } from "../../services/vendorService";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
@@ -39,8 +40,8 @@ export default function Statistic({ navigation }) {
   const insets = useSafeAreaInsets();
 
   // --- Mock Data - In a real app, this would be fetched based on filters ---
-  const [orderNumber, setOrderNumber] = useState([]);
-  const [orderRevenue, setOrderRevenue] = useState(1000000);
+  const [orderNumber, setOrderNumber] = useState(0);
+  const [orderRevenue, setOrderRevenue] = useState(0);
   const [topDish, setTopDish] = useState([]);
 
   const [yearlyChartData, setYearlyChartData] = useState({
@@ -67,34 +68,7 @@ export default function Statistic({ navigation }) {
   // --- End Mock Data ---
 
   // Effect to simulate data fetching when filters change
-  useEffect(() => {
-    // Simulate fetching/filtering data based on viewType, currentYear, currentMonth
-    console.log(
-      `Fetching data for: ${viewType}, Year: ${currentYear}, Month: ${
-        viewType === "month" ? currentMonth : "N/A"
-      }`
-    );
-    // Example: update orderNumber and orderRevenue based on filters (simplified)
-    if (viewType === "year") {
-      setOrderNumber(
-        currentYear === 2023 ? 12000 : 10000 + (currentYear % 2020) * 100
-      );
-      setOrderRevenue(
-        currentYear === 2023
-          ? 150000000
-          : 120000000 + (currentYear % 2020) * 1000000
-      );
-      // Update chart data for the selected year if necessary
-      // For now, yearlyChartData.datasets[0].data is static but could be fetched
-    } else {
-      // month view
-      setOrderNumber(1000 + currentMonth * 10 + (currentYear % 2020) * 50);
-      setOrderRevenue(
-        1000000 + currentMonth * 100000 + (currentYear % 2020) * 500000
-      );
-    }
-    // Top dishes could also be updated here
-  }, [viewType, currentYear, currentMonth]);
+ 
   useEffect(() => {
     const fetchTopDishes = async () => {
       let responseDish;
@@ -352,12 +326,18 @@ export default function Statistic({ navigation }) {
   // --- Main Render ---
   return (
     <View style={[styles.mainContainer, { paddingBottom: insets.bottom }]}>
+       <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Thống kê</Text>
+      </View>
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.header}>Thống kê</Text>
+     
 
         <View style={styles.dateDisplayContainer}>
           {viewType === "month" ? (
@@ -482,7 +462,7 @@ export default function Statistic({ navigation }) {
             : renderYearPicker()}
 
           <TouchableOpacity
-            style={styles.applyButton}
+            style={[styles.applyButton,{marginBottom:Display.setHeight(4.5)}]}
             onPress={handleApplyFilters}
           >
             <Text style={styles.applyButtonText}>Áp dụng</Text>
@@ -509,7 +489,7 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-    marginBottom: Display.setHeight(2.5),
+   
     color: Colors.DEFAULT_GREEN,
     fontWeight: "bold",
     fontSize: 28,
@@ -747,4 +727,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+   justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    
+  },
+  backButton: { padding: 8 },
 });

@@ -63,3 +63,12 @@ export const recallMessage = (chatId, messageId) => {
     recalled: true,
   });
 };
+
+// Cập nhật nội dung tin nhắn
+export const updateMessage = (chatId, messageId, newText) => {
+  const messageRef = ref(database, `chats/${chatId}/messages/${messageId}`);
+  return update(messageRef, {
+    text: newText,
+    edited: true,
+  });
+};

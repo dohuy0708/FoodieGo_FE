@@ -14,15 +14,15 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import  Colors  from "../../constants/Colors";
+import Colors from "../../constants/Colors";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import Display from "../../utils/Display";
 import { uploadImageToServer, updateMenu } from "../../services/vendorService";
 import useSessionStore from "../../utils/store";
-
+import Icon from "react-native-vector-icons/Ionicons";
 export default function EditDish({ navigation, route }) {
-  const { dishData } = route.params;
+  const dishData  = route?.params?.dishData;
   const categoriesFromStore = useSessionStore((state) => state.categories);
 
   const [category, setCategory] = useState(categoriesFromStore || []);
@@ -34,7 +34,7 @@ export default function EditDish({ navigation, route }) {
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(null);
-  const [status, setStatus] = useState([
+  const [statusList, setStatusList] = useState([
     { id: "available", name: "Đang bán" },
     { id: "unavailable", name: "Tạm dừng bán" },
   ]);
@@ -43,13 +43,14 @@ export default function EditDish({ navigation, route }) {
 
   useEffect(() => {
     if (dishData) {
+      console.log("dishData",dishData);
       setName(dishData.name);
       setDescription(dishData.description || "");
-      setPrice(dishData.price.toLocaleString("de-DE"));
-      setQuantity(dishData.quantity.toString());
-      setSelectedCategoryId(dishData.categoryId);
+      setPrice(dishData.price ? dishData.price.toLocaleString("de-DE") : "");
+      setQuantity(dishData.quantity ? dishData.quantity.toString() : "");
+      setSelectedCategoryId(dishData.categoryId || null);
       setSelectedStatus(dishData.available ? "available" : "unavailable");
-      setSelectedImage({ uri: dishData.imageUrl });
+       setSelectedImage({ uri: dishData.imageUrl });
       setImageChanged(false);
       setCategory(categoriesFromStore || []);
       setIsLoading(false);
@@ -57,7 +58,9 @@ export default function EditDish({ navigation, route }) {
       Alert.alert("Lỗi", "Không có dữ liệu món ăn để chỉnh sửa.", [
         { text: "OK", onPress: () => navigation.goBack() },
       ]);
+      setIsLoading(false);
     }
+   
   }, [dishData, categoriesFromStore, navigation]);
 
   const formatPrice = (text) => {
@@ -78,11 +81,11 @@ export default function EditDish({ navigation, route }) {
 
   const handleQuantityChange = (text) => {
     const numericValue = text.replace(/[^0-9]/g, "");
-     if (numericValue.length > 1 && numericValue.startsWith('0')) {
-       setQuantity(parseInt(numericValue, 10).toString());
-     } else {
-       setQuantity(numericValue);
-     }
+    if (numericValue.length > 1 && numericValue.startsWith("0")) {
+      setQuantity(parseInt(numericValue, 10).toString());
+    } else {
+      setQuantity(numericValue);
+    }
   };
 
   const selectImage = async () => {
@@ -116,6 +119,7 @@ export default function EditDish({ navigation, route }) {
   };
 
   const handleUpdateDish = async () => {
+    console.log("selectedImage",selectedImage);
     Keyboard.dismiss();
 
     if (!name.trim()) {
@@ -137,11 +141,7 @@ export default function EditDish({ navigation, route }) {
 
     const numericPriceString = price.replace(/\./g, "");
     const priceValue = parseInt(numericPriceString, 10);
-    if (
-      !numericPriceString ||
-      isNaN(priceValue) ||
-      priceValue <= 0
-    ) {
+    if (!numericPriceString || isNaN(priceValue) || priceValue <= 0) {
       Alert.alert(
         "Thiếu thông tin",
         "Vui lòng nhập giá món ăn hợp lệ (lớn hơn 0)."
@@ -156,34 +156,39 @@ export default function EditDish({ navigation, route }) {
       Alert.alert("Thiếu thông tin", "Vui lòng chọn tình trạng món ăn.");
       return;
     }
-    if (!selectedImage || !selectedImage.uri) {
-      Alert.alert("Thiếu thông tin", "Vui lòng chọn ảnh cho món ăn.");
+    if (imageChanged && (!selectedImage || !selectedImage.uri || !selectedImage.uri.startsWith('file:'))) {
+        Alert.alert("Thiếu thông tin", "Vui lòng chọn ảnh mới hợp lệ cho món ăn nếu bạn đã thay đổi.");
+        return;
+    }
+    if (!category || category.length === 0) {
+      Alert.alert("Lỗi", "Không có danh mục nào để chọn.");
       return;
     }
-     if (!category || category.length === 0) {
-       Alert.alert("Lỗi", "Không có danh mục nào để chọn.");
-       return;
-     }
 
     setIsSaving(true);
     let finalImageUrl = dishData.imageUrl;
 
     try {
       if (imageChanged) {
-        console.log("Image changed, uploading new image...");
-        if (!selectedImage.assetId) {
-           throw new Error("Đối tượng ảnh không hợp lệ để tải lên.");
+        
+        console.log("Image changed, attempting to upload new image:", selectedImage);
+        if (!selectedImage || typeof selectedImage.uri !== 'string' || !selectedImage.uri.startsWith('file:')) {
+            throw new Error("Ảnh đã chọn không hợp lệ để tải lên. Vui lòng chọn lại.");
         }
-        const uploadedUrl = await uploadImageToServer(selectedImage);
-        if (uploadedUrl) {
-          finalImageUrl = uploadedUrl.split(" ")[0];
-          console.log("New image uploaded:", finalImageUrl);
+        
+        const uploadedUrlResponse = await uploadImageToServer(selectedImage);
+        
+        if (uploadedUrlResponse && typeof uploadedUrlResponse === 'string') {
+          finalImageUrl = uploadedUrlResponse.split(" ")[0];
+          console.log("New image uploaded successfully:", finalImageUrl);
         } else {
-          throw new Error("Không thể tải ảnh mới lên. Vui lòng thử lại.");
+          throw new Error("Không thể tải ảnh mới lên máy chủ. Vui lòng thử lại.");
         }
       } else {
-         console.log("Image not changed, using old URL:", finalImageUrl);
+        console.log("Image not changed, using existing URL:", finalImageUrl);
       }
+
+     
 
       const updateData = {
         id: dishData.id,
@@ -192,12 +197,11 @@ export default function EditDish({ navigation, route }) {
         price: priceValue,
         quantity: quantityValue,
         imageUrl: finalImageUrl,
-        available: selectedStatus,
+        available:selectedStatus ,
         categoryId: selectedCategoryId,
       };
 
       console.log("Updating menu with data:", updateData);
-
       const updatedMenu = await updateMenu(updateData);
 
       if (updatedMenu) {
@@ -206,9 +210,9 @@ export default function EditDish({ navigation, route }) {
           { text: "OK", onPress: () => navigation.goBack() },
         ]);
       } else {
-         throw new Error(
-           "Không thể cập nhật món ăn. Vui lòng kiểm tra thông tin và thử lại."
-         );
+        throw new Error(
+          "Không thể cập nhật món ăn. Máy chủ không phản hồi hoặc có lỗi dữ liệu."
+        );
       }
     } catch (error) {
       console.error("Error during dish update:", error);
@@ -226,31 +230,29 @@ export default function EditDish({ navigation, route }) {
       </View>
     );
   }
-  if (isSaving) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN} />
-        <Text style={styles.loadingText}>Đang lưu thay đổi...</Text>
-      </View>
-    );
-  }
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.keyboardAvoidingContainer}
     >
-      <TouchableWithoutFeedback style={{ flex: 1 }} onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.innerContainer}>
+        <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Chỉnh sửa món ăn</Text>
+      </View>
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContent}
+            contentContainerStyle={styles.scrollViewContentContainer}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.view_image}>
               <Image
-                source={selectedImage ? { uri: selectedImage.uri } : null}
+                source={selectedImage && selectedImage.uri ? { uri: selectedImage.uri } : null}
                 style={styles.previewImage}
                 resizeMode={"cover"}
               />
@@ -267,114 +269,125 @@ export default function EditDish({ navigation, route }) {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.input_container}>
-              <TextInput
-                style={styles.input_text}
-                placeholder="Tên món ăn (*)"
-                value={name}
-                onChangeText={setName}
-                placeholderTextColor={Colors.LIGHT_GREY2}
-                editable={!isSaving}
-              />
-            </View>
-            <View style={styles.input_container}>
-              <TextInput
-                style={styles.input_text}
-                placeholder="Số lượng (*)"
-                value={quantity}
-                onChangeText={handleQuantityChange}
-                keyboardType="numeric"
-                placeholderTextColor={Colors.LIGHT_GREY2}
-                editable={!isSaving}
-              />
-            </View>
-            <View style={[styles.input_container, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input_text, styles.textArea]}
-                placeholder="Mô tả món ăn"
-                value={description}
-                onChangeText={setDescription}
-                multiline={true}
-                numberOfLines={4}
-                textAlignVertical="top"
-                placeholderTextColor={Colors.LIGHT_GREY2}
-                editable={!isSaving}
-              />
-            </View>
-            <View style={styles.input_container}>
-              <TextInput
-                style={styles.input_text}
-                placeholder="Giá món ăn (VNĐ) (*)"
-                value={price}
-                keyboardType="numeric"
-                onChangeText={formatPrice}
-                placeholderTextColor={Colors.LIGHT_GREY2}
-                editable={!isSaving}
-              />
-            </View>
+            <View style={styles.formContainer}>
+              <View style={styles.input_container}>
+                <TextInput
+                  style={styles.input_text}
+                  placeholder="Tên món ăn (*)"
+                  value={name}
+                  onChangeText={setName}
+                  placeholderTextColor={Colors.LIGHT_GREY2}
+                  editable={!isSaving}
+                />
+              </View>
+              <View style={styles.input_container}>
+                <TextInput
+                  style={styles.input_text}
+                  placeholder="Số lượng (*)"
+                  value={quantity}
+                  onChangeText={handleQuantityChange}
+                  keyboardType="numeric"
+                  placeholderTextColor={Colors.LIGHT_GREY2}
+                  editable={!isSaving}
+                />
+              </View>
+              <View style={[styles.input_container, styles.textAreaContainer]}>
+                <TextInput
+                  style={[styles.input_text, styles.textArea]}
+                  placeholder="Mô tả món ăn"
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline={true}
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  placeholderTextColor={Colors.LIGHT_GREY2}
+                  editable={!isSaving}
+                />
+              </View>
+              <View style={styles.input_container}>
+                <TextInput
+                  style={styles.input_text}
+                  placeholder="Giá món ăn (VNĐ) (*)"
+                  value={price}
+                  keyboardType="numeric"
+                  onChangeText={formatPrice}
+                  placeholderTextColor={Colors.LIGHT_GREY2}
+                  editable={!isSaving}
+                />
+              </View>
 
-            <View style={styles.picker_container}>
-              {(!category || category.length === 0) ? (
-                <View style={[styles.picker, styles.pickerDisabled]}>
-                  <Text style={styles.pickerPlaceholder}>
-                    Không có danh mục để chọn
-                  </Text>
-                </View>
-              ) : (
-                <Picker
-                  selectedValue={selectedCategoryId}
-                  onValueChange={(itemValue) => {
-                    if (itemValue !== null) setSelectedCategoryId(itemValue);
-                  }}
-                  style={styles.picker}
-                  mode="dropdown"
-                  enabled={!isSaving}
-                >
-                  <Picker.Item
-                    label="-- Chọn danh mục (*) --"
-                    value={null}
-                    style={styles.pickerPlaceholder}
-                  />
-                  {category
-                    .filter((item) => item.isActive === "accepted")
-                    .map((item) => (
+              <View style={styles.picker_container}>
+                {(!category || category.length === 0) ? (
+                  <View style={[styles.pickerWrapper, styles.pickerDisabled]}>
+                    <Text style={styles.pickerPlaceholder}>
+                      Không có danh mục để chọn
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.pickerWrapper}>
+                    <Picker
+                      selectedValue={selectedCategoryId}
+                      onValueChange={(itemValue) => {
+                        if (itemValue !== null) setSelectedCategoryId(itemValue);
+                      }}
+                      style={styles.picker}
+                      mode="dropdown"
+                      enabled={!isSaving && category.filter(c => c.isActive === "accepted").length > 0}
+                    >
                       <Picker.Item
-                        key={item.id}
-                        label={item.name}
-                        value={item.id}
+                        label="-- Chọn danh mục (*) --"
+                        value={null}
+                        style={styles.pickerPlaceholderItem}
+                      />
+                      {category
+                        .filter((item) => item.isActive === "accepted")
+                        .map((item) => (
+                          <Picker.Item
+                            key={item.id}
+                            label={item.name}
+                            value={item.id}
+                            style={styles.pickerItem}
+                          />
+                        ))}
+                    </Picker>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.picker_container}>
+                <View style={styles.pickerWrapper}>
+                  <Picker
+                    selectedValue={selectedStatus}
+                    onValueChange={(itemValue) => {
+                      if (itemValue !== null) setSelectedStatus(itemValue);
+                    }}
+                    style={styles.picker}
+                    enabled={!isSaving}
+                    mode="dropdown"
+                  >
+                    <Picker.Item
+                      label="-- Chọn tình trạng món ăn (*) --"
+                      value={null}
+                      style={styles.pickerPlaceholderItem}
+                    />
+                    {statusList.map((s) => (
+                      <Picker.Item
+                        key={s.id}
+                        label={s.name}
+                        value={s.id}
                         style={styles.pickerItem}
                       />
                     ))}
-                </Picker>
-              )}
+                  </Picker>
+                </View>
+              </View>
             </View>
-
-            <View style={styles.picker_container}>
-              <Picker
-                selectedValue={selectedStatus}
-                onValueChange={(itemValue) => {
-                  if (itemValue !== null) setSelectedStatus(itemValue);
-                }}
-                style={styles.picker}
-                enabled={!isSaving}
-                mode="dropdown"
-              >
-                <Picker.Item
-                  label="-- Chọn tình trạng món ăn (*) --"
-                  value={null}
-                  style={styles.pickerPlaceholder}
-                />
-                {status.map((s) => (
-                  <Picker.Item
-                    key={s.id}
-                    label={s.name}
-                    value={s.id}
-                    style={styles.pickerItem}
-                  />
-                ))}
-              </Picker>
-            </View>
-
+            {isSaving && (
+                <View style={styles.savingIndicatorContainer}>
+                    <ActivityIndicator size="small" color={Colors.DEFAULT_GREEN} />
+                    <Text style={styles.savingText}>Đang lưu...</Text>
+                </View>
+            )}
             <View style={styles.bottomButtonContainer}>
               <TouchableOpacity
                 style={[
@@ -391,13 +404,14 @@ export default function EditDish({ navigation, route }) {
                 style={[
                   styles.button,
                   styles.addButton,
-                  (isSaving || !category || category.length === 0) && styles.disabledButton,
+                  (isSaving || !category || category.filter(c => c.isActive === "accepted").length === 0) && styles.disabledButton,
                 ]}
                 onPress={handleUpdateDish}
-                disabled={isSaving || !category || category.length === 0}
+                disabled={isSaving || !category || category.filter(c => c.isActive === "accepted").length === 0}
               >
                 <Text style={styles.buttonText}>Lưu thay đổi</Text>
               </TouchableOpacity>
+              
             </View>
           </ScrollView>
         </View>
@@ -418,36 +432,26 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    backgroundColor: Colors.DEFAULT_WHITE,
   },
-  scrollViewContent: {
-    paddingHorizontal: Display.setWidth(4),
-    paddingVertical: Display.setHeight(2.5),
-    paddingBottom: Display.setHeight(5),
-    gap: Display.setHeight(2.2),
+  scrollViewContentContainer: {
+    paddingBottom: Display.setHeight(2),
     backgroundColor: Colors.DEFAULT_WHITE,
     flexGrow: 1,
   },
-  bottomButtonContainer: {
-    flexDirection: "row",
-    gap: Display.setWidth(3),
-    justifyContent: "flex-end",
-    paddingVertical: Display.setHeight(1.8),
+  formContainer: {
     paddingHorizontal: Display.setWidth(4),
-    backgroundColor: Colors.DEFAULT_WHITE,
-    
+    paddingVertical: Display.setHeight(2.5),
+    gap: Display.setHeight(2.2),
   },
   view_image: {
-    position: "relative",
     width: "100%",
     aspectRatio: 8 / 7,
-    borderWidth: 1,
+    borderBottomWidth: 1,
     borderColor: Colors.LIGHT_GREY2,
-    borderRadius: 10,
     backgroundColor: Colors.LIGHT_GREY,
-    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
   },
   previewImage: {
     width: "100%",
@@ -460,6 +464,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    minWidth: Display.setWidth(25),
   },
   buttonText: {
     color: Colors.DEFAULT_WHITE,
@@ -484,26 +489,23 @@ const styles = StyleSheet.create({
     borderColor: Colors.GRAY_BORDER,
     borderRadius: 10,
     paddingHorizontal: Display.setWidth(3),
-    paddingVertical:
-      Platform.OS === "ios" ? Display.setHeight(1.2) : Display.setHeight(0.6),
     backgroundColor: Colors.DEFAULT_WHITE,
-    minHeight: Display.setHeight(6),
+    minHeight: Display.setHeight(6.5),
     justifyContent: "center",
+     paddingVertical: Platform.OS === "ios" ? Display.setHeight(1.2) : 0,
   },
   input_text: {
     color: Colors.SECONDARY_BLACK,
     fontSize: 16,
-    paddingVertical: Platform.OS === "ios" ? 0 : Display.setHeight(0.6),
   },
   textAreaContainer: {
-    paddingVertical: Display.setHeight(1.2),
     minHeight: Display.setHeight(12),
     justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
   },
   textArea: {
-    height: Display.setHeight(12),
+    height: Display.setHeight(10),
     textAlignVertical: "top",
-    paddingVertical: 0,
   },
   picker_container: {
     width: "100%",
@@ -512,15 +514,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: "hidden",
     backgroundColor: Colors.DEFAULT_WHITE,
-    justifyContent: "center",
     minHeight: Display.setHeight(7),
+    justifyContent: "center",
   },
-  pickerDisabled: {
-    paddingHorizontal: Display.setWidth(3),
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.LIGHT_GREY,
-    minHeight: Display.setHeight(7),
+  pickerWrapper: {
   },
   picker: {
     width: "100%",
@@ -528,7 +525,18 @@ const styles = StyleSheet.create({
     color: Colors.SECONDARY_BLACK,
     backgroundColor: 'transparent',
   },
+  pickerDisabled: {
+    paddingHorizontal: Display.setWidth(3),
+    backgroundColor: Colors.LIGHT_GREY,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    height: Display.setHeight(7),
+  },
   pickerPlaceholder: {
+    color: Colors.LIGHT_GREY2,
+    fontSize: 16,
+  },
+  pickerPlaceholderItem: {
     color: Colors.LIGHT_GREY2,
     fontSize: 16,
   },
@@ -536,13 +544,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.SECONDARY_BLACK,
   },
+  bottomButtonContainer: {
+    flexDirection: "row",
+    gap: Display.setWidth(3),
+    justifyContent: "flex-end",
+    paddingVertical: Display.setHeight(1.8),
+    paddingHorizontal: Display.setWidth(4),
+    backgroundColor: Colors.DEFAULT_WHITE,
+    borderTopWidth: 1,
+    borderColor: Colors.LIGHT_GREY2,
+  },
   cancelButton: {
     backgroundColor: Colors.DEFAULT_YELLOW,
-    paddingHorizontal: Display.setWidth(7),
   },
   addButton: {
     backgroundColor: Colors.DEFAULT_GREEN,
-    paddingHorizontal: Display.setWidth(7),
   },
   disabledButton: {
     backgroundColor: Colors.LIGHT_GREY,
@@ -560,4 +576,34 @@ const styles = StyleSheet.create({
     color: Colors.SECONDARY_BLACK,
     fontWeight: "500",
   },
+  savingIndicatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Display.setHeight(1),
+  },
+  savingText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: Colors.SECONDARY_BLACK,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+   
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    width: "100%",
+    
+  },
+  header: {
+    textAlign: "center",
+    color: Colors.DEFAULT_GREEN,
+    fontWeight: "bold",
+    fontSize: 25,
+   
+    marginBottom: Display.setHeight(1.5),
+  },
+  backButton: { padding: 8, marginRight: 12 },
 });

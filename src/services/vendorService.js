@@ -1,5 +1,13 @@
 import GRAPHQL_ENDPOINT from "../../config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export const uploadImageToServer = async (selectedImage) => {
+  const token = await AsyncStorage.getItem("token");
+  const uploadHeaders = {
+    // KHÔNG ĐẶT 'Content-Type' ở đây, fetch sẽ tự làm
+    'Accept': 'application/json', // Server có thể vẫn cần cái này để biết client chấp nhận kiểu response nào
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  };
   if (!selectedImage || !selectedImage.uri) {
     Alert.alert("Lỗi", "Không có ảnh nào được chọn hoặc ảnh không hợp lệ.");
     return null;
@@ -63,12 +71,14 @@ export const uploadImageToServer = async (selectedImage) => {
   });
   console.log("3");
   try {
+    console.log("[uploadImageToServer] GRAPHQL_ENDPOINT:", GRAPHQL_ENDPOINT);
+  console.log("[uploadImageToServer] Token for this request:", token);
+  console.log("[uploadImageToServer] Upload Headers for this request:", JSON.stringify(uploadHeaders));
+  console.log("[uploadImageToServer] FormData keys:", Array.from(formData.keys()));
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
       body: formData,
-      headers: {
-        Accept: "application/json",
-      },
+      headers: uploadHeaders,
     });
 
     const responseText = await response.text();
@@ -80,10 +90,7 @@ export const uploadImageToServer = async (selectedImage) => {
       result = JSON.parse(responseText);
     } catch (parseError) {
       console.error("Failed to parse server response as JSON:", parseError);
-      Alert.alert(
-        "Lỗi",
-        `Không thể phân tích phản hồi từ server: ${responseText}`
-      );
+     
       return null;
     }
 
@@ -93,7 +100,7 @@ export const uploadImageToServer = async (selectedImage) => {
         result?.errors?.[0]?.message ||
         `Yêu cầu thất bại với mã trạng thái: ${response.status}`;
       console.error("Upload failed (HTTP Status):", errorMessage);
-      Alert.alert("Lỗi Upload", errorMessage);
+   
       return null;
     }
 
@@ -101,7 +108,7 @@ export const uploadImageToServer = async (selectedImage) => {
       const errorMessage =
         result.errors[0].message || "Lỗi không xác định từ GraphQL.";
       console.error("Upload failed (GraphQL Errors):", errorMessage);
-      Alert.alert("Lỗi Upload", errorMessage);
+      
       return null;
     }
 
@@ -111,15 +118,28 @@ export const uploadImageToServer = async (selectedImage) => {
       return result.data.uploadToCloudinary;
     } else {
       console.error("Upload failed: Unexpected response structure", result);
-      Alert.alert("Lỗi", "Cấu trúc phản hồi từ server không đúng.");
+     
       return null;
     }
   } catch (error) {
     console.error("Upload Error (Network/Fetch):", error);
-    Alert.alert("Lỗi Mạng", `Không thể kết nối đến server: ${error.message}`);
+   
     return null;
   }
 };
+
+// Hàm tiện ích lấy token
+async function getAuthHeaders() {
+  const token = await AsyncStorage.getItem("token");
+  console.log("token", token);
+  return {
+  
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export const getCoordinatesOfLocation = async (address) => {
   if (!address || typeof address !== "string" || address.trim() === "") {
     console.error(
@@ -145,12 +165,10 @@ export const getCoordinatesOfLocation = async (address) => {
   console.log("Searching coordinates for address:", address);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -199,6 +217,7 @@ export const getCoordinatesOfLocation = async (address) => {
     return null;
   }
 };
+
 export const createNewAddress = async (addressData) => {
   if (!addressData || typeof addressData !== "object" || !addressData.street) {
     console.error(
@@ -226,12 +245,10 @@ export const createNewAddress = async (addressData) => {
   console.log("Creating new address with data (variables):", variables);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -272,7 +289,9 @@ export const createNewAddress = async (addressData) => {
     return null;
   }
 };
+
 export const createNewRestaurant = async (restaurantData) => {
+  console.log("restaurantData",restaurantData);
   if (
     !restaurantData ||
     typeof restaurantData !== "object" ||
@@ -302,12 +321,10 @@ export const createNewRestaurant = async (restaurantData) => {
   console.log("Creating new restaurant with data:", restaurantData);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -348,6 +365,7 @@ export const createNewRestaurant = async (restaurantData) => {
     return null;
   }
 };
+
 export const getRestaurantByOwnerId = async (ownerId) => {
   if (
     ownerId === null ||
@@ -387,12 +405,10 @@ export const getRestaurantByOwnerId = async (ownerId) => {
 
   console.log("Fetching restaurant by ownerId:", ownerId);
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -449,6 +465,107 @@ export const getRestaurantByOwnerId = async (ownerId) => {
     return null;
   }
 };
+
+export const checkRestaurantByOwnerId = async (ownerId) => {
+  if (
+    ownerId === null ||
+    ownerId === undefined ||
+    typeof ownerId !== "number" ||
+    !Number.isInteger(ownerId)
+  ) {
+    console.error("getRestaurantByOwnerId requires a valid integer ownerId.");
+    return null;
+  }
+
+  const query = `
+    query GetRestaurantByOwnerId($ownerId: Int!) {
+      findRestaurantsByOwnerId(ownerId: $ownerId) {
+        id
+      }
+    }
+  `;
+  const variables = { ownerId };
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query, variables }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response:", result);
+
+    // Nếu có lỗi và data là null => không có nhà hàng
+    if (result.errors && result.data === null) {
+      return false;
+    }
+
+    // Nếu có data và mảng rỗng => không có nhà hàng
+    if (result.data && Array.isArray(result.data.findRestaurantsByOwnerId) && result.data.findRestaurantsByOwnerId.length === 0) {
+      return false;
+    }
+
+    // Nếu có data và có nhà hàng
+    if (result.data && Array.isArray(result.data.findRestaurantsByOwnerId) && result.data.findRestaurantsByOwnerId.length > 0) {
+      return true;
+    }
+
+    // Trường hợp khác (không xác định)
+    return false;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra nhà hàng theo ownerId:", error);
+    return null;
+  }
+};
+
+export const getRestaurantById = async (restaurantId) => {
+  if (
+    restaurantId === null ||
+    restaurantId === undefined ||
+    typeof restaurantId !== "number" ||
+    !Number.isInteger(restaurantId)
+  ) {
+    console.error("getRestaurantById requires a valid integer restaurantId.");
+    return null;
+  }
+
+  const query = `
+    query FindRestaurantById($restaurantId: Int!) {
+     findByIdNotLocation(id: $restaurantId) {
+        id
+        name
+        avatar
+        owner
+        {
+        id
+        }
+      }
+    }
+  `;
+  const variables = {
+    restaurantId: restaurantId,
+  };
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+    const result = await response.json();
+    console.log("result",result);
+    return result.data.findByIdNotLocation;
+  } catch (error) {
+    console.error("Get restaurant by id Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
 export const getAddressById = async (addressId) => {
   if (!addressId) {
     console.error("getAddressById requires a valid addressId.");
@@ -468,12 +585,10 @@ export const getAddressById = async (addressId) => {
     addressId: addressId,
   };
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -511,6 +626,7 @@ export const getAddressById = async (addressId) => {
     return null;
   }
 };
+
 export const getCategoriesByRestaurantId = async (restaurantId) => {
   if (
     restaurantId === null ||
@@ -541,12 +657,10 @@ export const getCategoriesByRestaurantId = async (restaurantId) => {
   console.log("Fetching categories by restaurantId:", restaurantId);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -606,6 +720,7 @@ export const getCategoriesByRestaurantId = async (restaurantId) => {
     return null;
   }
 };
+
 export const getMenusByCategoryId = async (categoryId) => {
   if (
     categoryId === null ||
@@ -627,6 +742,7 @@ export const getMenusByCategoryId = async (categoryId) => {
         available
         imageUrl
         quantity
+       
       }
     }
   `;
@@ -638,12 +754,10 @@ export const getMenusByCategoryId = async (categoryId) => {
   console.log("Fetching menus by categoryId:", categoryId);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -700,6 +814,96 @@ export const getMenusByCategoryId = async (categoryId) => {
     return null;
   }
 };
+
+export const getMenusIdByCategoryId = async (categoryId) => {
+  if (
+    categoryId === null ||
+    categoryId === undefined ||
+    typeof categoryId !== "number" ||
+    !Number.isInteger(categoryId)
+  ) {
+    console.error("getMenusByCategoryId requires a valid integer categoryId.");
+    return null;
+  }
+
+  const query = `
+    query GetMenusByCategoryId($categoryId: Int!) {
+      findMenusByCategoryId(categoryId: $categoryId) {
+        id
+        
+       
+      }
+    }
+  `;
+
+  const variables = {
+    categoryId: categoryId,
+  };
+
+  console.log("Fetching menus by categoryId:", categoryId);
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Menus):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status code: ${response.status}`;
+      console.error(
+        "Get menus by categoryId failed (HTTP Status):",
+        errorMessage,
+        result
+      );
+      if (result && result.errors) {
+        const graphqlError =
+          result.errors[0]?.message || "Unknown GraphQL error.";
+        console.error("GraphQL Errors:", graphqlError);
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      const errorMessage =
+        result.errors[0]?.message || "Unknown error from GraphQL.";
+      console.error(
+        "Get menus by categoryId failed (GraphQL Errors):",
+        errorMessage
+      );
+      return null;
+    }
+
+    if (result.data && result.data.findMenusByCategoryId !== undefined) {
+      if (result.data.findMenusByCategoryId === null) {
+        console.log("No menus found for categoryId:", categoryId);
+        return [];
+      }
+      console.log(
+        "Menus found successfully:",
+        result.data.findMenusByCategoryId
+      );
+      return result.data.findMenusByCategoryId;
+    } else {
+      console.error(
+        "Get menus by categoryId failed: Unexpected response structure",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Get menus by categoryId Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
 export const updateCategory = async (categoryId, newName) => {
   if (
     categoryId === null ||
@@ -742,14 +946,10 @@ export const updateCategory = async (categoryId, newName) => {
   console.log("Updating category:", categoryId, "to name:", newName.trim());
 
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: headers,
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -801,6 +1001,7 @@ export const updateCategory = async (categoryId, newName) => {
     return null;
   }
 };
+
 export const updateCategoryStatus = async (categoryId, status) => {
   if (
     categoryId === null ||
@@ -832,14 +1033,10 @@ export const updateCategoryStatus = async (categoryId, status) => {
   };
   console.log("variables", variables);
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: headers,
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -891,6 +1088,7 @@ export const updateCategoryStatus = async (categoryId, status) => {
     return null;
   }
 };
+
 export const createCategory = async (categoryName, restaurantId) => {
   if (
     categoryName === null ||
@@ -939,14 +1137,10 @@ export const createCategory = async (categoryName, restaurantId) => {
   );
 
   try {
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
-
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: headers,
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1036,12 +1230,10 @@ export const updateRestaurantAPI = async (updateData) => {
   console.log("Updating restaurant with data:", updateData);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -1090,6 +1282,7 @@ export const updateRestaurantAPI = async (updateData) => {
     return null;
   }
 };
+
 export const updateAddressAPI = async (addressUpdateData) => {
   if (
     !addressUpdateData ||
@@ -1124,12 +1317,10 @@ export const updateAddressAPI = async (addressUpdateData) => {
   console.log("Updating address with data:", addressUpdateData);
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query,
         variables,
@@ -1211,12 +1402,10 @@ export const createMenu = async (menuData) => {
   console.log("Sending Create Menu Request:", { query: mutation, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: mutation,
         variables: variables,
@@ -1303,12 +1492,10 @@ export const updateMenu = async (menuUpdateData) => {
   console.log("Sending Update Menu Request:", { query: mutation, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: mutation,
         variables: variables,
@@ -1356,6 +1543,91 @@ export const updateMenu = async (menuUpdateData) => {
     return null;
   }
 };
+
+export const updateMenuStatus = async (menuId, status) => {
+  console.log("Update menu status", menuId, status);
+  if (!menuId || menuId == null) {
+    console.error(
+      "updateMenuStatusAPI: ID món ăn là bắt buộc để cập nhật.",
+      menuUpdateData
+    );
+    return null;
+  }
+
+
+
+  const mutation = `
+    mutation UpdateExistingMenu($updateMenuInput: UpdateMenuInput!) {
+      updateMenu(updateMenuInput: $updateMenuInput) {
+        id
+        available
+        
+      }
+    }
+  `;
+
+  const variables = {
+    updateMenuInput: {
+      id: parseInt(menuId.id),
+      available: status,
+    },
+  };
+
+  console.log("Sending Update Menu Request:", { query: mutation, variables });
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query: mutation,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Update Menu):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Request failed with status: ${response.status}`;
+      console.error(
+        "Update menu failed (HTTP Status):",
+        errorMessage,
+        result?.errors || "No GraphQL errors field"
+      );
+      if (result && result.errors) {
+        result.errors.forEach((err) =>
+          console.error("GraphQL Error:", err.message)
+        );
+      }
+      return null;
+    }
+
+    if (result.errors) {
+      console.error("Update menu failed (GraphQL Errors):", result.errors);
+      result.errors.forEach((err) =>
+        console.error("GraphQL Error:", err.message)
+      );
+      return null;
+    }
+
+    if (result.data && result.data.updateMenu) {
+      console.log("Menu updated successfully:", result.data.updateMenu);
+      return result.data.updateMenu;
+    } else {
+      console.error(
+        "Update menu failed: Unexpected response structure.",
+        result
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error("Update menu Error (Network/Fetch):", error);
+    return null;
+  }
+};
+
 export const getMenuById = async (menuId) => {
   if (
     menuId === null ||
@@ -1376,7 +1648,11 @@ export const getMenuById = async (menuId) => {
         quantity
         imageUrl
         available
-       
+        category
+        {
+          id
+          name
+        }
       }
     }
   `;
@@ -1387,12 +1663,10 @@ export const getMenuById = async (menuId) => {
   console.log("Sending Get Menu Request:", { query, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1444,6 +1718,7 @@ export const getMenuById = async (menuId) => {
 };
 
 export const getAllOrdersByRestaurantId = async (restaurantId) => {
+  const token = await AsyncStorage.getItem("token");
   if (
     restaurantId === null ||
     restaurantId === undefined ||
@@ -1453,7 +1728,7 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
     console.error(
       "getAllOrdersByRestaurantId requires a valid integer restaurantId."
     );
-    return null;
+    return [];
   }
 
   const query = `
@@ -1504,12 +1779,10 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
     console.log(`Đang lấy trang ${currentPage} (limit: ${limitPerPage})...`);
 
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(GRAPHQL_ENDPOINT, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers,
         body: JSON.stringify({
           query: query,
           variables: variables,
@@ -1530,18 +1803,18 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
             console.error("GraphQL Error:", err.message)
           );
         }
-        return null;
+        return [];
       }
 
       if (result.errors) {
-        console.error(
-          `Lấy đơn hàng trang ${currentPage} thất bại (GraphQL Errors):`,
-          result.errors
-        );
-        result.errors.forEach((err) =>
-          console.error("GraphQL Error:", err.message)
-        );
-        return null;
+        // console.error(
+        //   `Lấy đơn hàng trang ${currentPage} thất bại (GraphQL Errors):`,
+        //   result.errors
+        // );
+        // result.errors.forEach((err) =>
+        //   console.error("GraphQL Error:", err.message)
+        // );
+        return [];
       }
 
       const pageData = result?.data?.findOrdersByRestaurantId?.data;
@@ -1551,7 +1824,7 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
           `Lấy đơn hàng trang ${currentPage} thất bại: Cấu trúc response không mong muốn hoặc không có data.`,
           result
         );
-        return null;
+        return [];
       }
 
       if (pageData.length > 0) {
@@ -1574,7 +1847,7 @@ export const getAllOrdersByRestaurantId = async (restaurantId) => {
         `Lỗi khi lấy đơn hàng trang ${currentPage} (Network/Fetch):`,
         error
       );
-      return null;
+      return [];
     }
   }
 
@@ -1610,12 +1883,10 @@ export const findUserById = async (userId) => {
   console.log("Gửi yêu cầu lấy thông tin người dùng:", { query, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1678,6 +1949,7 @@ export const findUserById = async (userId) => {
     return null;
   }
 };
+
 export const findOrderDetailByOrderId = async (orderId) => {
   if (
     orderId === null ||
@@ -1712,12 +1984,10 @@ export const findOrderDetailByOrderId = async (orderId) => {
   console.log("Gửi yêu cầu lấy chi tiết đơn hàng:", { query, variables });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1777,6 +2047,7 @@ export const findOrderDetailByOrderId = async (orderId) => {
     return null;
   }
 };
+
 export const updateOrderStatus = async (orderId, newStatus) => {
   if (
     orderId === null ||
@@ -1789,8 +2060,8 @@ export const updateOrderStatus = async (orderId, newStatus) => {
   }
 
   const mutation = `
-    mutation UpdateOrderStatusMutation($payload: UpdateOrderInput!) {
-      updateOrder(updateOrderInput: $payload) {
+    mutation UpdateOrderStatusMutation($id: Int!, $status: String!) {
+      updateOrderStatus(id: $id, status: $status) {
         id
         status
       }
@@ -1798,10 +2069,8 @@ export const updateOrderStatus = async (orderId, newStatus) => {
   `;
 
   const variables = {
-    payload: {
-      id: orderId,
-      status: newStatus,
-    },
+    id: orderId,
+    status: newStatus,
   };
 
   console.log("Gửi yêu cầu cập nhật trạng thái đơn hàng:", {
@@ -1810,12 +2079,10 @@ export const updateOrderStatus = async (orderId, newStatus) => {
   });
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: mutation,
         variables: variables,
@@ -1862,10 +2129,10 @@ export const updateOrderStatus = async (orderId, newStatus) => {
       return { success: false, error: result.errors };
     }
 
-    if (result.data && result.data.updateOrder) {
-      console.log("Cập nhật trạng thái thành công:", result.data.updateOrder);
-      return { success: true, data: result.data.updateOrder };
-    } else if (result.data && result.data.updateOrder === null) {
+    if (result.data && result.data.updateOrderStatus) {
+      console.log("Cập nhật trạng thái thành công:", result.data.updateOrderStatus);
+      return { success: true, data: result.data.updateOrderStatus };
+    } else if (result.data && result.data.updateOrderStatus === null) {
       console.log(
         "Cập nhật trạng thái trả về null, có thể không tìm thấy ID:",
         orderId
@@ -1894,6 +2161,7 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     };
   }
 };
+
 export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
   if (
     restaurantId === null ||
@@ -1930,12 +2198,10 @@ export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
   };
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -1955,23 +2221,13 @@ export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
         errorMessage,
         result?.errors || "Không có trường lỗi GraphQL"
       );
-      if (result && result.errors) {
-        result.errors.forEach((err) =>
-          console.error("Lỗi GraphQL:", err.message)
-        );
-      }
-      return null;
+     
+      return [];
     }
 
     if (result.errors) {
-      console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
-        result.errors
-      );
-      result.errors.forEach((err) =>
-        console.error("Lỗi GraphQL:", err.message)
-      );
-      return null;
+     
+      return [];
     }
 
     if (result.data && result.data.findTop10MenuByRestaurantId) {
@@ -1987,17 +2243,15 @@ export const getTop10MenuByRestaurantId = async (restaurantId, year, month) => {
       console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
       return [];
     } else {
-      console.error(
-        "Lấy 10 món ăn hàng đầu thất bại: Cấu trúc response không mong muốn.",
-        result
-      );
-      return null;
+      
+      return [];
     }
   } catch (error) {
-    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
-    return null;
+   
+    return [];
   }
 };
+
 export const getTotalOrderByRestaurantId = async (
   restaurantId,
   year,
@@ -2028,12 +2282,10 @@ export const getTotalOrderByRestaurantId = async (
   };
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -2060,18 +2312,23 @@ export const getTotalOrderByRestaurantId = async (
 
     if (result.errors) {
       console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        "Tổng đơn thất bại (Lỗi GraphQL):",
         result.errors
       );
       result.errors.forEach((err) =>
         console.error("Lỗi GraphQL:", err.message)
       );
-      return null;
+      return 0;
     }
 
-    if (result.data && result.data.getTotalOrderByRestaurantId) {
+    if (
+      result.data &&
+      result.data.getTotalOrderByRestaurantId !== undefined &&
+      result.data.getTotalOrderByRestaurantId !== null
+    ) {
+      // Giá trị có thể là 0, hợp lệ
       console.log(
-        "Lấy order thành công:",
+        "Lấy order real thành công:",
         result.data.getTotalOrderByRestaurantId
       );
       return result.data.getTotalOrderByRestaurantId;
@@ -2079,20 +2336,21 @@ export const getTotalOrderByRestaurantId = async (
       result.data &&
       result.data.getTotalOrderByRestaurantId === null
     ) {
-      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
-      return [];
+      console.log(" getTotalOrderByRestaurantId nhà hàng ID:", restaurantId);
+      return 0;
     } else {
       console.error(
-        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        "Lấy order real thất bại: Cấu trúc response không mong muốn.",
         result
       );
-      return null;
+      return 0;
     }
   } catch (error) {
-    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
-    return null;
+   
+    return 0;
   }
 };
+
 export const getTotalRevenueByRestaurantId = async (
   restaurantId,
   year,
@@ -2123,12 +2381,10 @@ export const getTotalRevenueByRestaurantId = async (
   };
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -2155,16 +2411,21 @@ export const getTotalRevenueByRestaurantId = async (
 
     if (result.errors) {
       console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        "Tổng đơn thất bại (Lỗi GraphQL):",
         result.errors
       );
       result.errors.forEach((err) =>
         console.error("Lỗi GraphQL:", err.message)
       );
-      return null;
+      return 0;
     }
 
-    if (result.data && result.data.getTotalRevenueByRestaurantId) {
+    if (
+      result.data &&
+      result.data.getTotalRevenueByRestaurantId !== undefined &&
+      result.data.getTotalRevenueByRestaurantId !== null
+    ) {
+      // Giá trị có thể là 0, hợp lệ
       console.log(
         "Lấy order thành công:",
         result.data.getTotalRevenueByRestaurantId
@@ -2174,20 +2435,21 @@ export const getTotalRevenueByRestaurantId = async (
       result.data &&
       result.data.getTotalRevenueByRestaurantId === null
     ) {
-      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
-      return [];
+      console.log("Không getTotalRevenueByRestaurantId cho nhà hàng ID:", restaurantId);
+      return 0;
     } else {
       console.error(
-        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        "Lấy doanh thu thất bại: Cấu trúc response không mong muốn.",
         result
       );
-      return null;
+      return 0;
     }
   } catch (error) {
-    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
-    return null;
+    console.error("Lỗi getTotalRevenueByRestaurantId (Network/Fetch):", error);
+    return 0;
   }
 };
+
 export const getTotalRevenueByRestaurantIdByYear = async (
   restaurantId,
   year
@@ -2219,12 +2481,10 @@ export const getTotalRevenueByRestaurantIdByYear = async (
   };
 
   try {
+    const headers = await getAuthHeaders();
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers,
       body: JSON.stringify({
         query: query,
         variables: variables,
@@ -2237,7 +2497,7 @@ export const getTotalRevenueByRestaurantIdByYear = async (
     if (!response.ok) {
       const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
       console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (HTTP Status):",
+        "getTotalRevenueByRestaurantIdByYear thất bại (HTTP Status):",
         errorMessage,
         result?.errors || "Không có trường lỗi GraphQL"
       );
@@ -2251,18 +2511,23 @@ export const getTotalRevenueByRestaurantIdByYear = async (
 
     if (result.errors) {
       console.error(
-        "Lấy 10 món ăn hàng đầu thất bại (Lỗi GraphQL):",
+        "getTotalRevenueByRestaurantIdByYear thất bại (Lỗi GraphQL):",
         result.errors
       );
       result.errors.forEach((err) =>
         console.error("Lỗi GraphQL:", err.message)
       );
-      return null;
+      return 0;
     }
 
-    if (result.data && result.data.getTotalRevenueByRestaurantIdByYear) {
+    if (
+      result.data &&
+      result.data.getTotalRevenueByRestaurantIdByYear !== undefined &&
+      result.data.getTotalRevenueByRestaurantIdByYear !== null
+    ) {
+      // Giá trị có thể là 0 hoặc object hợp lệ
       console.log(
-        "Lấy order thành công:",
+        "Lấy getTotalRevenueByRestaurantIdByYear thành công:",
         result.data.getTotalRevenueByRestaurantIdByYear
       );
       return result.data.getTotalRevenueByRestaurantIdByYear;
@@ -2270,16 +2535,287 @@ export const getTotalRevenueByRestaurantIdByYear = async (
       result.data &&
       result.data.getTotalRevenueByRestaurantIdByYear === null
     ) {
-      console.log("Không tìm thấy món ăn nào cho nhà hàng ID:", restaurantId);
+      console.log("Không getTotalRevenueByRestaurantIdByYear ID:", restaurantId);
+      return 0;
     } else {
       console.error(
-        "Lấy order thất bại: Cấu trúc response không mong muốn.",
+        "Lấy getTotalRevenueByRestaurantIdByYear thất bại: Cấu trúc response không mong muốn.",
         result
       );
+      return 0;
+    }
+  } catch (error) {
+    console.error("Lỗi getTotalRevenueByRestaurantIdByYear (Network/Fetch):", error);
+    return 0;
+  }
+};
+
+
+export const findNotificationByUserId = async (userId) => {
+  console.log("userId:", userId);
+  if (
+    userId === null ||
+    userId === undefined ||
+    typeof userId !== "number" ||
+    !Number.isInteger(userId)
+  ) {
+    console.error("getAllNotificationsByUserId yêu cầu userId là số nguyên hợp lệ.");
+    return [];
+  }
+
+  const query = `
+    query FindNotificationByUserId($userId: Int!, $page: Int!, $limit: Int!) {
+      findNotificationByUserId(userId: $userId, page: $page, limit: $limit) {
+        data {
+          id
+          title
+          content
+          createdAt
+        }
+        total
+      }
+    }
+  `;
+
+  let allNotifications = [];
+  let currentPage = 1;
+  const limitPerPage = 100; // Có thể tăng nếu backend cho phép
+  let hasMorePages = true;
+
+  while (hasMorePages) {
+    const variables = {
+      userId,
+      page: currentPage,
+      limit: limitPerPage,
+    };
+
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          query,
+          variables,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = `Yêu cầu trang ${currentPage} thất bại với trạng thái: ${response.status}`;
+        console.error("Lấy thông báo thất bại (HTTP Status):", errorMessage, result?.errors || "Không có trường lỗi GraphQL");
+        return allNotifications;
+      }
+
+      if (result.errors) {
+        console.error(`Lấy thông báo trang ${currentPage} thất bại (GraphQL Errors):`, result.errors);
+        return allNotifications;
+      }
+
+      const pageData = result?.data?.findNotificationByUserId?.data;
+      const total = result?.data?.findNotificationByUserId?.total;
+
+      if (!pageData || !Array.isArray(pageData)) {
+        console.error(`Lấy thông báo trang ${currentPage} thất bại: Cấu trúc response không mong muốn hoặc không có data.`, result);
+        return allNotifications;
+      }
+
+      allNotifications = allNotifications.concat(pageData);
+      console.log("allNotifications:", allNotifications);
+
+      if (allNotifications.length >= total || pageData.length < limitPerPage) {
+        hasMorePages = false;
+      } else {
+        currentPage++;
+      }
+    } catch (error) {
+      console.error(`Lỗi khi lấy thông báo trang ${currentPage} (Network/Fetch):`, error);
+      return allNotifications;
+    }
+  }
+  console.log("allNotifications:", allNotifications);
+  return allNotifications;
+};
+
+export const sendNotification = async (notificationData) => {
+  if (
+    !notificationData ||
+    typeof notificationData !== "object" ||
+    !notificationData.title ||
+    !notificationData.content ||
+    !notificationData.type ||
+    !notificationData.userId
+  ) {
+    console.error("sendNotification: Dữ liệu đầu vào không hợp lệ.", notificationData);
+    return null;
+  }
+
+  const mutation = `
+    mutation SendNotification($createNotificationDto: CreateNotificationInput!) {
+      sendNotification(createNotificationDto: $createNotificationDto) {
+        title
+        content
+      }
+    }
+  `;
+
+  const variables = {
+    createNotificationDto: {
+      title: notificationData.title,
+      content: notificationData.content,
+      type: notificationData.type,
+      userId: notificationData.userId,
+    },
+  };
+
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query: mutation,
+        variables: variables,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Server Response (Send Notification):", result);
+
+    if (!response.ok) {
+      const errorMessage = `Yêu cầu thất bại với trạng thái: ${response.status}`;
+      console.error("Gửi thông báo thất bại (HTTP Status):", errorMessage, result?.errors || "Không có trường lỗi GraphQL");
+      return null;
+    }
+
+    if (result.errors) {
+      console.error("Gửi thông báo thất bại (GraphQL Errors):", result.errors);
+      return null;
+    }
+
+    if (result.data && result.data.sendNotification) {
+      console.log("Gửi thông báo thành công:", result.data.sendNotification);
+      return result.data.sendNotification;
+    } else {
+      console.error("Gửi thông báo thất bại: Cấu trúc response không mong muốn.", result);
       return null;
     }
   } catch (error) {
-    console.error("Lỗi khi lấy 10 món ăn hàng đầu (Network/Fetch):", error);
+    console.error("Lỗi khi gửi thông báo (Network/Fetch):", error);
     return null;
   }
 };
+
+// Lấy tất cả tên nhà hàng (chỉ trường name)
+export const getAllRestaurantNames = async () => {
+  console.log("getAllRestaurantNames");
+  const query = `
+    query {
+      restaurants(page: 1, limit: 100) {
+        data {
+          id
+          name
+        }
+        total
+      }
+    }
+  `;
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query }),
+    });
+    const result = await response.json();
+    console.log("result", result);
+    if (result.data && result.data.restaurants && result.data.restaurants.data) {
+      console.log("result.data.restaurants.data", result.data.restaurants.data);
+      return result.data.restaurants.data;
+    } else {
+      console.error("Không lấy được danh sách tên nhà hàng:", result);
+      return [];
+    }
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách tên nhà hàng:", error);
+    return [];
+  }
+};
+export const getReviewByOrderId = async (orderId) => {
+ 
+  const query = `
+    query GetReviewByOrderId($orderId: Int!, $page: Int!, $limit: Int!) {
+     findReviewsByOrderId(orderId: $orderId, page: $page, limit: $limit) {
+       data
+       {
+       id
+       content
+       }
+      }
+    }
+  `;
+  const variables = {
+      orderId: orderId,
+      page: 1,
+      limit: 10,
+  };
+  try {
+    const headers = await getAuthHeaders();
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query, variables }),
+    });
+    const result = await response.json();
+    console.log("result", result);
+    if (result.data && result.data.findReviewsByOrderId && result.data.findReviewsByOrderId.data) {
+      console.log("result.data.findReviewsByOrderId.data", result.data.findReviewsByOrderId.data);
+      return result.data.findReviewsByOrderId.data;
+    }
+  }
+  catch (error) {
+    console.error("Lỗi khi lấy đánh giá theo orderId:", error);
+   
+      return [{content:"Không có đánh giá"}];
+    
+   
+  }
+  
+};
+  export const createComplaint = async (complaintData) => {
+    console.log("complaintData", complaintData);
+    const query = `
+      mutation CreateComplaint($createComplaintInput: CreateComplaintInput!) {
+        createComplaint(createComplaintInput: $createComplaintInput) {
+          id
+          content
+        
+        
+          
+          
+        }
+      }
+    `;
+    const variables = {
+      createComplaintInput: complaintData,
+    };
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ query, variables }),
+      });
+      const result = await response.json();
+      console.log("result", result);
+      if (result.data && result.data.createComplaint) {
+        console.log("result.data.createComplaint", result.data.createComplaint);
+        return result.data.createComplaint;
+      }
+    }
+    catch (error) {
+      console.error("Lỗi khi tạo khiếu nại:", error);
+      return null;
+    }
+  };

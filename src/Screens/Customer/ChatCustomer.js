@@ -1,5 +1,5 @@
 // ChatListScreen.js
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,17 @@ import {
   TouchableOpacity,
   Image,
   Platform, // Thêm Platform để sử dụng cho padding
+  Button,
+  Alert
 } from "react-native";
 import Colors from "../../constants/Colors"; // Đường dẫn này giả định file nằm trong /screens
 import Display from "../../utils/Display";   // Đường dẫn này giả định file nằm trong /screens
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Nav from "../../components/Nav"; // Đường dẫn này giả định file nằm trong /screens
-
+import { UserContext } from "../../context/UserContext";
+import { listenUserChats } from '../../services/chatService';
+import { getDatabase, ref, set, push, get } from "firebase/database";
+import {getRestaurantById} from '../../services/vendorService';
 // Giả lập Display và Colors nếu bạn chưa có các file này
 // (Trong dự án thực, bạn nên có các file này và xóa phần mock)
 if (typeof Display === 'undefined') {
@@ -48,259 +52,132 @@ const MockNav = ({ nav }) => (
 );
 
 // Dữ liệu mẫu cho danh sách chat
-const initialChatListData = [
-  {
-    id: "chat1",
-    name: "Phạm Phố",
-    lastMessage: "WEBGROUP.pptx",
-    timestamp: "09/05/24",
-    avatar: null,
-    messageType: "file",
-    unreadCount: 0,
-  },
-  {
-    id: "chat2",
-    name: "Hồ Thị Mỹ Tâm",
-    lastMessage: "Oke",
-    timestamp: "02/05/24",
-    avatar: "https://via.placeholder.com/50/00FF00/808080?Text=HTMT",
-    messageType: "text",
-    unreadCount: 2,
-  },
-  {
-    id: "chat3",
-    name: "Phạm Hoàng Duy",
-    lastMessage: "2024-04-28 13-58-50.mp4",
-    timestamp: "28/04/24",
-    avatarInitials: "PD",
-    messageType: "file",
-    unreadCount: 0,
-  },
-  {
-    id: "chat4",
-    name: "Ngữ Văn 12A1",
-    lastMessage: "Hồ Minh Khôi: [Tin nhắn đã tự xóa]",
-    timestamp: "28/04/24",
-    avatarInitials: "NV",
-    messageType: "text_special",
-    unreadCount: 0,
-  },
-  {
-    id: "chat5",
-    name: "Lê Quốc Thái",
-    lastMessage: "Bạn: 📍 A14 KTX A ĐHQG TPHCM, Đô...",
-    timestamp: "06/04/24",
-    avatar: "https://via.placeholder.com/50/FF0000/FFFFFF?Text=LQT",
-    messageType: "location",
-    isSender: true,
-    unreadCount: 0,
-  },
-  {
-    id: "chat6",
-    name: "CELLPHONES",
-    lastMessage: "các bạn sẽ giao hàng trước 12h trưa ...",
-    timestamp: "04/04/24",
-    avatar: "https://via.placeholder.com/50/FFA500/000000?Text=S",
-    messageType: "text",
-    isVerified: true,
-    unreadCount: 1,
-  },
-];
 
-export default function ChatListScreen({ navigation }) {
+
+export default function ChatCustomer({ navigation }) {
+  const { userInfo } = useContext(UserContext);
+  const customerId = userInfo.id;
+  const [chatList, setChatList] = useState([]);
   const insets = useSafeAreaInsets();
-  const [chatList, setChatList] = useState(initialChatListData);
-  const customerId = 251; // Giả định id khách hàng là 251
+
+  // Lắng nghe danh sách chat
+  useEffect(() => {
+    const unsubscribe = listenUserChats(customerId.toString(), async (rawList) => {
+      const newList = await Promise.all(rawList.map(async (item) => {
+        // Lấy vendorId từ members (id khác với customerId)
+        const memberIds = Object.keys(item.members);
+
+        const vendorId = memberIds.find(id => id !== customerId.toString());
+      
+        let restaurantInfo = null;
+        if (vendorId) {
+          const info = await getRestaurantById(Number(vendorId));
+         
+          restaurantInfo = Array.isArray(info) ? info[0] : info;
+          
+        }
+        return { ...item, restaurantInfo, vendorId };
+      }));
+      setChatList(newList);
+    });
+    return unsubscribe;
+  }, [customerId]);
+
+  // Hàm tạo node chat mẫu với vendorId = 4
+  const createSampleChat = async () => {
+    try {
+      const vendorId = 4;
+      const database = getDatabase();
+      const chatId = `customer_${customerId}_vendor_${vendorId}`;
+      const chatRef = ref(database, `chats/${chatId}`);
+      const snapshot = await get(chatRef);
+      if (!snapshot.exists()) {
+        await set(chatRef, {
+          members: {
+            [customerId]: true,
+            [vendorId]: true
+          },
+          messages: {}
+        });
+      }
+      const messagesRef = ref(database, `chats/${chatId}/messages`);
+      await push(messagesRef, {
+        receiverId: vendorId.toString(),
+        senderId: customerId.toString(),
+        text: "Xin chào, đây là tin nhắn mẫu!",
+        timestamp: Date.now()
+      });
+      Alert.alert("Thành công", "Đã tạo chat mẫu với vendor 4!");
+    } catch (error) {
+      Alert.alert("Lỗi", error.message || "Không thể tạo chat mẫu");
+    }
+  };
 
   const renderChatItem = ({ item }) => {
-    const getAvatarContent = () => {
-      if (item.avatar) {
-        return <Image source={{ uri: item.avatar }} style={styles.avatar} />;
-      } else if (item.avatarInitials) {
-        return <Text style={styles.avatarText}>{item.avatarInitials}</Text>;
-      }
-      return <View style={[styles.avatar, {backgroundColor: Colors.PLACEHOLDER_AVATAR_BG }]} />;
-    };
-
-    const renderLastMessage = () => {
-      let prefix = "";
-      if (item.isSender) prefix = "Bạn: ";
-      let icon = null;
-      if (item.messageType === "file") icon = <MaterialIcons name="attach-file" size={14} color={Colors.DARK_GREY_TEXT} style={styles.messageIcon} />;
-      if (item.messageType === "location") icon = <MaterialIcons name="location-on" size={14} color={Colors.DARK_GREY_TEXT} style={styles.messageIcon} />;
-      return (
-        <View style={styles.lastMessageContainer}>
-          {icon}
-          <Text style={styles.lastMessage} numberOfLines={1}>
-            {prefix}{item.lastMessage}
-          </Text>
-        </View>
-      );
-    };
-
+    const vendor = item.restaurantInfo;
+    console.log("vendor",vendor);
     return (
       <TouchableOpacity
         style={styles.chatItemContainer}
         onPress={() =>
           navigation.navigate("IndividualChatCustomer", {
-            chatId: `customer_${customerId}_vendor_${item.id}`,
+            chatId: item.id,
             userId: customerId.toString(),
-            contactName: item.name,
-            contactAvatar: item.avatar,
-            contactInitials: item.avatarInitials
+            contactName: vendor ? vendor.name : "Đang tải...",
+            contactAvatar: vendor?.avatar || null,
+            contactInitials: vendor?.name ? vendor.name[0] : "V",
+            ownerId: vendor?.owner?.id,
+            vendorId: item.vendorId,
           })
         }
       >
-        <View style={[styles.avatarContainer, item.avatar ? {} : {backgroundColor: Colors.PLACEHOLDER_AVATAR_BG}]}> 
-          {getAvatarContent()}
-          {item.isVerified && (
-            <View style={styles.verifiedBadge}>
-              <MaterialIcons name="check-circle" size={16} color={Colors.DEFAULT_GREEN} />
-            </View>
-          )}
+        <View style={styles.avatarContainer}>
+          {vendor?.avatar
+            ? <Image source={{ uri: vendor.avatar }} style={styles.avatar} />
+            : <Text style={styles.avatarText}>{vendor?.name ? vendor.name[0] : "V"}</Text>
+          }
         </View>
         <View style={styles.chatInfo}>
-          <View style={styles.chatHeader}>
-            <Text style={styles.contactName}>{item.name}</Text>
-            <Text style={styles.timestamp}>{item.timestamp}</Text>
-          </View>
-          {renderLastMessage()}
+          <Text style={styles.contactName}>{vendor ? vendor.name : `Nhà hàng ${item.vendorId}`}</Text>
+          <Text style={styles.lastMessage} numberOfLines={1}>
+            {item.lastMessage ? item.lastMessage.text : ""}
+          </Text>
         </View>
-        {item.unreadCount > 0 && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadText}>{item.unreadCount}</Text>
-          </View>
-        )}
+        <Text style={styles.timestamp}>
+          {item.lastMessage ? new Date(item.lastMessage.timestamp).toLocaleDateString() : ""}
+        </Text>
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.screenTitle}>Tin nhắn</Text>
+      <Text style={styles.screenTitle}>Tin nhắn với nhà hàng</Text>
+     
       <FlatList
         data={chatList}
         renderItem={renderChatItem}
-        keyExtractor={(item) => item.id}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        // Thêm paddingBottom cho FlatList để nội dung cuối không bị che bởi Nav
-        contentContainerStyle={{ paddingBottom: NAV_HEIGHT + Display.setHeight(1) }}
-        style={{flex: 1}} // Đảm bảo FlatList chiếm không gian
+        keyExtractor={item => item.id}
+        contentContainerStyle={{ paddingBottom: 20 + insets.bottom }}
       />
-      {/* Navigation Bar cố định ở dưới cùng */}
-      <View style={[styles.navContainerFixed, { paddingBottom: insets.bottom, height: NAV_HEIGHT + insets.bottom }]}>
-        {Nav ? <Nav nav={navigation} /> : <MockNav nav={navigation}/>}
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.DEFAULT_WHITE,
-    // paddingBottom: NAV_HEIGHT, // Loại bỏ paddingBottom ở đây, sẽ xử lý bằng contentContainerStyle của FlatList và height của Nav
-  },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: Colors.DEFAULT_BLACK,
-    paddingHorizontal: Display.setWidth(4),
-    paddingTop: Display.setHeight(2) + (Platform.OS === 'ios' ? insets.top : 0), // Điều chỉnh padding theo insets.top
-    paddingBottom: Display.setHeight(1.5),
-    backgroundColor: Colors.DEFAULT_WHITE, // Đảm bảo title có nền nếu cần
-  },
+  container: { flex: 1, backgroundColor: Colors.DEFAULT_WHITE },
+  screenTitle: { fontSize: 24, fontWeight: "bold", margin: 16 },
   chatItemContainer: {
-    flexDirection: "row",
-    paddingHorizontal: Display.setWidth(4),
-    paddingVertical: Display.setHeight(1.5),
-    alignItems: "center",
-    backgroundColor: Colors.DEFAULT_WHITE,
+    flexDirection: "row", alignItems: "center", padding: 16, borderBottomWidth: 1, borderColor: Colors.GRAY_BORDER
   },
   avatarContainer: {
-    width: Display.setWidth(13),
-    height: Display.setWidth(13),
-    borderRadius: Display.setWidth(6.5),
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: Display.setWidth(3),
+    width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.PLACEHOLDER_AVATAR_BG,
+    justifyContent: "center", alignItems: "center", marginRight: 12
   },
-  avatar: {
-    width: "100%",
-    height: "100%",
-    borderRadius: Display.setWidth(6.5),
-  },
-  avatarText: {
-    fontSize: Display.setWidth(5),
-    color: Colors.DEFAULT_WHITE,
-    fontWeight: 'bold',
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: Colors.DEFAULT_WHITE,
-    borderRadius: 10,
-    padding: 1,
-  },
-  chatInfo: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  chatHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: Display.setHeight(0.5),
-  },
-  contactName: {
-    fontSize: 17,
-    fontWeight: "500",
-    color: Colors.DEFAULT_BLACK,
-  },
-  timestamp: {
-    fontSize: 12,
-    color: Colors.DEFAULT_GREY,
-  },
-  lastMessageContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  messageIcon: {
-    marginRight: Display.setWidth(1),
-  },
-  lastMessage: {
-    fontSize: 14,
-    color: Colors.DARK_GREY_TEXT,
-  },
-  unreadBadge: {
-    backgroundColor: Colors.DEFAULT_GREEN,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 5,
-    marginLeft: Display.setWidth(2)
-  },
-  unreadText: {
-    color: Colors.DEFAULT_WHITE,
-    fontSize: 12,
-    fontWeight: 'bold'
-  },
-  separator: {
-    height: 1,
-    backgroundColor: Colors.GRAY_BORDER,
-    marginLeft: Display.setWidth(13) + Display.setWidth(4) + Display.setWidth(3),
-  },
-  navContainerFixed: {
-    // position: "absolute", // Không cần nếu không có KeyboardAvoidingView phức tạp
-    // bottom: 0,             // Đã được tính vào height và paddingBottom
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.DEFAULT_WHITE || "#fff",
-    borderTopWidth: 1,
-    borderTopColor: Colors.GRAY_BORDER || "#e0e0e0", // Sử dụng Colors.GRAY_BORDER nếu có
-    // zIndex: 10, // Chỉ cần nếu có thành phần khác có thể che phủ
-  },
+  avatar: { width: 48, height: 48, borderRadius: 24 },
+  avatarText: { color: Colors.DEFAULT_WHITE, fontWeight: "bold", fontSize: 20 },
+  chatInfo: { flex: 1 },
+  contactName: { fontWeight: "bold", fontSize: 16 },
+  lastMessage: { color: Colors.DARK_GREY_TEXT, fontSize: 14 },
+  timestamp: { color: Colors.DEFAULT_GREY, fontSize: 12, marginLeft: 8 }
 });

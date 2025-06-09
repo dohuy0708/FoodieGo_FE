@@ -1,169 +1,289 @@
-import React from "react";
+import React, { useState, useContext, useEffect } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
-import  Colors  from "../../constants/Colors";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { Avatar, Button } from "react-native-elements";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { Colors } from "../../constants";
+import { UserContext } from "../../context/UserContext";
+import ConfirmModal from "../../components/ConfirmModal";
+import AlertModal from "../../components/AlertModal";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Display from "../../utils/Display";
 import Nav from "../../components/Nav";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 const NAV_HEIGHT = Display.setHeight(7);
-export default function Account({ navigation }) {
-  const user = "Nguyễn Văn A";
+const Account = ({ navigation }) => {
+  
+
   const insets = useSafeAreaInsets();
+  const [username, setUsername] = useState("---");
+  const [email, setEmail] = useState("Bạn chưa đăng nhập tài khoản!");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false); // Trạng thái hiển thị modal
+  const { userInfo } = useContext(UserContext); // Lấy thông tin user từ context
+  const { setUserInfo } = useContext(UserContext); // Lấy hàm setUserInfo từ context
+  const [isAlertModalVisible, setIsAlertModalVisible] = useState(false); // Trạng thái hiển thị modal
+
+  useEffect(() => {
+    if (userInfo) {
+      setIsLoggedIn(true);
+      setUsername(userInfo.name || "---");
+      setEmail(userInfo.email || "N/A");
+    }
+  }, [userInfo]); // Cập nhật lại khi userInfo thay đổi
+
+  const handleLogout = async () => {
+    try {
+      console.log("Logout userInfo", userInfo);
+      // 1. Xóa dữ liệu trong AsyncStorage
+      await AsyncStorage.removeItem("userInfo");
+      await AsyncStorage.removeItem("token");
+
+      // 2. Reset context
+      setUserInfo(null); // hoặc setUserInfo({}) tùy theo bạn setup
+      // 3. Reset stack và điều hướng về màn hình chính (hoặc Login)
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "SplashScreen" }], // hoặc 'Login' tùy vào yêu cầu của bạn
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+  const handleLoginRedirect = () => {
+    setIsModalVisible(false); // Đóng modal
+    navigation.navigate("LoginScreen"); // Chuyển đến màn hình đăng nhập
+  };
+  // Hàm để đóng modal khi nhấn nút "Hủy"
+  const handleCloseModal = () => {
+    setIsModalVisible(false); // Đóng modal
+  };
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.header}>Tài khoản</Text>
-        <View style={styles.iconContainer}>
-          <MaterialIcons
-            name="account-circle"
-            size={Display.setWidth(50)}
-            color={Colors.DEFAULT_GREEN}
-            style={{ alignSelf: "center" }}
-          />
-          <TouchableOpacity style={[styles.button, styles.logoutButton]}>
-            <Text style={styles.buttonText}>Đăng xuất</Text>
-          </TouchableOpacity>
-          <Text style={styles.usernameText}>{user}</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View>
+          <Avatar
+            rounded
+            size={70}
+            source={require("../../assets/images/user.png")}
+            containerStyle={styles.avatar}
+          ></Avatar>
         </View>
+        <Text style={styles.name}>{username}</Text>
+        <Text style={styles.email}>{email}</Text>
+      </View>
 
-        <Text style={[styles.header, styles.subHeader]}>Đổi mật khẩu</Text>
-
-        <View style={styles.changePass}>
-          <Text style={styles.label}>Mật khẩu cũ</Text>
-          <TextInput
-            style={styles.input}
-            secureTextEntry={true}
-            placeholder="Nhập mật khẩu cũ"
-            placeholderTextColor={Colors.LIGHT_GREY2}
-          />
-          <Text style={styles.label}>Mật khẩu mới</Text>
-          <TextInput
-            style={styles.input}
-            secureTextEntry={true}
-            placeholder="Nhập mật khẩu mới"
-            placeholderTextColor={Colors.LIGHT_GREY2}
-          />
-          <Text style={styles.label}>Nhập lại mật khẩu mới</Text>
-          <TextInput
-            style={styles.input}
-            secureTextEntry={true}
-            placeholder="Nhập lại mật khẩu mới"
-            placeholderTextColor={Colors.LIGHT_GREY2}
-          />
-          <TouchableOpacity style={[styles.button, styles.changePassButton]}>
-            <Text style={styles.buttonText}>Đổi mật khẩu</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-       <View style={[styles.navContainer, { bottom: insets.bottom }]}>
-              <Nav nav={navigation} />
+      <View style={styles.bodyContainer}>
+        <View style={styles.menuContainer}>
+          {/* Thông tin cá nhân*/}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              if (isLoggedIn) {
+                // Nếu đã đăng nhập, điều hướng đến màn hình ProfileScreen
+                navigation.navigate("ProfileScreen");
+              } else {
+                // Nếu chưa đăng nhập, hiển thị modal yêu cầu đăng nhập
+                setIsAlertModalVisible(true);
+              }
+            }} // Gọi hàm khi nhấn vào mục này)}
+          >
+            <View style={styles.iconTitle}>
+              <Ionicons name="person-outline" size={22} style={styles.icon} />
+              <Text style={styles.title}>Thông tin cá nhân</Text>
             </View>
-    </View>
+            <Ionicons name="chevron-forward-outline" size={20} />
+          </TouchableOpacity>
+          {/* Địa chỉ */}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              if (isLoggedIn) {
+                // Nếu đã đăng nhập, điều hướng đến màn hình ProfileScreen
+                navigation.navigate("ProfileScreen");
+              } else {
+                // Nếu chưa đăng nhập, hiển thị modal yêu cầu đăng nhập
+                setIsAlertModalVisible(true);
+              }
+            }}
+          >
+            <View style={styles.iconTitle}>
+              <Ionicons
+                name="paper-plane-outline"
+                size={22}
+                style={styles.icon}
+              />
+              <Text style={styles.title}>Địa chỉ</Text>
+            </View>
+            <Ionicons name="chevron-forward-outline" size={20} />
+          </TouchableOpacity>
+          {/* Chính sách  */}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              navigation.navigate("AboutUsScreen");
+            }}
+          >
+            <View style={styles.iconTitle}>
+              <Ionicons
+                name="newspaper-outline"
+                size={22}
+                style={styles.icon}
+              />
+              <Text style={styles.title}>Chính sách</Text>
+            </View>
+            <Ionicons name="chevron-forward-outline" size={20} />
+          </TouchableOpacity>
+          {/* Về chúng tôi */}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              navigation.navigate("AboutUsScreen");
+            }}
+          >
+            <View style={styles.iconTitle}>
+              <Ionicons name="business-outline" size={22} style={styles.icon} />
+              <Text style={styles.title}>Về chúng tôi</Text>
+            </View>
+            <Ionicons name="chevron-forward-outline" size={20} />
+          </TouchableOpacity>
+          {/* Trợ giúp */}
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => {
+              navigation.navigate("AboutUsScreen");
+            }}
+          >
+            <View style={styles.iconTitle}>
+              <Ionicons
+                name="alert-circle-outline"
+                size={22}
+                style={styles.icon}
+              />
+              <Text style={styles.title}>Trợ giúp</Text>
+            </View>
+            <Ionicons name="chevron-forward-outline" size={20} />
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={() => {
+            if (!isLoggedIn) {
+              navigation.navigate("LoginScreen");
+            } else {
+              setIsModalVisible(true);
+            }
+          }}
+        >
+          <Text style={styles.loginText}>
+            {!isLoggedIn ? "Đăng nhập/Đăng ký" : "Đăng xuất"}
+          </Text>
+        </TouchableOpacity>
+        
+      </View>
+      <View style={[styles.navContainer, { bottom: insets.bottom }]}>
+        <Nav nav={navigation} />
+      </View>
+      {/* Sử dụng ModalComponent và truyền onClose, onAction */}
+      <ConfirmModal
+        visible={isModalVisible}
+        onClose={handleCloseModal} // Đóng modal
+        onAction={handleLogout}
+        info="Bạn muốn đăng xuất?" // Thực hiện hành động khi nhấn nút "Đăng nhập"
+        actionText="Đăng xuất" // Tùy chọn văn bản cho nút hành động
+      />
+      <AlertModal
+        visible={isAlertModalVisible}
+        onClose={() => setIsAlertModalVisible(false)} // Đóng modal
+        info="Đăng nhập để xem thông tin!" // Thông báo cho người dùng
+      />
+    </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: Display.setWidth(5),
-    paddingVertical: Display.setHeight(1.2),
+    flex: 1,
+    paddingBottom: 40,
   },
   header: {
-    marginTop: Display.setHeight(5),
-    textAlign: "center",
-    color: Colors.DEFAULT_GREEN,
-    fontWeight: "bold",
-    fontSize: 24,
-    marginBottom: Display.setHeight(1.8),
-  },
-  subHeader: {
-    fontSize: 18,
-    marginTop: Display.setHeight(2.5),
-    marginBottom: Display.setHeight(1.2),
-  },
-  iconContainer: {
-    borderRadius: 10,
-    paddingVertical: Display.setHeight(1.2),
-    paddingHorizontal: Display.setWidth(2.5),
+    backgroundColor: "#118b96",
+    padding: 20,
     alignItems: "center",
+    height: "30%",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.GRAY_BORDER,
-    marginBottom: Display.setHeight(1.8),
   },
-  usernameText: {
-    fontSize: 20,
-    textAlign: "center",
-    marginTop: Display.setHeight(1.2),
-    color: Colors.DEFAULT_BLACK,
+  bodyContainer: {
+    flex: 1,
   },
-  changePass: {
-    borderRadius: 10,
-    paddingVertical: Display.setHeight(2.5),
-    paddingHorizontal: Display.setWidth(2.5),
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.LIGHT_GREY2,
-    gap: Display.setHeight(1.8),
-    marginBottom: Display.setHeight(2.5),
+  avatar: {
+    backgroundColor: "#fff",
   },
-  label: {
-    color: Colors.DEFAULT_GREEN,
-    fontSize: 16,
-  },
-  input: {
-    borderColor: Colors.GRAY_BORDER,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: Display.setWidth(2.5),
-    paddingVertical: Display.setHeight(1.2),
-    fontSize: 16,
-    color: Colors.DEFAULT_BLACK,
-  },
-  button: {
-    paddingHorizontal: Display.setWidth(5),
-    paddingVertical: Display.setHeight(1.2),
-    minHeight: Display.setHeight(5),
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-  },
-  logoutButton: {
-    backgroundColor: Colors.DEFAULT_YELLOW,
-    marginTop: Display.setHeight(2),
-  },
-  changePassButton: {
-    backgroundColor: Colors.DEFAULT_GREEN,
-    alignSelf: "flex-end",
-    marginTop: Display.setHeight(1),
-  },
-  buttonText: {
+  name: {
     color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 18,
+    marginTop: 8,
+  },
+  email: {
+    color: "#fff",
+    fontSize: 14,
+    marginTop: 4,
+  },
+  menuContainer: {
+    padding: 16,
+  },
+  menuItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 0.5,
+    borderColor: "#ccc",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  iconTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  icon: {
+    marginRight: 16,
+    width: 24,
+  },
+  title: {
+    fontSize: 14,
+  },
+  loginButton: {
+    marginTop: 20,
+    paddingVertical: 12,
+    backgroundColor: "#007B7F",
+    width: "90%",
+    padding: 10,
+    marginLeft: "5%",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  loginText: {
+    fontSize: 14,
+    color: "#fff",
   },
   navContainer: {
     position: "absolute",
-    bottom: 0,
     left: 0,
     right: 0,
     height: NAV_HEIGHT,
     backgroundColor: Colors.DEFAULT_WHITE || "#fff",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
-  },
-  scrollView: {
-    flex: 1,
-    width: "100%",
-    marginBottom: Display.setHeight(6)+ NAV_HEIGHT, // Adjust for nav height
+    zIndex: 10,
   },
 });
+
+export default Account;

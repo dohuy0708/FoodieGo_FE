@@ -12,13 +12,14 @@ import {
   Alert,
   Image,
   TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import Colors from "../../constants/Colors"; // Giả sử file này nằm trong /screens
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Display from "../../utils/Display"; // Giả sử file này nằm trong /screens
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { listenMessages, sendMessage, recallMessage } from '../../services/chatService';
-
+import { listenMessages, sendMessage, recallMessage, updateMessage } from '../../services/chatService';
+import { sendNotification,getRestaurantById } from '../../services/vendorService';
 // Giả lập Display và Colors nếu bạn chưa có các file này
 // (Trong dự án thực, bạn nên có các file này và xóa phần mock)
 if (typeof Display === "undefined") {
@@ -46,11 +47,29 @@ if (typeof Colors === "undefined") {
 // Dữ liệu tin nhắn mẫu (trong ứng dụng thực, bạn sẽ lấy theo chatId)
 
 // Thêm vào trước component chính IndividualChatScreen
-const MessageContextMenu = ({ visible, onEdit, onRecall, style }) => {
+const MessageContextMenu = ({ visible, onEdit, onRecall }) => {
   if (!visible) return null;
-
   return (
-    <View style={[styles.contextMenuContainer, style]}>
+    <View style={{
+      position: 'absolute',
+      top: '40%',
+      left: '50%',
+      transform: [
+        { translateX: -0.5 * Display.setWidth(70) },
+        { translateY: -0.5 * Display.setHeight(7.5) }
+      ],
+      zIndex: 1000,
+      backgroundColor: Colors.DEFAULT_WHITE,
+      borderRadius: 8,
+      elevation: 5,
+      shadowColor: Colors.DEFAULT_BLACK,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      padding: Display.setWidth(2),
+      width: Display.setWidth(70),
+      justifyContent: "space-around",
+    }}>
       <TouchableOpacity style={styles.contextMenuItem} onPress={onEdit}>
         <MaterialIcons name="edit" size={20} color={Colors.DEFAULT_BLACK} />
         <Text style={styles.contextMenuText}>Chỉnh sửa</Text>
@@ -63,20 +82,20 @@ const MessageContextMenu = ({ visible, onEdit, onRecall, style }) => {
   );
 };
 
-export default function IndividualChatScreen({ route, navigation }) {
+export default function IndividualChatCustomer({ route, navigation }) {
   // Đổi tên component cho đúng chuẩn (PascalCase)
   // Kiểm tra xem route.params có tồn tại không trước khi truy cập
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     message: null,
   });
-  const chatId = route.params?.chatId;
+  const chatId = route.params?.chatId || `customer_${route.params?.userId}_vendor_${route.params?.vendorId}`;
   const contactName = route.params?.contactName;
   const contactAvatar = route.params?.contactAvatar;
   const contactInitials = route.params?.contactInitials;
   // Giả định userId lấy từ context hoặc route (bạn thay thế bằng logic thực tế của bạn)
   const userId = route.params?.userId || 'user1';
-
+  const vendorId = route.params?.vendorId || 'vendor1';
   const insets = useSafeAreaInsets();
 
   // Sử dụng state messages từ Firebase
@@ -84,9 +103,11 @@ export default function IndividualChatScreen({ route, navigation }) {
   const [inputText, setInputText] = useState("");
   const [editingMessage, setEditingMessage] = useState(null);
   const flatListRef = useRef(null);
-
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [ownerId, setOwnerId] = useState(null);
   // Lắng nghe tin nhắn realtime từ Firebase
   useEffect(() => {
+  
     if (!chatId) return;
     const unsubscribe = listenMessages(chatId, setMessages);
     return unsubscribe;
@@ -106,15 +127,46 @@ export default function IndividualChatScreen({ route, navigation }) {
       );
     }
   }, [messages]);
+  useEffect(() => {
+    console.log("vendorId",vendorId);
+    const fetchOwnerId = async () => {
+      const restaurant = await getRestaurantById(vendorId);
+      console.log("restaurant",restaurant);
+      setOwnerId(restaurant.owner.id);
+    };
+    fetchOwnerId();
+  }, [vendorId]);
+
+  useEffect(() => {
+    const onKeyboardShow = () => setKeyboardOffset(30); // offset khi bàn phím hiện
+    const onKeyboardHide = () => setKeyboardOffset(0);  // offset khi bàn phím ẩn
+
+    const showSub = Keyboard.addListener("keyboardDidShow", onKeyboardShow);
+    const hideSub = Keyboard.addListener("keyboardDidHide", onKeyboardHide);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Gửi hoặc sửa tin nhắn
-  const handleSend = () => {
+  const handleSend = async () => {
+    
     if (inputText.trim() === "") return;
     if (editingMessage) {
-      // Nếu đang sửa, chỉ update local, không update Firebase (bạn có thể mở rộng nếu muốn)
+      updateMessage(chatId, editingMessage.id, inputText);
       setEditingMessage(null);
     } else {
       sendMessage(chatId, userId, inputText);
+      console.log(ownerId);
+      console.log(typeof ownerId);
+      await sendNotification({
+        title: 'Tin nhắn mới',
+        content: 'Bạn có tin nhắn mới',
+        type: 'push',
+        userId: parseInt(ownerId),
+      });
     }
     setInputText("");
   };
@@ -161,10 +213,10 @@ export default function IndividualChatScreen({ route, navigation }) {
           <View style={styles.avatarColumn}>{getAvatarContent()}</View>
         )}
         {!showAvatar && !isUser && <View style={styles.avatarPlaceholder} />}
-        <View>
+        <View style={{ flexShrink: 1 }}>
           <TouchableOpacity
             onLongPress={() => {
-              if (item.recalled || !isUser) return;
+              if (item.recalled || item.sender !== userId) return;
               setContextMenu({ visible: true, message: item });
             }}
             activeOpacity={0.8}
@@ -172,7 +224,6 @@ export default function IndividualChatScreen({ route, navigation }) {
               styles.messageBubble,
               isUser ? styles.userMessage : styles.otherMessage,
               item.recalled && styles.recalledMessage,
-              isUser ? styles.userBubbleAlign : styles.otherBubbleAlign,
               styles.bubbleMinWidth,
             ]}
           >
@@ -185,30 +236,7 @@ export default function IndividualChatScreen({ route, navigation }) {
             >
               {item.text}
             </Text>
-            {item.edited && !item.recalled && (
-              <Text style={styles.editedText}>(đã sửa)</Text>
-            )}
           </TouchableOpacity>
-          {contextMenu.visible && contextMenu.message?.id === item.id && (
-            <MessageContextMenu
-              visible={true}
-              onEdit={() => {
-                setInputText(contextMenu.message.text);
-                setEditingMessage(contextMenu.message);
-                setContextMenu({ visible: false, message: null });
-              }}
-              onRecall={() => {
-                handleRecall(item.id);
-                setContextMenu({ visible: false, message: null });
-              }}
-              style={{
-                position: "absolute",
-                top: Display.setHeight(8),
-                left: -Display.setWidth(15),
-                right: "auto",
-              }}
-            />
-          )}
         </View>
       </View>
     );
@@ -228,7 +256,7 @@ export default function IndividualChatScreen({ route, navigation }) {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -45}
+        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : keyboardOffset}
       >
         <View
           style={[
@@ -236,6 +264,8 @@ export default function IndividualChatScreen({ route, navigation }) {
             { paddingTop: Display.setHeight(5) },
           ]}
         >
+        <Text style={{fontSize: Display.setWidth(5), fontWeight: "bold", marginBottom: Display.setHeight(2),alignSelf: "center"}}>{contactName}</Text>
+       
           <FlatList
             ref={flatListRef}
             data={messages}
@@ -280,13 +310,31 @@ export default function IndividualChatScreen({ route, navigation }) {
               onChangeText={setInputText}
               placeholder={editingMessage ? "Đang sửa..." : "Nhắn tin..."}
               multiline
-              placeholderTextColor={Colors.DARK_GREY_TEXT}
+              placeholderTextColor={Colors.DEFAULT_BLACK}
             />
             <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
-              <MaterialIcons name="send" size={24} />
+              <MaterialIcons name="send" size={24} color={Colors.DEFAULT_GREEN} />
             </TouchableOpacity>
           </View>
         </View>
+        {contextMenu.visible && (
+          <MessageContextMenu
+            visible={true}
+            onEdit={() => {
+              if (contextMenu.message) {
+                setInputText(contextMenu.message.text);
+                setEditingMessage(contextMenu.message);
+              }
+              setContextMenu({ visible: false, message: null });
+            }}
+            onRecall={() => {
+              if (contextMenu.message) {
+                handleRecall(contextMenu.message.id);
+              }
+              setContextMenu({ visible: false, message: null });
+            }}
+          />
+        )}
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -340,8 +388,8 @@ const styles = StyleSheet.create({
     paddingVertical: Display.setHeight(0.8),
     paddingHorizontal: Display.setWidth(3.5),
     borderRadius: 18,
-    maxWidth: "85%",
-    minWidth: Display.setWidth(50),
+    maxWidth: Display.setWidth(70),
+   
   },
   userMessage: {
     backgroundColor: Colors.DEFAULT_GREEN,
@@ -413,19 +461,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  contextMenuContainer: {
-    position: "absolute",
-    backgroundColor: Colors.DEFAULT_WHITE,
-    borderRadius: 8,
-    elevation: 5,
-    shadowColor: Colors.DEFAULT_BLACK,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    padding: Display.setWidth(2),
-    zIndex: 1000,
-    width: Display.setWidth(35),
-  },
   contextMenuItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -443,7 +478,5 @@ const styles = StyleSheet.create({
   otherBubbleAlign: {
     alignSelf: "flex-start",
   },
-  bubbleMinWidth: {
-    minWidth: Display.setWidth(20),
-  },
+ 
 });

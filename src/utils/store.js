@@ -8,7 +8,8 @@ const useSessionStore = create((set) => ({
  
   setRestaurantId: (id) => set({ restaurantId: id }),
   clearRestaurantId: () => set({ restaurantId: null }),
-
+  setSelectedCategoryId: (categoryId) => set({ selectedCategoryId: categoryId }),
+  clearSelectedCategoryId: () => set({ selectedCategoryId: null }),
   setCategories: (newCategories) => set((state) => {
     
     if (!Array.isArray(newCategories)) {

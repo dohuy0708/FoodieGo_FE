@@ -109,6 +109,7 @@ export default function HomeScreen({ navigation }) {
       setIsLoading(true);
       try {
         const [near, popular, rated] = await Promise.all([
+
           searchNearestRestaurants(
             location?.coords?.latitude || 10.8790332,
             location?.coords?.longitude || 106.8107046,
@@ -127,9 +128,11 @@ export default function HomeScreen({ navigation }) {
             1,
             6
           ),
+
         ]);
 
-        setNearRestaurants(near.data);
+         setNearRestaurants(near.data);
+      
         setNearTotal(near.total);
 
         setPopularRestaurants(popular.data);

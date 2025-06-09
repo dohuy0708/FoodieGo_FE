@@ -20,7 +20,7 @@ import { Picker } from "@react-native-picker/picker";
 import Display from "../../utils/Display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { uploadImageToServer, createMenu } from "../../services/vendorService";
-
+import Icon from "react-native-vector-icons/Ionicons";
 export default function AddDish({ navigation, route }) {
   const initialCategory =
     route?.params?.category && Array.isArray(route.params.category)
@@ -199,12 +199,19 @@ export default function AddDish({ navigation, route }) {
     >
       <TouchableWithoutFeedback style={{ flex: 1 }} onPress={Keyboard.dismiss}>
         <View style={styles.innerContainer}>
+        <View style={styles.headerContainer}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Thêm món ăn</Text>
+      </View>
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+             
             <View style={styles.view_image}>
               <Image
                 source={selectedImage ? { uri: selectedImage.uri } : {}}
@@ -365,6 +372,7 @@ export default function AddDish({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
+ 
   keyboardAvoidingContainer: {
     flex: 1,
     backgroundColor: Colors.DEFAULT_WHITE,
@@ -489,7 +497,7 @@ const styles = StyleSheet.create({
   },
   pickerItem: {
     fontSize: 16,
-    color: Colors.SECONDARY_BLACK,
+    color: Colors.LIGHT_GREY2,
   },
   cancelButton: {
     backgroundColor: Colors.DEFAULT_YELLOW,
@@ -514,5 +522,23 @@ const styles = StyleSheet.create({
     fontSize: 18, 
     color: Colors.SECONDARY_BLACK, 
     fontWeight: '500',
+  },
+  headerContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+   justifyContent: "flex-start",
+    paddingVertical: Display.setHeight(1.2),
+    backgroundColor: "#ffffff",
+    
+  },
+  backButton: { padding: 8 },
+  header: {
+    textAlign: "center",
+    color: Colors.DEFAULT_GREEN,
+    fontWeight: "bold",
+    fontSize: 25,
+   
+    marginBottom: Display.setHeight(1.5),
   },
 });

@@ -1,2 +1,8 @@
-const GRAPHQL_ENDPOINT = "http://192.168.1.8:3001/graphql";
+
+
+
+
+const GRAPHQL_ENDPOINT = "http://13.212.21.133:80/graphql";
+
+
 export default GRAPHQL_ENDPOINT;
