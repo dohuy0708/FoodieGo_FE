@@ -40,7 +40,8 @@ export default function HomeVendor({ navigation, route }) {
   const [restaurant, setRestaurant] = useState(null);
   const [category, setCategory] = useState([]);
   const [menus, setMenus] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory]
+   = useState(useSessionStore.getState().selectedCategoryId || null);
 
   const [isLoadingRestaurant, setIsLoadingRestaurant] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -49,7 +50,8 @@ export default function HomeVendor({ navigation, route }) {
   const [errorRestaurant, setErrorRestaurant] = useState(null);
   const [errorCategories, setErrorCategories] = useState(null);
   const [errorMenus, setErrorMenus] = useState(null);
-  const { setRestaurantId,setCategories } = useSessionStore();
+  const { setRestaurantId,setCategories ,setSelectedCategoryId} = useSessionStore();
+
   const fetchRestaurantCallback = useCallback(() => {
     async function fetchData() {
       setSelectedCategory(null);
@@ -318,7 +320,12 @@ export default function HomeVendor({ navigation, route }) {
             <View style={styles.picker_container}>
               <Picker
                 selectedValue={selectedCategory}
-                onValueChange={(itemValue) => setSelectedCategory(itemValue)}
+                onValueChange={(itemValue) => 
+                  {
+                    setSelectedCategory(itemValue)
+                    setSelectedCategoryId(itemValue)
+                  }
+                }
                 style={styles.picker}
                 mode="dropdown"
                 enabled={!isLoadingMenus}
