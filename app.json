@@ -12,11 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "plugins": [
-      "@react-native-community/datetimepicker",
-      "expo-font"
-      
-    ],
+    "plugins": ["@react-native-community/datetimepicker", "expo-font"],
     "ios": {
       "supportsTablet": true
     },
@@ -27,21 +23,15 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+          "apiKey": "AIzaSyDmthPP3oRtm9E7tRAHo4_ChQ2y2LJeO6w"
         }
       }
     },
     "web": {
-
       "favicon": "./assets/favicon.png",
       "config": {
         "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
       }
     }
-
-     
-    }
-   
-
   }
-
+}

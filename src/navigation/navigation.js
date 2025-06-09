@@ -41,12 +41,15 @@ import IndividualChatCustomer from "../Screens/Customer/InvidualChatCustomer";
 // import OrderDetailScreen from "../Screens/Customer/OrderDetailScreen";
 import FeedbackScreen from "../Screens/Customer/FeedbackScreen";
 import { CartProvider } from "../context/CartContext";
-import OrderConfirmScreen from "../Screens/Customer/OrderConfirmScreen";
-import PaymentScreen from "../Screens/Customer/PaymentScreen";
-import CategoryScreen from "../Screens/Customer/CategoryScreen";
+import OrderConfirmScreen from "../screens/customer/OrderConfirmScreen";
+import PaymentScreen from "../screens/customer/PaymentScreen";
+import CategoryScreen from "../screens/customer/CategoryScreen";
 import HelpScreen from "../Screens/Customer/HelpScreen";
 import OrderDetailScreen from "../Screens/Customer/OrderDetailScreen";
-
+import AddressScreen from "../Screens/Customer/AddressScreen";
+import AddAddressScreens from "../Screens/Customer/AddAddressScreen";
+import SelectAddressScreen from "../Screens/Customer/SelectAddressScreen";
+import SeeRestaurantScreen from "../Screens/Admin/SeeRestaurantScreen";
 const Stack = createNativeStackNavigator();
 
 export default function Navigation() {
@@ -77,6 +80,10 @@ export default function Navigation() {
               name="RestaurantScreen"
               component={RestaurantScreen}
             />
+            <Stack.Screen
+              name="SeeRestaurantScreen"
+              component={SeeRestaurantScreen}
+            />
             <Stack.Screen name="FoodScreen" component={FoodScreen} />
             <Stack.Screen name="ExploreScreen" component={ExploreScreen} />
             <Stack.Screen name="SearchScreen" component={SearchScreen} />
@@ -95,6 +102,15 @@ export default function Navigation() {
             <Stack.Screen name="AddDish" component={AddDish} />
             <Stack.Screen name="EditDish" component={EditDish} />
             <Stack.Screen name="OrderDetail" component={OrderDetail} />
+            <Stack.Screen name="AddressScreen" component={AddressScreen} />
+            <Stack.Screen
+              name="AddAddressScreen"
+              component={AddAddressScreens}
+            />
+            <Stack.Screen
+              name="SelectAddressScreen"
+              component={SelectAddressScreen}
+            />
             <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
             <Stack.Screen name="IndividualChat" component={IndividualChat} />
             <Stack.Screen name="ChatCustomer" component={ChatCustomer} />

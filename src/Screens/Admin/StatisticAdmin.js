@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,17 +8,76 @@ import {
   Dimensions,
   ScrollView,
   Platform,
+  ActivityIndicator, // Thêm
 } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 import { Calendar } from "react-native-calendars";
 import Feather from "@expo/vector-icons/Feather";
-import  Colors  from "../../constants/Colors";
+import Colors from "../../constants/Colors";
 import NavAdmin from "../../components/NavAdmin";
 import Display from "../../utils/Display";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import GRAPHQL_ENDPOINT from "../../../config";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 const NAV_HEIGHT = Display.setHeight(8);
+
+// GraphQL Queries
+const GET_TOTAL_USERS_QUERY = `
+  query GetTotalUsers {
+    totalUsers
+  }
+`;
+
+const GET_RESTAURANTS_TOTAL = `
+  query GetRestaurants {
+    restaurants(page: 1, limit: 1) {
+      total
+    }
+  }
+`;
+
+// GraphQL API Caller
+const callGraphQL = async (query, variables) => {
+  const token = await AsyncStorage.getItem("token");
+  const headers = { "Content-Type": "application/json" };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else {
+    console.warn("callGraphQL - Token không được tìm thấy.");
+  }
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({ query, variables }),
+    });
+    const responseText = await response.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`Lỗi parse JSON: ${responseText.substring(0, 100)}`);
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("Phiên đăng nhập không hợp lệ.");
+    }
+    if (!response.ok) {
+      const errTxt =
+        responseData.errors?.map((e) => e.message).join("\n") ||
+        responseData.message ||
+        `Lỗi API (${response.status})`;
+      throw new Error(errTxt);
+    }
+    if (responseData.errors) {
+      throw new Error(responseData.errors.map((e) => e.message).join("\n"));
+    }
+    return responseData.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export default function StatisticAdmin({ navigation }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,10 +87,38 @@ export default function StatisticAdmin({ navigation }) {
   const [selectedEndDate, setSelectedEndDate] = useState(null);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
-  const userNumber = 1000;
-  const totalUser = 10000;
-  const restaurantNumber = 100;
-  const totalRestaurant = 1000;
+
+  // States for API data
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalRestaurants, setTotalRestaurants] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      setLoadingStats(true);
+      try {
+        const [userData, restaurantData] = await Promise.all([
+          callGraphQL(GET_TOTAL_USERS_QUERY, {}),
+          callGraphQL(GET_RESTAURANTS_TOTAL, {}),
+        ]);
+
+        if (userData && userData.findAllUsers) {
+          setTotalUsers(userData.findAllUsers.total);
+        }
+        if (restaurantData && restaurantData.restaurants) {
+          setTotalRestaurants(restaurantData.restaurants.total);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải dữ liệu thống kê:", error);
+        // Optional: Set an error state to show a message to the user
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchStatistics();
+  }, []); // Empty dependency array ensures this runs only once
 
   const toggleBottomSheet = () => {
     const toValue = isOpen ? 0 : 1;
@@ -52,6 +139,7 @@ export default function StatisticAdmin({ navigation }) {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
+
   const getWeekDates = (selectedDate) => {
     const date = new Date(selectedDate);
     const day = date.getDay();
@@ -73,7 +161,6 @@ export default function StatisticAdmin({ navigation }) {
     setSelectedStartDate(weekDates.start);
     setSelectedEndDate(weekDates.end);
   };
-
 
   const renderWeekPicker = () => {
     const markedDates = {};
@@ -131,6 +218,7 @@ export default function StatisticAdmin({ navigation }) {
       </View>
     );
   };
+
   const renderMonthPicker = () => {
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
     return (
@@ -206,7 +294,10 @@ export default function StatisticAdmin({ navigation }) {
   };
 
   const renderChart = () => {
-     const chartWidth = Math.max(screenWidth - Display.setWidth(10), weeklyData.labels.length * Display.setWidth(15));
+    const chartWidth = Math.max(
+      screenWidth - Display.setWidth(10),
+      weeklyData.labels.length * Display.setWidth(15)
+    );
     return (
       <View style={styles.chartOuterContainer}>
         <Text style={styles.chartTitle}>Doanh thu theo ngày</Text>
@@ -261,29 +352,43 @@ export default function StatisticAdmin({ navigation }) {
         </View>
 
         <View style={styles.statsRow}>
-          <View style={styles.statisticBox}>
-            <Text style={styles.statisticLabel}>Tổng người dùng mới</Text>
-            <Text style={styles.statisticValue}>{userNumber}</Text>
-          </View>
-          <View style={styles.statisticBox}>
-            <Text style={styles.statisticLabel}>Tổng số người dùng </Text>
-            <Text style={[styles.statisticValue,{ color:Colors.DEFAULT_YELLOW }]}>{totalUser}</Text>
-          </View>
-          <View style={styles.statisticBox}>
-            <Text style={styles.statisticLabel}>Tổng cửa hàng mới</Text>
-            <Text style={styles.statisticValue}>{restaurantNumber} </Text>
-          </View>
-          <View style={styles.statisticBox}>
-            <Text style={styles.statisticLabel}>Tổng số cửa hàng </Text>
-            <Text style={[styles.statisticValue,{ color:Colors.DEFAULT_YELLOW }]}>{totalRestaurant}</Text>
-          </View>
+          {loadingStats ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={Colors.DEFAULT_GREEN} />
+            </View>
+          ) : (
+            <>
+              <View style={styles.statisticBox}>
+                <Text style={styles.statisticLabel}>Tổng số người dùng</Text>
+                <Text
+                  style={[
+                    styles.statisticValue,
+                    { color: Colors.DEFAULT_YELLOW },
+                  ]}
+                >
+                  {totalUsers}
+                </Text>
+              </View>
+              <View style={styles.statisticBox}>
+                <Text style={styles.statisticLabel}>Tổng số cửa hàng</Text>
+                <Text
+                  style={[
+                    styles.statisticValue,
+                    { color: Colors.DEFAULT_YELLOW },
+                  ]}
+                >
+                  {totalRestaurants}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
 
-        {viewType == "week" && renderChart()}
+        {viewType === "week" && renderChart()}
       </ScrollView>
 
       <View style={styles.navContainer}>
-          <NavAdmin nav={navigation} />
+        <NavAdmin nav={navigation} />
       </View>
 
       <Animated.View
@@ -408,6 +513,12 @@ const styles = StyleSheet.create({
   statsRow: {
     marginBottom: Display.setHeight(3),
     gap: Display.setHeight(1.8),
+  },
+  loadingContainer: {
+    width: "100%",
+    height: 100, // Give it some height to avoid layout jump
+    justifyContent: "center",
+    alignItems: "center",
   },
   statisticBox: {
     flex: 1,
