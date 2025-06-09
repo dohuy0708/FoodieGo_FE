@@ -219,16 +219,7 @@ export default function OrderDetail({ navigation, route }) {
               {orderBaseInfo?.price || "N/A"}
             </Text>
           </View>
-          <View style={styles.viewText}>
-            <Text style={styles.infoLabel}>Thời gian</Text>
-            <Text style={styles.infoValue}>
-              {orderBaseInfo?.originalDate
-                ? formatTime(orderBaseInfo.originalDate)
-                : orderBaseInfo?.hour !== undefined
-                ? `${orderBaseInfo.hour}h${orderBaseInfo.minute}p`
-                : "N/A"}
-            </Text>
-          </View>
+         
           <View style={styles.viewText}>
             <Text style={styles.infoLabel}>Ngày</Text>
             <Text style={styles.infoValue}>

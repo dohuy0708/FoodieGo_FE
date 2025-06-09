@@ -56,9 +56,28 @@ const MockNav = ({ nav }) => (
 
 export default function ChatCustomer({ navigation }) {
   const { userInfo } = useContext(UserContext);
-  const customerId = userInfo.id;
+  const customerId = userInfo?.id;
   const [chatList, setChatList] = useState([]);
   const insets = useSafeAreaInsets();
+
+  // Kiểm tra nếu không có userInfo
+  if (!userInfo) {
+    return (
+      <View style={styles.loginPromptContainer}>
+       
+        <Text style={styles.loginPromptTitle}>Bạn chưa đăng nhập</Text>
+        <Text style={styles.loginPromptText}>
+          Vui lòng đăng nhập để sử dụng tính năng chat với nhà hàng
+        </Text>
+        <TouchableOpacity 
+          style={styles.loginButton}
+          onPress={() => navigation.navigate('LoginScreen')}
+        >
+          <Text style={styles.loginButtonText}>Đăng nhập ngay</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Lắng nghe danh sách chat
   useEffect(() => {
@@ -151,6 +170,8 @@ export default function ChatCustomer({ navigation }) {
   };
 
   return (
+  
+   
     <View style={styles.container}>
       <Text style={styles.screenTitle}>Tin nhắn với nhà hàng</Text>
      
@@ -179,5 +200,43 @@ const styles = StyleSheet.create({
   chatInfo: { flex: 1 },
   contactName: { fontWeight: "bold", fontSize: 16 },
   lastMessage: { color: Colors.DARK_GREY_TEXT, fontSize: 14 },
-  timestamp: { color: Colors.DEFAULT_GREY, fontSize: 12, marginLeft: 8 }
+  timestamp: { color: Colors.DEFAULT_GREY, fontSize: 12, marginLeft: 8 },
+  // Styles cho màn hình thông báo login
+  loginPromptContainer: {
+    flex: 1,
+    backgroundColor: Colors.DEFAULT_WHITE,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32
+  },
+  loginPromptTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.DEFAULT_BLACK,
+    marginTop: 16,
+    marginBottom: 8
+  },
+  loginPromptText: {
+    fontSize: 16,
+    color: Colors.DARK_GREY_TEXT,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32
+  },
+  loginButton: {
+    backgroundColor: Colors.DEFAULT_GREEN,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4
+  },
+  loginButtonText: {
+    color: Colors.DEFAULT_WHITE,
+    fontSize: 16,
+    fontWeight: 'bold'
+  }
 });

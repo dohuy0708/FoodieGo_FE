@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   ScrollView,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -180,7 +181,7 @@ const FeedbackScreen = ({ navigation, route }) => {
             <TextInput
               style={styles.input}
               placeholder="Nhập đánh giá của bạn..."
-              multil
+              multiline
               value={comment}
               onChangeText={setComment}
               editable={!hasFeedback}

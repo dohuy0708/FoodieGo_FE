@@ -45,7 +45,16 @@ const VerifyScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
-        <Header title="Xác thực" onBackPress={() => navigation.goBack()} />
+        <Header 
+          title="Xác thực" 
+          onBackPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('LoginScreen');
+            }
+          }} 
+        />
 
         <Image source={Logo} style={styles.logo}></Image>
         {/* Ô nhập email */}

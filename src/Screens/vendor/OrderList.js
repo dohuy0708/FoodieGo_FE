@@ -349,16 +349,7 @@ export default function OrderList({ navigation }) {
           <Text style={styles.labelText}>Tổng tiền</Text>
           <Text style={[styles.valueText, styles.priceText]}>{item.price}</Text>
         </View>
-        <View style={styles.viewText}>
-          <Text style={styles.labelText}>Thời gian</Text>
-          <Text style={styles.valueText}>
-            {item.hour !== "N/A"
-              ? `${String(item.hour).padStart(2, "0")}h${String(
-                  item.minute
-                ).padStart(2, "0")}p`
-              : "N/A"}
-          </Text>
-        </View>
+       
         <View style={styles.viewText}>
           <Text style={styles.labelText}>Ngày</Text>
           <Text style={styles.valueText}>{displayItemDate(item.originalDate)}</Text>

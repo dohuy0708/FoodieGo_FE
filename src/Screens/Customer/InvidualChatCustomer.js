@@ -130,7 +130,7 @@ export default function IndividualChatCustomer({ route, navigation }) {
   useEffect(() => {
     console.log("vendorId",vendorId);
     const fetchOwnerId = async () => {
-      const restaurant = await getRestaurantById(vendorId);
+      const restaurant = await getRestaurantById(parseInt(vendorId));
       console.log("restaurant",restaurant);
       setOwnerId(restaurant.owner.id);
     };

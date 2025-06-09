@@ -58,121 +58,60 @@ export default function Navigation() {
       <CartProvider>
         <NavigationContainer ref={navigationRef}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {/*App*/}
-          <Stack.Screen name="SplashScreen" component={SplashScreen} />
-          <Stack.Screen name="LoginScreen" component={LoginScreen} />      
-          
-          <Stack.Screen name="MainApp" component={CustomerBottomTab} />        
-          <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
-          <Stack.Screen name="VerifyScreen" component={VerifyScreen} />
-          
-          <Stack.Screen name="ChangePassScreen" component={ChangePassScreen} />
-           {/* Vendor */}
-          <Stack.Screen name="HomeVendor" component={HomeVendor} />
-          <Stack.Screen name="AccountScreen" component={AccountScreen} />
-          <Stack.Screen name="AboutUsScreen" component={AboutUsScreen} />
-          <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-          <Stack.Screen name="RestaurantScreen" component={RestaurantScreen} />
-          <Stack.Screen name="FoodScreen" component={FoodScreen} />
-          <Stack.Screen name="ExploreScreen" component={ExploreScreen} />
-          <Stack.Screen name="SearchScreen" component={SearchScreen} />  
-          <Stack.Screen name="Register" component={Register} />
-          <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
-          <Stack.Screen name="Category" component={Category} />
-          <Stack.Screen name="Account" component={Account} />
-          <Stack.Screen name="Comment" component={Comment} />
-          <Stack.Screen name="ListVendor" component={ListVendor} />
-          <Stack.Screen name="Statistic" component={Statistic} />
-          <Stack.Screen name="Notification" component={Notification} />
-          <Stack.Screen name="OrderList" component={OrderList} />
-          <Stack.Screen name="EditVendor" component={EditVendor} />
-          <Stack.Screen name="EditCategory" component={EditCategory} />
-          <Stack.Screen name="DishDetail" component={DishDetail} />
-          <Stack.Screen name="AddDish" component={AddDish} />
-          <Stack.Screen name="EditDish" component={EditDish} />
-          <Stack.Screen name="OrderDetail" component={OrderDetail} />
-          <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
-          <Stack.Screen name="IndividualChat" component={IndividualChat} />
-          <Stack.Screen name="ChatCustomer" component={ChatCustomer} />
-          <Stack.Screen name="SelectAddress" component={SelectAddress} />
-        
-         
-        
-          <Stack.Screen
-              name="ForgotPassScreen"
-              component={ForgotPassScreen}
-            />
+            {/* Auth Screens */}
             <Stack.Screen name="SplashScreen" component={SplashScreen} />
             <Stack.Screen name="LoginScreen" component={LoginScreen} />
-            <Stack.Screen name="MainApp" component={CustomerBottomTab} />
             <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
+            <Stack.Screen name="ForgotPassScreen" component={ForgotPassScreen} />
+            <Stack.Screen name="ChangePassScreen" component={ChangePassScreen} />
             <Stack.Screen name="VerifyScreen" component={VerifyScreen} />
-            <Stack.Screen
-              name="ForgotPassScreen"
-              component={ForgotPassScreen}
-            />
-            <Stack.Screen
-              name="ChangePassScreen"
-              component={ChangePassScreen}
-            />
-            {/* Vendor */}
-            <Stack.Screen name="HomeVendor" component={HomeVendor} />
-            <Stack.Screen name="AboutUsScreen" component={AboutUsScreen} />
+            
+            {/* Main App */}
+            <Stack.Screen name="MainApp" component={CustomerBottomTab} />
+            
+            {/* Customer Screens */}
             <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-            <Stack.Screen
-              name="RestaurantScreen"
-              component={RestaurantScreen}
-            />
-            <Stack.Screen
-              name="SeeRestaurantScreen"
-              component={SeeRestaurantScreen}
-            />
+            <Stack.Screen name="AccountScreen" component={AccountScreen} />
+            <Stack.Screen name="AboutUsScreen" component={AboutUsScreen} />
+            <Stack.Screen name="RestaurantScreen" component={RestaurantScreen} />
             <Stack.Screen name="FoodScreen" component={FoodScreen} />
             <Stack.Screen name="ExploreScreen" component={ExploreScreen} />
             <Stack.Screen name="SearchScreen" component={SearchScreen} />
+            <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
+            <Stack.Screen name="OrderConfirmScreen" component={OrderConfirmScreen} />
+            <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+            <Stack.Screen name="HelpScreen" component={HelpScreen} />
+            <Stack.Screen name="OrderDetailScreen" component={OrderDetailScreen} />
+            <Stack.Screen name="FeedbackScreen" component={FeedbackScreen} />
+            <Stack.Screen name="AddressScreen" component={AddressScreen} />
+            <Stack.Screen name="AddAddressScreen" component={AddAddressScreens} />
+            <Stack.Screen name="SelectAddressScreen" component={SelectAddressScreen} />
+            <Stack.Screen name="ChatCustomer" component={ChatCustomer} />
+            <Stack.Screen name="IndividualChatCustomer" component={IndividualChatCustomer} />
+            
+            {/* Vendor Screens */}
+            <Stack.Screen name="HomeVendor" component={HomeVendor} />
             <Stack.Screen name="Register" component={Register} />
-            <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
-            <Stack.Screen name="Category" component={Category} />
             <Stack.Screen name="Account" component={Account} />
-            <Stack.Screen name="Comment" component={Comment} />
-            <Stack.Screen name="ListVendor" component={ListVendor} />
-            <Stack.Screen name="Statistic" component={Statistic} />
-            <Stack.Screen name="Notification" component={Notification} />
-            <Stack.Screen name="OrderList" component={OrderList} />
             <Stack.Screen name="EditVendor" component={EditVendor} />
             <Stack.Screen name="EditCategory" component={EditCategory} />
             <Stack.Screen name="DishDetail" component={DishDetail} />
             <Stack.Screen name="AddDish" component={AddDish} />
             <Stack.Screen name="EditDish" component={EditDish} />
+            <Stack.Screen name="OrderList" component={OrderList} />
             <Stack.Screen name="OrderDetail" component={OrderDetail} />
-            <Stack.Screen name="AddressScreen" component={AddressScreen} />
-            <Stack.Screen
-              name="AddAddressScreen"
-              component={AddAddressScreens}
-            />
-            <Stack.Screen
-              name="SelectAddressScreen"
-              component={SelectAddressScreen}
-            />
+            <Stack.Screen name="Notification" component={Notification} />
+            <Stack.Screen name="Statistic" component={Statistic} />
             <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
             <Stack.Screen name="IndividualChat" component={IndividualChat} />
-            <Stack.Screen name="ChatCustomer" component={ChatCustomer} />
-            <Stack.Screen
-              name="IndividualChatCustomer"
-              component={IndividualChatCustomer}
-            />
-            <Stack.Screen name="HelpScreen" component={HelpScreen} />
-            <Stack.Screen
-              name="OrderDetailScreen"
-              component={OrderDetailScreen}
-            />
-            <Stack.Screen name="FeedbackScreen" component={FeedbackScreen} />
-            <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
-            <Stack.Screen
-              name="OrderConfirmScreen"
-              component={OrderConfirmScreen}
-            />
-            <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+            <Stack.Screen name="SelectAddress" component={SelectAddress} />
+            
+            {/* Admin Screens */}
+            <Stack.Screen name="StatisticAdmin" component={StatisticAdmin} />
+            <Stack.Screen name="Category" component={Category} />
+            <Stack.Screen name="Comment" component={Comment} />
+            <Stack.Screen name="ListVendor" component={ListVendor} />
+            <Stack.Screen name="SeeRestaurantScreen" component={SeeRestaurantScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </CartProvider>

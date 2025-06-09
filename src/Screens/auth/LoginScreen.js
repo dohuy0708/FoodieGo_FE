@@ -88,13 +88,21 @@ const LoginScreen = ({ navigation }) => {
         setLoading(false); // Dù thành công hay thất bại đều dừng loading
       }
     }
-    a;
   };
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         {/* Nút quay lại */}
-        <Header title="Đăng nhập" onBackPress={() => navigation.goBack()} />
+        <Header 
+          title="Đăng nhập" 
+          onBackPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('SplashScreen');
+            }
+          }} 
+        />
 
         {/* Logo */}
         <Image source={Logo} style={styles.logo} />
