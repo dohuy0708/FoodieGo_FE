@@ -8,7 +8,7 @@ import { Colors } from "../constants";
 // import { useDispatch, useSelector } from "react-redux";
 // import { BookmarkAction } from "../actions";
 
-const FavoriteCard = ({ id, restaurant, navigate }) => {
+const FavoriteCard = ({ id, restaurant, navigate, onRemoveFavorite }) => {
   // const addBookmark = () =>
   //   dispatch(BookmarkAction.addBookmark({ restaurantId: id }));
   // const removeBookmark = () =>
@@ -18,10 +18,13 @@ const FavoriteCard = ({ id, restaurant, navigate }) => {
     <TouchableOpacity
       style={styles.container}
       activeOpacity={0.8}
-      onPress={() => navigate(id)}
+      // onPress={() => navigate(id)}
     >
       {/* ICON bookmark ở góc trên phải */}
-      <TouchableOpacity style={styles.heart}>
+      <TouchableOpacity
+        style={styles.heart}
+        onPress={() => onRemoveFavorite(id)}
+      >
         <Ionicons name={"heart"} color={Colors.SECONDARY_RED} size={28} />
       </TouchableOpacity>
       <Image
@@ -40,27 +43,8 @@ const FavoriteCard = ({ id, restaurant, navigate }) => {
         {/* <Text style={styles.tagText}>{tags?.join(" • ")}</Text> */}
         <View style={styles.footerContainer}>
           <View style={styles.rowAndCenter}>
-            <FontAwesome name="star" size={14} color={Colors.DEFAULT_YELLOW} />
-            <Text style={styles.ratingText}>4</Text>
-            <Text style={styles.reviewsText}>({10})</Text>
-          </View>
-          <View style={styles.rowAndCenter}>
-            <View style={styles.timeAndDistanceContainer}>
-              <Ionicons name="location-outline" color={"#yellow"} size={15} />
-              <Text style={styles.timeAndDistanceText}>
-                {" "}
-                {/* {distance?.toFixed(1)} km */}
-                20km
-              </Text>
-            </View>
-            <View style={styles.timeAndDistanceContainer}>
-              <Ionicons name="time-outline" color="Blue" size={15} />
-              <Text style={styles.timeAndDistanceText}>
-                {" "}
-                {/* {Math.round(distance?.toFixed(1) * 1.5)} phút */}
-                15 phút
-              </Text>
-            </View>
+            {/* <FontAwesome name="star" size={14} color={Colors.DEFAULT_YELLOW} />
+            <Text style={styles.ratingText}>4</Text> */}
           </View>
         </View>
       </View>

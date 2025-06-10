@@ -88,6 +88,7 @@ const CategoryScreen = ({ navigation, route }) => {
             categoryName,
             10.8790332,
             106.8107046,
+            1,
             10
           );
         }

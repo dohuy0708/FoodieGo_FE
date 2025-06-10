@@ -17,6 +17,7 @@ import {
   searchMostOrderedRestaurants,
   searchTopRatedRestaurants,
 } from "../../services/restaurantService";
+import * as Location from "expo-location";
 // const restaurants = [
 //   {
 //     id: "1",
@@ -51,7 +52,7 @@ import {
 // ];
 
 const ExploreScreen = ({ navigation, route }) => {
-  const { categoryName } = route.params;
+  const { categoryName, location } = route.params;
   const [activeSortItem, setActiveSortItem] = useState("Mới nhất");
   const [restaurants, setRestaurants] = useState(restaurants);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,26 +75,45 @@ const ExploreScreen = ({ navigation, route }) => {
   });
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
+    const fetchLocationAndRestaurants = async () => {
       setIsLoading(true);
       try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          console.error("Permission to access location was denied");
+          return;
+        }
+
+        const loc = await Location.getCurrentPositionAsync({});
+        const latitude = loc.coords.latitude;
+        const longitude = loc.coords.longitude;
+
         let data = [];
 
         if (categoryName === "Đề xuất") {
-          data = await searchMostOrderedRestaurants(10.8790332, 106.8107046); // có distace r thì truyền ị trí vào
+          const response = await searchMostOrderedRestaurants(
+            latitude,
+            longitude
+          );
+          data = response?.data || [];
         } else if (categoryName === "Nổi bật") {
-          data = await searchTopRatedRestaurants(10.8790332, 106.8107046); // có distace r thì truyền ị trí vào
+          const response = await searchTopRatedRestaurants(latitude, longitude);
+          data = response?.data || [];
+        }
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid data format: Expected an array");
         }
 
         setRestaurants(data);
       } catch (error) {
-        console.error("Error fetching restaurants:", error);
+        console.error("Error fetching location or restaurants:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchRestaurants();
+    fetchLocationAndRestaurants();
   }, [categoryName]);
 
   if (isLoading) {

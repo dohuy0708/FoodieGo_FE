@@ -36,6 +36,7 @@ const FoodScreen = ({ navigation, route }) => {
   const [itemCount, setItemCount] = useState(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [reviewList, setReviewList] = useState();
+
   useEffect(() => {
     if (restaurantId) {
       const fetchReviews = async () => {
@@ -175,11 +176,11 @@ const FoodScreen = ({ navigation, route }) => {
               reviewList.map((review, index) => (
                 <View key={review.id}>
                   <ReviewItem
-                    username={review.username}
-                    userImageUri={review.userImageUri}
-                    rating={review.rating}
-                    content={review.content}
-                    reviewImage={review.reviewImage}
+                    username={review.order?.user?.name || "Ẩn danh"} // Extract user name
+                    userImageUri={review.order?.user?.avatar || null} // Extract user avatar
+                    rating={review.rating} // Extract rating
+                    content={review.content} // Extract review content
+                    reviewImage={review.imageUrl || null} // Extract review image
                   />
                   {/* Divider trừ phần tử cuối cùng */}
                   {index !== reviewList.length - 1 && (

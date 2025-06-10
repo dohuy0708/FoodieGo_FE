@@ -12,8 +12,9 @@ import RestaurantMediumCard from "../../components/RestaurantMediumCard";
 import FavoriteCard from "../../components/FavouriteCard";
 import { Colors } from "../../constants";
 import { UserContext } from "../../context/UserContext";
-import { fetchFavoritesByUserId } from "../../services/favouriteService";
+
 import { useFocusEffect } from "@react-navigation/native";
+import { fetchFavoritesByUserId } from "../../services/favouriteService";
 
 const FavoriteScreen = ({ navigation }) => {
   const [activeSortItem, setActiveSortItem] = useState("Mới nhất");
@@ -54,6 +55,18 @@ const FavoriteScreen = ({ navigation }) => {
       fetchFavorites();
     }, [userInfo])
   );
+
+  const handleRemoveFavorite = async (favoriteId) => {
+    try {
+      await removeFavorite(favoriteId); // Assuming removeFavorite is a function in favouriteService.js
+      const updatedFavorites = listFavorite.filter(
+        (item) => item.id !== favoriteId
+      );
+      setListFavorite(updatedFavorites);
+    } catch (error) {
+      console.error("Failed to remove favorite", error);
+    }
+  };
 
   if (!userInfo) {
     return (
@@ -110,15 +123,19 @@ const FavoriteScreen = ({ navigation }) => {
 
         {/* List FoodCard */}
         <ScrollView style={styles.listContainer}>
-          {listFavorite?.map((item) => (
-            <FavoriteCard
-              {...item}
-              key={item?.id}
-              navigate={(restaurantId) =>
-                navigation.navigate("RestaurantScreen", { restaurantId })
-              }
-            />
-          ))}
+          {listFavorite?.map((item) => {
+            console.log("Favorite item:", item); // Log each item
+            return (
+              <FavoriteCard
+                {...item}
+                key={item?.id}
+                navigate={(restaurantId) =>
+                  navigation.navigate("RestaurantScreen", { restaurantId })
+                }
+                onRemoveFavorite={handleRemoveFavorite}
+              />
+            );
+          })}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -158,6 +175,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   listContainer: {
+    marginTop: 55,
     paddingVertical: 5,
     zIndex: -5,
     marginBottom: 30,

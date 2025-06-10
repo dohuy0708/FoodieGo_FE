@@ -4,27 +4,29 @@ export const findRestaurantsByCategory = async (
   categoryName,
   latitude,
   longitude,
+  page = 1,
   limit = 10
 ) => {
   const token = await AsyncStorage.getItem("token");
+
   const query = `
     query {
       findRestaurantsByCategory(
         categoryName: "${categoryName}"
         latitude: ${latitude}
         longitude: ${longitude}
+        page: ${page}
         limit: ${limit}
       ) {
-        id
-        name
-        distance
-        description
-        avatar
-        owner
-        {
+        total
+        data {
           id
+          name
+          description
+          avatar
+          distance
+          averageRating
         }
-        
       }
     }
   `;
@@ -34,7 +36,7 @@ export const findRestaurantsByCategory = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // nếu cần
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ query }),
     });
@@ -46,12 +48,13 @@ export const findRestaurantsByCategory = async (
       throw new Error(result.errors[0].message || "GraphQL Error");
     }
 
-    return result.data.findRestaurantsByCategory;
+    return result.data.findRestaurantsByCategory.data;
   } catch (error) {
     console.error("Fetch error:", error);
     throw error;
   }
 };
+
 export const searchNearestRestaurants = async (
   latitude,
   longitude,

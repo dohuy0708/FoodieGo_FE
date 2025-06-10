@@ -32,6 +32,34 @@ export const createFavorite = async (restaurantId, userId) => {
     throw error;
   }
 };
+// services/favoriteService.js
+
+export async function removeFavorite(id) {
+  const query = `
+    mutation {
+      removeFavorite(id: ${id}) {
+        id
+      }
+    }
+  `;
+
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query }),
+  });
+
+  const result = await response.json();
+
+  if (result.errors) {
+    throw new Error(result.errors[0].message);
+  }
+
+  return result.data.removeFavorite;
+}
+
 export const fetchFavoritesByUserId = async ({
   userId,
   page = 1,

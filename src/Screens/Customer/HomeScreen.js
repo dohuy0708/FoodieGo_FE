@@ -109,7 +109,6 @@ export default function HomeScreen({ navigation }) {
       setIsLoading(true);
       try {
         const [near, popular, rated] = await Promise.all([
-
           searchNearestRestaurants(
             location?.coords?.latitude || 10.8790332,
             location?.coords?.longitude || 106.8107046,
@@ -128,11 +127,10 @@ export default function HomeScreen({ navigation }) {
             1,
             6
           ),
-
         ]);
 
-         setNearRestaurants(near.data);
-      
+        setNearRestaurants(near.data);
+
         setNearTotal(near.total);
 
         setPopularRestaurants(popular.data);
@@ -278,11 +276,11 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.listHeaderTitle}>Đề xuất</Text>
               <Text
                 style={styles.listHeaderSubtitle}
-                onPress={() =>
-                  navigation.navigate("ExploreScreen", {
-                    categoryName: "Đề xuất",
-                  })
-                }
+                // onPress={() =>
+                //   navigation.navigate("ExploreScreen", {
+                //     categoryName: "Đề xuất",
+                //   })
+                // }
               >
                 Xem tất cả
               </Text>
@@ -312,11 +310,11 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.listHeaderTitle}>Nổi bật </Text>
               <Text
                 style={styles.listHeaderSubtitle}
-                onPress={() =>
-                  navigation.navigate("ExploreScreen", {
-                    categoryName: "Nổi bật",
-                  })
-                }
+                // onPress={() =>
+                //   navigation.navigate("ExploreScreen", {
+                //     categoryName: "Nổi bật",
+                //   })
+                // }
               >
                 Xem tất cả
               </Text>

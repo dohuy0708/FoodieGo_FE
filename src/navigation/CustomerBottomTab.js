@@ -8,23 +8,12 @@ import {
   NotificationScreen,
   OrderScreen,
   ProfileScreen,
-
-} from "../Screens/customer";
-
-import AccountScreen from "../Screens/customer/AccountScreen";
-
+} from "../Screens/Customer";
 import Display from "../utils/Display";
-
-import ChatCustomer from "../Screens/customer/ChatCustomer";
-
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-
-
+import AccountScreen from "../Screens/Customer/AccountScreen";
 
 const CustomerBottomTabs = createBottomTabNavigator();
-
 export default () => (
-  
   <CustomerBottomTabs.Navigator
     screenOptions={{
       headerShown: false,
@@ -35,7 +24,6 @@ export default () => (
         height: Display.setHeight(7),
         backgroundColor: Colors.DEFAULT_WHITE,
         borderTopWidth: 0,
-        marginBottom: 20,
       },
       tabBarShowLabel: true,
       tabBarActiveTintColor: Colors.DEFAULT_GREEN,
@@ -101,19 +89,6 @@ export default () => (
         tabBarIcon: ({ focused, color }) => (
           <Ionicons
             name={focused ? "person" : "person-outline"}
-            size={25}
-            color={color}
-          />
-        ),
-      }}
-    />
-     <CustomerBottomTabs.Screen
-      name="Chat"
-      component={ChatCustomer}
-      options={{
-        tabBarIcon: ({ focused, color }) => (
-          <MaterialCommunityIcons
-            name={focused ? "chat-outline" : "chat-outline"}
             size={25}
             color={color}
           />

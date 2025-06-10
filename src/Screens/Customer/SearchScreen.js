@@ -317,6 +317,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F6F6F6",
   },
   headerContainer: {
+    marginTop: 10,
     flexDirection: "row",
   },
   searchContainer: {

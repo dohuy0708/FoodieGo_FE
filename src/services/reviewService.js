@@ -152,6 +152,7 @@ export const getReviewsByRestaurant = async (
   page = 1,
   limit = 10
 ) => {
+  console.log("Fetching reviews for restaurantId:", restaurantId);
   const token = await AsyncStorage.getItem("token");
 
   const query = `
@@ -199,7 +200,7 @@ export const getReviewsByRestaurant = async (
       throw new Error(result.errors[0]?.message || "Đã xảy ra lỗi.");
     }
 
-    return result.data.findReviewsByRestaurantId;
+    return result.data.findReviewsByRestaurantId.data;
   } catch (error) {
     console.error("Fetch Error:", error);
     throw error;

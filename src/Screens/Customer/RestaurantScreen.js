@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useContext } from "react";
 
 import {
@@ -30,6 +29,7 @@ import CartModal from "../../components/CartModal";
 import {
   fetchCategoriesByRestaurantId,
   fetchFoodsByCategoryId,
+  findRestaurantById,
 } from "../../services/restaurantService";
 import CartPanel from "../../components/CartPanel";
 import {
@@ -47,7 +47,7 @@ const RestaurantScreen = ({ navigation, route }) => {
   const customerId = userInfo.id;
 
   const restaurantId = restaurant?.id; // Lấy restaurantId từ restaurant
-// <-- Đúng cú pháp
+  // <-- Đúng cú pháp
   const [isCartVisible, setCartVisible] = useState(false);
   const { getCartItems, clearCart, hasItems } = useCart();
   const [items, setItems] = useState([]);
@@ -61,6 +61,7 @@ const RestaurantScreen = ({ navigation, route }) => {
   });
   const [listFoods, setListFoods] = useState([]);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [restaurantDetails, setRestaurant] = useState(restaurant); // Thêm state cho chi tiết nhà hàng
   // Thêm state tổng giá
   // kiểm tra nhà hàng đã được yêu thích chưa
   useEffect(() => {
@@ -77,7 +78,6 @@ const RestaurantScreen = ({ navigation, route }) => {
   }, [restaurantId, userInfo]);
   useEffect(() => {
     if (restaurantId) {
-      
       const cartItems = getCartItems(restaurantId);
       setItems(cartItems);
     }
@@ -93,17 +93,15 @@ const RestaurantScreen = ({ navigation, route }) => {
     setTotalPrice(total);
   }, [items]);
   const handleChat = () => {
-    if(customerId){
+    if (customerId) {
       console.log(restaurant);
       navigation.navigate("IndividualChatCustomer", {
-       
         contactName: restaurant?.name,
         contactAvatar: restaurant?.avatar,
         userId: customerId.toString(),
         vendorId: restaurant?.id,
-        
       });
-    }else{
+    } else {
       navigation.navigate("LoginScreen");
     }
   };
@@ -177,11 +175,27 @@ const RestaurantScreen = ({ navigation, route }) => {
   const removeFavorite = () => {
     try {
       // Giả sử bạn có một hàm để xóa yêu thích, ví dụ:
+
       setIsFavorite(false); // Cập nhật trạng thái yêu thích
     } catch (error) {
       console.error("Failed to remove favorite", error);
     }
   };
+
+  useEffect(() => {
+    if (!restaurant && restaurantId) {
+      const fetchRestaurantDetails = async () => {
+        try {
+          const restaurantDetails = await findRestaurantById(restaurantId);
+          setRestaurant(restaurantDetails);
+        } catch (error) {
+          console.error("Error fetching restaurant details:", error);
+        }
+      };
+      fetchRestaurantDetails();
+    }
+  }, [restaurantId, restaurant]);
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -258,7 +272,7 @@ const RestaurantScreen = ({ navigation, route }) => {
               </View>
             </View>
           </View>
-              <TouchableOpacity style={styles.button} onPress={handleChat}>
+          <TouchableOpacity style={styles.button} onPress={handleChat}>
             <MaterialCommunityIcons name="chat" size={20} color="white" />
             <Text style={styles.buttonText}>Nhắn tin</Text>
           </TouchableOpacity>
